@@ -109,7 +109,7 @@ export const ChapterList = () => {
         <Link to={`/books/${bookId}/chapters/new`}>
           <Button>
             <Plus className="h-4 w-4 mr-2" />
-            New Chapter
+            Adicionar Capítulo
           </Button>
         </Link>
       </div>
@@ -119,14 +119,14 @@ export const ChapterList = () => {
           <CardContent className="pt-6">
             <div className="text-center py-8">
               <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No chapters yet</h3>
+              <h3 className="text-lg font-semibold mb-2">Nenhum capítulo ainda.</h3>
               <p className="text-muted-foreground mb-4">
-                Start writing by adding your first chapter
+                Clique em 'Adicionar Capítulo' para criar o primeiro.
               </p>
               <Link to={`/books/${bookId}/chapters/new`}>
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
-                  Add First Chapter
+                  Adicionar Capítulo
                 </Button>
               </Link>
             </div>
