@@ -29,6 +29,9 @@ export const Navigation = () => {
             <Link to="/docs/overview" className="text-sm text-muted-foreground hover:text-primary">
               Docs
             </Link>
+            <Link to="/profile" className="text-sm text-muted-foreground hover:text-primary">
+              Profile
+            </Link>
             <span className="text-sm text-muted-foreground">
               {user.email}
             </span>

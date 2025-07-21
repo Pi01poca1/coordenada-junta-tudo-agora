@@ -11,6 +11,7 @@ import BookDetails from "./pages/BookDetails";
 import CreateBook from "./pages/CreateBook";
 import EditChapter from "./pages/EditChapter";
 import DocsOverview from "./pages/DocsOverview";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -70,6 +71,12 @@ const AppRoutes = () => {
       <Route path="/docs/overview" element={
         <ProtectedRoute>
           <DocsOverview />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/profile" element={
+        <ProtectedRoute>
+          <Profile />
         </ProtectedRoute>
       } />
       
