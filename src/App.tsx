@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import BookDetails from "./pages/BookDetails";
 import CreateBook from "./pages/CreateBook";
 import EditChapter from "./pages/EditChapter";
+import ChapterDetail from "./pages/ChapterDetail";
 import DocsOverview from "./pages/DocsOverview";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
@@ -65,6 +66,12 @@ const AppRoutes = () => {
       <Route path="/books/:bookId/chapters/:chapterId/edit" element={
         <ProtectedRoute>
           <EditChapter />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/books/:bookId/chapters/:chapterId" element={
+        <ProtectedRoute>
+          <ChapterDetail />
         </ProtectedRoute>
       } />
       

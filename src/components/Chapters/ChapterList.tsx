@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash2, FileText } from 'lucide-react';
+import { Plus, Edit, Trash2, FileText, Eye } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import {
   AlertDialog,
@@ -155,6 +155,12 @@ export const ChapterList = () => {
                     </CardDescription>
                   </div>
                   <div className="flex space-x-2">
+                    <Link to={`/books/${bookId}/chapters/${chapter.id}`}>
+                      <Button variant="outline" size="sm">
+                        <Eye className="h-4 w-4 mr-2" />
+                        View
+                      </Button>
+                    </Link>
                     <Link to={`/books/${bookId}/chapters/${chapter.id}/edit`}>
                       <Button variant="outline" size="sm">
                         <Edit className="h-4 w-4 mr-2" />
