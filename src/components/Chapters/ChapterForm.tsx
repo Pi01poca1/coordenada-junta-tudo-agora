@@ -42,9 +42,11 @@ export const ChapterForm = () => {
 
       if (error) throw error;
 
-      setTitle(data.title);
-      setContent(data.content || '');
-      setOrderIndex(data.order_index || 1);
+      if (data) {
+        setTitle(data.title);
+        setContent(data.content || '');
+        setOrderIndex(data.order_index || 1);
+      }
     } catch (error) {
       console.error('Error fetching chapter:', error);
       toast({

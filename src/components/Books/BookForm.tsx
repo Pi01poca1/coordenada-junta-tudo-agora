@@ -41,9 +41,11 @@ export const BookForm = () => {
 
       if (error) throw error;
 
-      setTitle(data.title);
-      setDescription(data.description || '');
-      setStatus(data.status);
+      if (data) {
+        setTitle(data.title);
+        setDescription(data.description || '');
+        setStatus(data.status);
+      }
     } catch (error) {
       console.error('Error fetching book:', error);
       toast({
