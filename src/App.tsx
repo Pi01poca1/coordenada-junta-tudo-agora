@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import BookDetails from "./pages/BookDetails";
 import CreateBook from "./pages/CreateBook";
 import EditChapter from "./pages/EditChapter";
+import DocsOverview from "./pages/DocsOverview";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -63,6 +64,12 @@ const AppRoutes = () => {
       <Route path="/books/:bookId/chapters/:chapterId/edit" element={
         <ProtectedRoute>
           <EditChapter />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/docs/overview" element={
+        <ProtectedRoute>
+          <DocsOverview />
         </ProtectedRoute>
       } />
       
