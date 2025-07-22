@@ -23,13 +23,24 @@ export const ChapterForm = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Check if bookId is valid
+    if (!bookId || bookId === 'undefined') {
+      toast({
+        title: "Erro",
+        description: "ID do livro inválido. Redirecionando...",
+        variant: "destructive",
+      });
+      navigate('/dashboard');
+      return;
+    }
+
     if (chapterId && chapterId !== 'new') {
       setIsEdit(true);
       fetchChapter(chapterId);
     } else {
       fetchNextOrderIndex();
     }
-  }, [chapterId, bookId]);
+  }, [chapterId, bookId, navigate, toast]);
 
   const fetchChapter = async (id: string) => {
     try {
