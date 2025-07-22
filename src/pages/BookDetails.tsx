@@ -144,7 +144,7 @@ const BookDetails = () => {
           </div>
 
           <div className="lg:col-span-2">
-            <ChapterList />
+            <ChapterList bookId={book.id} />
           </div>
         </div>
       </main>

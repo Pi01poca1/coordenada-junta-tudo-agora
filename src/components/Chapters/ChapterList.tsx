@@ -19,16 +19,23 @@ interface Chapter {
   book_id: string;
 }
 
-export const ChapterList = () => {
+interface ChapterListProps {
+  bookId?: string;
+}
+
+export const ChapterList = ({ bookId: propBookId }: ChapterListProps) => {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   
-  const { bookId } = useParams();
+  const { bookId: paramBookId } = useParams();
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // Use prop bookId if provided, otherwise use param bookId
+  const bookId = propBookId || paramBookId;
 
   // Helper function to add debug logs
   const addDebugLog = (message: string) => {
@@ -40,7 +47,7 @@ export const ChapterList = () => {
 
   useEffect(() => {
     addDebugLog('ChapterList component mounted');
-    addDebugLog(`bookId: ${bookId}, user: ${user?.id}`);
+    addDebugLog(`propBookId: ${propBookId}, paramBookId: ${paramBookId}, final bookId: ${bookId}, user: ${user?.id}`);
     
     if (bookId && user) {
       fetchChapters();
@@ -48,7 +55,7 @@ export const ChapterList = () => {
       addDebugLog('Missing bookId or user, skipping fetch');
       setLoading(false);
     }
-  }, [bookId, user]);
+  }, [bookId, user, propBookId, paramBookId]);
 
   const fetchChapters = async () => {
     addDebugLog('Starting fetchChapters');
