@@ -23,134 +23,64 @@ export const ChapterList = () => {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [authDebug, setAuthDebug] = useState<any>(null);
-  const [queryDebug, setQueryDebug] = useState<any>(null);
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+  const [isCreating, setIsCreating] = useState(false);
   
   const { bookId } = useParams();
   const { user } = useAuth();
   const { toast } = useToast();
 
+  // Helper function to add debug logs
+  const addDebugLog = (message: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    const logMessage = `[${timestamp}] ${message}`;
+    console.log('🔍 DEBUG:', logMessage);
+    setDebugLogs(prev => [...prev.slice(-10), logMessage]); // Keep last 10 logs
+  };
+
   useEffect(() => {
-    debugAuthentication();
+    addDebugLog('ChapterList component mounted');
+    addDebugLog(`bookId: ${bookId}, user: ${user?.id}`);
+    
     if (bookId && user) {
       fetchChapters();
     } else {
+      addDebugLog('Missing bookId or user, skipping fetch');
       setLoading(false);
     }
   }, [bookId, user]);
 
-  const debugAuthentication = async () => {
-    console.log('🔐 Starting authentication debug...');
-    
-    try {
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      
-      let dbTestResult = null;
-      try {
-        // Test simple query without count
-        const { data: testData, error: testError } = await supabase
-          .from('books')
-          .select('id')
-          .limit(1);
-        
-        dbTestResult = {
-          success: !testError,
-          error: testError?.message,
-          hasData: !!testData
-        };
-      } catch (dbError: any) {
-        dbTestResult = {
-          success: false,
-          error: dbError.message,
-          hasData: false
-        };
-      }
-
-      const authDebugInfo = {
-        timestamp: new Date().toISOString(),
-        contextUser: {
-          exists: !!user,
-          id: user?.id,
-          email: user?.email
-        },
-        supabaseSession: {
-          exists: !!sessionData.session,
-          user: sessionData.session?.user?.id,
-          error: sessionError?.message
-        },
-        supabaseUser: {
-          exists: !!userData.user,
-          id: userData.user?.id,
-          email: userData.user?.email,
-          error: userError?.message
-        },
-        databaseTest: dbTestResult
-      };
-
-      setAuthDebug(authDebugInfo);
-      console.log('🔐 Auth debug completed:', authDebugInfo);
-      
-    } catch (error: any) {
-      console.error('❌ Auth debug failed:', error);
-      setAuthDebug({
-        error: error.message,
-        timestamp: new Date().toISOString()
-      });
-    }
-  };
-
   const fetchChapters = async () => {
-    console.log('📚 Starting fetchChapters (without count)...');
+    addDebugLog('Starting fetchChapters');
     
     if (!user || !bookId) {
-      console.log('❌ Missing requirements:', { user: !!user, bookId });
+      addDebugLog('fetchChapters aborted: missing user or bookId');
       setLoading(false);
       return;
     }
 
     try {
       setError(null);
-      console.log('🔍 Querying chapters table (simple query)...');
+      addDebugLog('Executing Supabase query...');
 
-      // Simple query without count to avoid parsing issues
       const { data, error } = await supabase
         .from('chapters')
         .select('*')
         .eq('book_id', bookId)
         .order('order_index', { ascending: true });
 
-      const debugData = {
-        query: {
-          table: 'chapters',
-          filter: `book_id = ${bookId}`,
-          timestamp: new Date().toISOString(),
-          method: 'simple_select_without_count'
-        },
-        response: {
-          hasData: !!data,
-          dataCount: data?.length || 0,
-          hasError: !!error,
-          errorMessage: error?.message,
-          errorCode: error?.code,
-          errorDetails: error?.details,
-          errorHint: error?.hint
-        }
-      };
-
-      setQueryDebug(debugData);
-      console.log('📊 Query debug:', debugData);
+      addDebugLog(`Query completed. Data: ${data?.length || 0} chapters, Error: ${error?.message || 'none'}`);
 
       if (error) {
-        console.error('❌ Supabase query error:', error);
+        addDebugLog(`Supabase error: ${error.message}`);
         throw new Error(`Database error: ${error.message}`);
       }
 
       setChapters(data || []);
-      console.log('✅ Chapters loaded:', data?.length || 0);
+      addDebugLog(`Chapters set in state: ${data?.length || 0}`);
       
     } catch (error: any) {
-      console.error('💥 fetchChapters error:', error);
+      addDebugLog(`fetchChapters error: ${error.message}`);
       setError(error.message);
       
       toast({
@@ -160,21 +90,35 @@ export const ChapterList = () => {
       });
     } finally {
       setLoading(false);
+      addDebugLog('fetchChapters completed, loading set to false');
     }
   };
 
   const createTestChapter = async () => {
-    if (!user || !bookId) return;
+    addDebugLog('🧪 createTestChapter function called!');
+    
+    if (!user || !bookId) {
+      addDebugLog('❌ Cannot create: missing user or bookId');
+      toast({
+        title: "❌ Erro",
+        description: "User or Book ID missing",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
+      setIsCreating(true);
+      addDebugLog('Starting chapter creation...');
+
       const testChapter = {
         book_id: bookId,
         title: `Test Chapter ${Date.now()}`,
-        content: 'This is a test chapter for debugging.',
+        content: 'This is a test chapter created for debugging purposes.',
         order_index: chapters.length + 1,
       };
 
-      console.log('🧪 Creating test chapter:', testChapter);
+      addDebugLog(`Test chapter data: ${JSON.stringify(testChapter)}`);
 
       const { data, error } = await supabase
         .from('chapters')
@@ -182,61 +126,46 @@ export const ChapterList = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      addDebugLog(`Insert result - Data: ${!!data}, Error: ${error?.message || 'none'}`);
 
+      if (error) {
+        addDebugLog(`❌ Insert error: ${JSON.stringify(error)}`);
+        throw error;
+      }
+
+      addDebugLog('✅ Chapter created successfully!');
       setChapters([...chapters, data]);
+      
       toast({
         title: "✅ Sucesso!",
-        description: "Capítulo de teste criado",
+        description: "Capítulo de teste criado com sucesso!",
       });
+
+      addDebugLog('Toast shown, function completed');
     } catch (error: any) {
-      console.error('❌ Test chapter error:', error);
+      addDebugLog(`❌ createTestChapter error: ${error.message}`);
+      console.error('💥 Full error object:', error);
+      
       toast({
         title: "❌ Erro",
-        description: error.message,
+        description: `Falha ao criar capítulo: ${error.message}`,
         variant: "destructive",
       });
+    } finally {
+      setIsCreating(false);
+      addDebugLog('createTestChapter finally block executed');
     }
   };
 
-  const renderAuthStatus = () => {
-    if (!authDebug) return null;
+  const testButtonClick = () => {
+    addDebugLog('🔘 Test button clicked!');
+    alert('Button click detected! Check console for detailed logs.');
+    createTestChapter();
+  };
 
-    const isAuthenticated = authDebug.contextUser?.exists && authDebug.supabaseSession?.exists;
-    const hasDbAccess = authDebug.databaseTest?.success;
-
-    return (
-      <Card className={`${isAuthenticated && hasDbAccess ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-        <CardHeader>
-          <CardTitle className={`text-sm flex items-center ${isAuthenticated && hasDbAccess ? 'text-green-800' : 'text-red-800'}`}>
-            {isAuthenticated && hasDbAccess ? <CheckCircle className="h-4 w-4 mr-2" /> : <AlertTriangle className="h-4 w-4 mr-2" />}
-            Authentication Status
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2 text-xs">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <strong>Context User:</strong> {authDebug.contextUser?.exists ? '✅' : '❌'}
-                {authDebug.contextUser?.id && <div>ID: {authDebug.contextUser.id.substring(0, 8)}...</div>}
-              </div>
-              <div>
-                <strong>Supabase Session:</strong> {authDebug.supabaseSession?.exists ? '✅' : '❌'}
-                {authDebug.supabaseSession?.error && <div className="text-red-600">Error: {authDebug.supabaseSession.error}</div>}
-              </div>
-              <div>
-                <strong>Database Access:</strong> {hasDbAccess ? '✅' : '❌'}
-                {authDebug.databaseTest?.error && <div className="text-red-600">Error: {authDebug.databaseTest.error}</div>}
-              </div>
-              <div>
-                <strong>Book ID:</strong> {bookId ? '✅' : '❌'}
-                {bookId && <div>{bookId.substring(0, 8)}...</div>}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
+  const clearLogs = () => {
+    setDebugLogs([]);
+    addDebugLog('Debug logs cleared');
   };
 
   if (loading) {
@@ -245,38 +174,62 @@ export const ChapterList = () => {
         <div className="flex items-center justify-center min-h-32">
           <div className="text-muted-foreground">🔄 Loading chapters...</div>
         </div>
-        {renderAuthStatus()}
+        <Card className="bg-yellow-50 border-yellow-200">
+          <CardHeader>
+            <CardTitle className="text-sm text-yellow-800">🔄 Loading State</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-xs space-y-1">
+              {debugLogs.map((log, index) => (
+                <div key={index} className="font-mono">{log}</div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      {/* Authentication Debug */}
-      {renderAuthStatus()}
+      {/* Debug Logs Card */}
+      <Card className="bg-purple-50 border-purple-200">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm text-purple-800">🔍 Debug Logs</CardTitle>
+            <Button onClick={clearLogs} variant="outline" size="sm">
+              Clear Logs
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-xs space-y-1 max-h-32 overflow-y-auto">
+            {debugLogs.length === 0 ? (
+              <div>No logs yet...</div>
+            ) : (
+              debugLogs.map((log, index) => (
+                <div key={index} className="font-mono text-purple-700">{log}</div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Query Debug */}
-      {queryDebug && (
-        <Card className={`${queryDebug.response?.hasError ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'}`}>
-          <CardHeader>
-            <CardTitle className={`text-sm ${queryDebug.response?.hasError ? 'text-red-800' : 'text-blue-800'}`}>
-              📊 Database Query Debug
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xs space-y-1">
-              <div><strong>Table:</strong> {queryDebug.query?.table}</div>
-              <div><strong>Method:</strong> {queryDebug.query?.method}</div>
-              <div><strong>Filter:</strong> {queryDebug.query?.filter}</div>
-              <div><strong>Found:</strong> {queryDebug.response?.dataCount} chapters</div>
-              <div><strong>Error:</strong> {queryDebug.response?.hasError ? 'Yes' : 'No'}</div>
-              {queryDebug.response?.errorMessage && (
-                <div className="text-red-600"><strong>Error Message:</strong> {queryDebug.response.errorMessage}</div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Status Cards */}
+      <Card className="bg-blue-50 border-blue-200">
+        <CardHeader>
+          <CardTitle className="text-sm text-blue-800">📊 Current Status</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-xs space-y-1 text-blue-700">
+            <div><strong>Book ID:</strong> {bookId || 'MISSING'}</div>
+            <div><strong>User ID:</strong> {user?.id || 'MISSING'}</div>
+            <div><strong>Chapters Count:</strong> {chapters.length}</div>
+            <div><strong>Is Creating:</strong> {isCreating ? 'YES' : 'NO'}</div>
+            <div><strong>Error:</strong> {error || 'None'}</div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Error State */}
       {error && (
@@ -290,8 +243,8 @@ export const ChapterList = () => {
               <Button onClick={fetchChapters} variant="outline">
                 🔄 Try Again
               </Button>
-              <Button onClick={createTestChapter} variant="outline">
-                🧪 Create Test Chapter
+              <Button onClick={testButtonClick} variant="outline" disabled={isCreating}>
+                🧪 Test Create {isCreating && '(Creating...)'}
               </Button>
             </div>
           </CardContent>
@@ -311,9 +264,15 @@ export const ChapterList = () => {
               Adicionar Capítulo
             </Button>
           </Link>
-          <Button onClick={createTestChapter} variant="outline" size="sm">
+          <Button 
+            onClick={testButtonClick} 
+            variant="outline" 
+            size="sm"
+            disabled={isCreating}
+            className="bg-yellow-100 hover:bg-yellow-200"
+          >
             <TestTube className="h-4 w-4 mr-2" />
-            Test Create
+            {isCreating ? '⏳ Creating...' : 'Test Create'}
           </Button>
         </div>
       </div>
@@ -326,7 +285,7 @@ export const ChapterList = () => {
               <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">📝 No chapters found</h3>
               <p className="text-muted-foreground mb-4">
-                The chapters table exists but no chapters found for this book.
+                No chapters found for this book. Try creating one!
               </p>
               <div className="flex gap-2 justify-center">
                 <Link to={`/books/${bookId}/chapters/new`}>
@@ -335,9 +294,14 @@ export const ChapterList = () => {
                     Add Chapter
                   </Button>
                 </Link>
-                <Button onClick={createTestChapter} variant="outline">
+                <Button 
+                  onClick={testButtonClick} 
+                  variant="outline"
+                  disabled={isCreating}
+                  className="bg-green-100 hover:bg-green-200"
+                >
                   <TestTube className="h-4 w-4 mr-2" />
-                  Create Test
+                  {isCreating ? '⏳ Creating...' : 'Create Test Chapter'}
                 </Button>
               </div>
             </div>
