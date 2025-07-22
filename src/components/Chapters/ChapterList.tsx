@@ -6,18 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash2, FileText, Eye, Upload, Image } from 'lucide-react';
+import { Plus, Edit, Trash2, FileText, Eye, TestTube, AlertTriangle, CheckCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 
 interface Chapter {
   id: string;
@@ -33,61 +23,145 @@ export const ChapterList = () => {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [authDebug, setAuthDebug] = useState<any>(null);
+  const [supabaseDebug, setSupabaseDebug] = useState<any>(null);
+  
   const { bookId } = useParams();
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
-    console.log('ChapterList useEffect - bookId:', bookId, 'user:', user?.id);
-    if (bookId) {
+    debugAuthentication();
+    if (bookId && user) {
       fetchChapters();
+    } else {
+      setLoading(false);
     }
   }, [bookId, user]);
 
+  const debugAuthentication = async () => {
+    console.log('🔐 Starting authentication debug...');
+    
+    try {
+      // Get current session
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      // Get current user
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      
+      // Test a simple query to verify database connection
+      let dbTestResult = null;
+      try {
+        const { data: testData, error: testError } = await supabase
+          .from('books')
+          .select('count(*)')
+          .limit(1);
+        
+        dbTestResult = {
+          success: !testError,
+          error: testError?.message,
+          hasData: !!testData
+        };
+      } catch (dbError: any) {
+        dbTestResult = {
+          success: false,
+          error: dbError.message,
+          hasData: false
+        };
+      }
+
+      const authDebugInfo = {
+        timestamp: new Date().toISOString(),
+        contextUser: {
+          exists: !!user,
+          id: user?.id,
+          email: user?.email
+        },
+        supabaseSession: {
+          exists: !!sessionData.session,
+          user: sessionData.session?.user?.id,
+          error: sessionError?.message
+        },
+        supabaseUser: {
+          exists: !!userData.user,
+          id: userData.user?.id,
+          email: userData.user?.email,
+          error: userError?.message
+        },
+        databaseTest: dbTestResult,
+        supabaseConfig: {
+          url: 'configured',
+          anonKey: 'configured'
+        }
+      };
+
+      setAuthDebug(authDebugInfo);
+      console.log('🔐 Auth debug completed:', authDebugInfo);
+      
+    } catch (error: any) {
+      console.error('❌ Auth debug failed:', error);
+      setAuthDebug({
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+  };
+
   const fetchChapters = async () => {
+    console.log('📚 Starting fetchChapters...');
+    
     if (!user || !bookId) {
-      console.log('fetchChapters: missing user or bookId', { user: user?.id, bookId });
+      console.log('❌ Missing requirements:', { user: !!user, bookId });
       setLoading(false);
       return;
     }
 
     try {
-      console.log('Fetching chapters for bookId:', bookId);
       setError(null);
+      console.log('🔍 Querying chapters table...');
 
-      // Test connection and fetch chapters
       const { data, error, count } = await supabase
         .from('chapters')
         .select('*', { count: 'exact' })
         .eq('book_id', bookId)
         .order('order_index', { ascending: true });
 
-      console.log('Supabase response:', { data, error, count });
-      
-      setDebugInfo({
-        bookId,
-        userId: user.id,
-        responseData: data,
-        responseError: error,
-        count
-      });
+      const debugData = {
+        query: {
+          table: 'chapters',
+          filter: `book_id = ${bookId}`,
+          timestamp: new Date().toISOString()
+        },
+        response: {
+          hasData: !!data,
+          dataCount: data?.length || 0,
+          count: count,
+          hasError: !!error,
+          errorMessage: error?.message,
+          errorCode: error?.code,
+          errorDetails: error?.details,
+          errorHint: error?.hint
+        }
+      };
+
+      setSupabaseDebug(debugData);
+      console.log('📊 Query debug:', debugData);
 
       if (error) {
-        console.error('Supabase error:', error);
-        throw error;
+        console.error('❌ Supabase query error:', error);
+        throw new Error(`Database error: ${error.message}`);
       }
 
       setChapters(data || []);
-      console.log('Chapters loaded successfully:', data?.length);
+      console.log('✅ Chapters loaded:', data?.length || 0);
       
     } catch (error: any) {
-      console.error('Error fetching chapters:', error);
-      setError(error.message || 'Failed to load chapters');
+      console.error('💥 fetchChapters error:', error);
+      setError(error.message);
+      
       toast({
-        title: "Error",
-        description: `Failed to load chapters: ${error.message}`,
+        title: "❌ Erro ao Carregar",
+        description: error.message,
         variant: "destructive",
       });
     } finally {
@@ -95,21 +169,22 @@ export const ChapterList = () => {
     }
   };
 
-  const createMockChapter = async () => {
+  const createTestChapter = async () => {
     if (!user || !bookId) return;
 
     try {
-      const newChapter = {
+      const testChapter = {
         book_id: bookId,
-        title: 'Chapter 1 - Mock Chapter',
-        content: 'This is a mock chapter created for testing purposes.',
-        order_index: 1,
-        author_id: user.id
+        title: `Test Chapter ${Date.now()}`,
+        content: 'This is a test chapter for debugging.',
+        order_index: chapters.length + 1,
       };
+
+      console.log('🧪 Creating test chapter:', testChapter);
 
       const { data, error } = await supabase
         .from('chapters')
-        .insert([newChapter])
+        .insert([testChapter])
         .select()
         .single();
 
@@ -117,103 +192,125 @@ export const ChapterList = () => {
 
       setChapters([...chapters, data]);
       toast({
-        title: "Success",
-        description: "Mock chapter created successfully",
+        title: "✅ Sucesso!",
+        description: "Capítulo de teste criado",
       });
     } catch (error: any) {
-      console.error('Error creating mock chapter:', error);
+      console.error('❌ Test chapter error:', error);
       toast({
-        title: "Error",
-        description: `Failed to create chapter: ${error.message}`,
+        title: "❌ Erro",
+        description: error.message,
         variant: "destructive",
       });
     }
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('chapters')
-        .delete()
-        .eq('id', id);
+  const renderAuthStatus = () => {
+    if (!authDebug) return null;
 
-      if (error) throw error;
+    const isAuthenticated = authDebug.contextUser?.exists && authDebug.supabaseSession?.exists;
+    const hasDbAccess = authDebug.databaseTest?.success;
 
-      setChapters(chapters.filter(chapter => chapter.id !== id));
-      toast({
-        title: "Success",
-        description: "Chapter deleted successfully",
-      });
-    } catch (error) {
-      console.error('Error deleting chapter:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete chapter",
-        variant: "destructive",
-      });
-    }
-    setDeleteId(null);
+    return (
+      <Card className={`${isAuthenticated ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+        <CardHeader>
+          <CardTitle className={`text-sm flex items-center ${isAuthenticated ? 'text-green-800' : 'text-red-800'}`}>
+            {isAuthenticated ? <CheckCircle className="h-4 w-4 mr-2" /> : <AlertTriangle className="h-4 w-4 mr-2" />}
+            Authentication Status
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2 text-xs">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <strong>Context User:</strong> {authDebug.contextUser?.exists ? '✅' : '❌'}
+                {authDebug.contextUser?.id && <div>ID: {authDebug.contextUser.id.substring(0, 8)}...</div>}
+              </div>
+              <div>
+                <strong>Supabase Session:</strong> {authDebug.supabaseSession?.exists ? '✅' : '❌'}
+                {authDebug.supabaseSession?.error && <div className="text-red-600">Error: {authDebug.supabaseSession.error}</div>}
+              </div>
+              <div>
+                <strong>Database Access:</strong> {hasDbAccess ? '✅' : '❌'}
+                {authDebug.databaseTest?.error && <div className="text-red-600">Error: {authDebug.databaseTest.error}</div>}
+              </div>
+              <div>
+                <strong>Supabase URL:</strong> {authDebug.supabaseConfig?.url ? '✅' : '❌'}
+              </div>
+            </div>
+            
+            {!isAuthenticated && (
+              <div className="mt-4 p-2 bg-red-100 rounded text-red-800">
+                <strong>⚠️ Authentication Problem Detected!</strong>
+                <div>Please check your login status and Supabase configuration.</div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
   };
 
   if (loading) {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-center min-h-32">
-          <div className="text-muted-foreground">Loading chapters...</div>
+          <div className="text-muted-foreground">🔄 Loading chapters...</div>
         </div>
-        {/* Debug info while loading */}
-        {debugInfo && (
-          <Card className="bg-yellow-50 border-yellow-200">
-            <CardHeader>
-              <CardTitle className="text-sm">Debug Info</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <pre className="text-xs overflow-auto">
-                {JSON.stringify(debugInfo, null, 2)}
-              </pre>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="space-y-4">
-        <Card className="border-red-200 bg-red-50">
-          <CardHeader>
-            <CardTitle className="text-red-800">Error Loading Chapters</CardTitle>
-            <CardDescription className="text-red-600">{error}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Button onClick={fetchChapters} variant="outline">
-                Try Again
-              </Button>
-              <Button onClick={createMockChapter} variant="outline">
-                Create Mock Chapter (Test)
-              </Button>
-            </div>
-            {debugInfo && (
-              <details className="mt-4">
-                <summary className="cursor-pointer text-sm font-medium">Debug Info</summary>
-                <pre className="text-xs mt-2 p-2 bg-white rounded border overflow-auto">
-                  {JSON.stringify(debugInfo, null, 2)}
-                </pre>
-              </details>
-            )}
-          </CardContent>
-        </Card>
+        {renderAuthStatus()}
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
+      {/* Authentication Debug */}
+      {renderAuthStatus()}
+
+      {/* Supabase Query Debug */}
+      {supabaseDebug && (
+        <Card className="bg-blue-50 border-blue-200">
+          <CardHeader>
+            <CardTitle className="text-sm text-blue-800">📊 Database Query Debug</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-xs space-y-1 text-blue-700">
+              <div><strong>Table:</strong> {supabaseDebug.query?.table}</div>
+              <div><strong>Filter:</strong> {supabaseDebug.query?.filter}</div>
+              <div><strong>Found:</strong> {supabaseDebug.response?.dataCount} chapters</div>
+              <div><strong>Error:</strong> {supabaseDebug.response?.hasError ? 'Yes' : 'No'}</div>
+              {supabaseDebug.response?.errorMessage && (
+                <div className="text-red-600"><strong>Error Message:</strong> {supabaseDebug.response.errorMessage}</div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <Card className="border-red-200 bg-red-50">
+          <CardHeader>
+            <CardTitle className="text-red-800">❌ Error Loading Chapters</CardTitle>
+            <CardDescription className="text-red-600">{error}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-2">
+              <Button onClick={fetchChapters} variant="outline">
+                🔄 Try Again
+              </Button>
+              <Button onClick={createTestChapter} variant="outline">
+                🧪 Create Test Chapter
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Chapters</h2>
+          <h2 className="text-2xl font-bold">📚 Chapters</h2>
           <p className="text-muted-foreground">Organize your book content</p>
         </div>
         <div className="flex gap-2">
@@ -223,53 +320,39 @@ export const ChapterList = () => {
               Adicionar Capítulo
             </Button>
           </Link>
-          <Button onClick={createMockChapter} variant="outline" size="sm">
+          <Button onClick={createTestChapter} variant="outline" size="sm">
+            <TestTube className="h-4 w-4 mr-2" />
             Test Create
           </Button>
         </div>
       </div>
 
-      {/* Show debug info if needed */}
-      {debugInfo && (
-        <Card className="bg-blue-50 border-blue-200">
-          <CardHeader>
-            <CardTitle className="text-sm">Connection Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xs space-y-1">
-              <div>Book ID: {debugInfo.bookId}</div>
-              <div>User ID: {debugInfo.userId}</div>
-              <div>Chapters found: {debugInfo.count}</div>
-              <div>Error: {debugInfo.responseError ? 'Yes' : 'No'}</div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {chapters.length === 0 ? (
+      {/* Chapters Content */}
+      {!error && chapters.length === 0 ? (
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-8">
               <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Nenhum capítulo ainda.</h3>
+              <h3 className="text-lg font-semibold mb-2">📝 No chapters yet</h3>
               <p className="text-muted-foreground mb-4">
-                Clique em 'Adicionar Capítulo' para criar o primeiro.
+                Click 'Add Chapter' to create your first chapter
               </p>
-              <div className="space-x-2">
+              <div className="flex gap-2 justify-center">
                 <Link to={`/books/${bookId}/chapters/new`}>
                   <Button>
                     <Plus className="h-4 w-4 mr-2" />
-                    Adicionar Capítulo
+                    Add Chapter
                   </Button>
                 </Link>
-                <Button onClick={createMockChapter} variant="outline">
-                  Create Test Chapter
+                <Button onClick={createTestChapter} variant="outline">
+                  <TestTube className="h-4 w-4 mr-2" />
+                  Create Test
                 </Button>
               </div>
             </div>
           </CardContent>
         </Card>
-      ) : (
+      ) : !error && chapters.length > 0 ? (
         <div className="space-y-3">
           {chapters.map((chapter, index) => (
             <Card key={chapter.id} className="hover:shadow-md transition-shadow">
@@ -304,14 +387,6 @@ export const ChapterList = () => {
                         Edit
                       </Button>
                     </Link>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => setDeleteId(chapter.id)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
                   </div>
                 </div>
               </CardHeader>
@@ -325,27 +400,7 @@ export const ChapterList = () => {
             </Card>
           ))}
         </div>
-      )}
-
-      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Chapter</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this chapter? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deleteId && handleDelete(deleteId)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete Chapter
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      ) : null}
     </div>
   );
 };
