@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash2, FileText, Eye } from 'lucide-react';
+import { Plus, Edit, Trash2, FileText, Eye, Upload, Image } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import {
   AlertDialog,
@@ -26,43 +26,107 @@ interface Chapter {
   order_index: number | null;
   created_at: string;
   updated_at: string;
+  book_id: string;
 }
 
 export const ChapterList = () => {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
   const { bookId } = useParams();
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log('ChapterList useEffect - bookId:', bookId, 'user:', user?.id);
     if (bookId) {
       fetchChapters();
     }
   }, [bookId, user]);
 
   const fetchChapters = async () => {
-    if (!user || !bookId) return;
+    if (!user || !bookId) {
+      console.log('fetchChapters: missing user or bookId', { user: user?.id, bookId });
+      setLoading(false);
+      return;
+    }
 
     try {
-      const { data, error } = await supabase
+      console.log('Fetching chapters for bookId:', bookId);
+      setError(null);
+
+      // Test connection and fetch chapters
+      const { data, error, count } = await supabase
         .from('chapters')
-        .select('*')
+        .select('*', { count: 'exact' })
         .eq('book_id', bookId)
         .order('order_index', { ascending: true });
 
-      if (error) throw error;
+      console.log('Supabase response:', { data, error, count });
+      
+      setDebugInfo({
+        bookId,
+        userId: user.id,
+        responseData: data,
+        responseError: error,
+        count
+      });
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
       setChapters(data || []);
-    } catch (error) {
+      console.log('Chapters loaded successfully:', data?.length);
+      
+    } catch (error: any) {
       console.error('Error fetching chapters:', error);
+      setError(error.message || 'Failed to load chapters');
       toast({
         title: "Error",
-        description: "Failed to load chapters",
+        description: `Failed to load chapters: ${error.message}`,
         variant: "destructive",
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const createMockChapter = async () => {
+    if (!user || !bookId) return;
+
+    try {
+      const newChapter = {
+        book_id: bookId,
+        title: 'Chapter 1 - Mock Chapter',
+        content: 'This is a mock chapter created for testing purposes.',
+        order_index: 1,
+        author_id: user.id
+      };
+
+      const { data, error } = await supabase
+        .from('chapters')
+        .insert([newChapter])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setChapters([...chapters, data]);
+      toast({
+        title: "Success",
+        description: "Mock chapter created successfully",
+      });
+    } catch (error: any) {
+      console.error('Error creating mock chapter:', error);
+      toast({
+        title: "Error",
+        description: `Failed to create chapter: ${error.message}`,
+        variant: "destructive",
+      });
     }
   };
 
@@ -93,8 +157,54 @@ export const ChapterList = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-32">
-        <div className="text-muted-foreground">Loading chapters...</div>
+      <div className="space-y-4">
+        <div className="flex items-center justify-center min-h-32">
+          <div className="text-muted-foreground">Loading chapters...</div>
+        </div>
+        {/* Debug info while loading */}
+        {debugInfo && (
+          <Card className="bg-yellow-50 border-yellow-200">
+            <CardHeader>
+              <CardTitle className="text-sm">Debug Info</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre className="text-xs overflow-auto">
+                {JSON.stringify(debugInfo, null, 2)}
+              </pre>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <Card className="border-red-200 bg-red-50">
+          <CardHeader>
+            <CardTitle className="text-red-800">Error Loading Chapters</CardTitle>
+            <CardDescription className="text-red-600">{error}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Button onClick={fetchChapters} variant="outline">
+                Try Again
+              </Button>
+              <Button onClick={createMockChapter} variant="outline">
+                Create Mock Chapter (Test)
+              </Button>
+            </div>
+            {debugInfo && (
+              <details className="mt-4">
+                <summary className="cursor-pointer text-sm font-medium">Debug Info</summary>
+                <pre className="text-xs mt-2 p-2 bg-white rounded border overflow-auto">
+                  {JSON.stringify(debugInfo, null, 2)}
+                </pre>
+              </details>
+            )}
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -106,13 +216,35 @@ export const ChapterList = () => {
           <h2 className="text-2xl font-bold">Chapters</h2>
           <p className="text-muted-foreground">Organize your book content</p>
         </div>
-        <Link to={`/books/${bookId}/chapters/new`}>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Adicionar Capítulo
+        <div className="flex gap-2">
+          <Link to={`/books/${bookId}/chapters/new`}>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar Capítulo
+            </Button>
+          </Link>
+          <Button onClick={createMockChapter} variant="outline" size="sm">
+            Test Create
           </Button>
-        </Link>
+        </div>
       </div>
+
+      {/* Show debug info if needed */}
+      {debugInfo && (
+        <Card className="bg-blue-50 border-blue-200">
+          <CardHeader>
+            <CardTitle className="text-sm">Connection Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-xs space-y-1">
+              <div>Book ID: {debugInfo.bookId}</div>
+              <div>User ID: {debugInfo.userId}</div>
+              <div>Chapters found: {debugInfo.count}</div>
+              <div>Error: {debugInfo.responseError ? 'Yes' : 'No'}</div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {chapters.length === 0 ? (
         <Card>
@@ -123,12 +255,17 @@ export const ChapterList = () => {
               <p className="text-muted-foreground mb-4">
                 Clique em 'Adicionar Capítulo' para criar o primeiro.
               </p>
-              <Link to={`/books/${bookId}/chapters/new`}>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Adicionar Capítulo
+              <div className="space-x-2">
+                <Link to={`/books/${bookId}/chapters/new`}>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Adicionar Capítulo
+                  </Button>
+                </Link>
+                <Button onClick={createMockChapter} variant="outline">
+                  Create Test Chapter
                 </Button>
-              </Link>
+              </div>
             </div>
           </CardContent>
         </Card>

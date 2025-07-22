@@ -36,11 +36,11 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({ chapterId }) => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('images')
-        .select('*')
-        .eq('chapter_id', chapterId)
-        .order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('images')
+      .select('*')
+      .eq('chapter_id', chapterId)
+      .order('created_at', { ascending: false });
 
       if (error) throw error;
       setImages(data || []);
