@@ -24,7 +24,7 @@ export const ChapterList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authDebug, setAuthDebug] = useState<any>(null);
-  const [supabaseDebug, setSupabaseDebug] = useState<any>(null);
+  const [queryDebug, setQueryDebug] = useState<any>(null);
   
   const { bookId } = useParams();
   const { user } = useAuth();
@@ -43,18 +43,15 @@ export const ChapterList = () => {
     console.log('🔐 Starting authentication debug...');
     
     try {
-      // Get current session
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      
-      // Get current user
       const { data: userData, error: userError } = await supabase.auth.getUser();
       
-      // Test a simple query to verify database connection
       let dbTestResult = null;
       try {
+        // Test simple query without count
         const { data: testData, error: testError } = await supabase
           .from('books')
-          .select('count(*)')
+          .select('id')
           .limit(1);
         
         dbTestResult = {
@@ -88,11 +85,7 @@ export const ChapterList = () => {
           email: userData.user?.email,
           error: userError?.message
         },
-        databaseTest: dbTestResult,
-        supabaseConfig: {
-          url: 'configured',
-          anonKey: 'configured'
-        }
+        databaseTest: dbTestResult
       };
 
       setAuthDebug(authDebugInfo);
@@ -108,7 +101,7 @@ export const ChapterList = () => {
   };
 
   const fetchChapters = async () => {
-    console.log('📚 Starting fetchChapters...');
+    console.log('📚 Starting fetchChapters (without count)...');
     
     if (!user || !bookId) {
       console.log('❌ Missing requirements:', { user: !!user, bookId });
@@ -118,11 +111,12 @@ export const ChapterList = () => {
 
     try {
       setError(null);
-      console.log('🔍 Querying chapters table...');
+      console.log('🔍 Querying chapters table (simple query)...');
 
-      const { data, error, count } = await supabase
+      // Simple query without count to avoid parsing issues
+      const { data, error } = await supabase
         .from('chapters')
-        .select('*', { count: 'exact' })
+        .select('*')
         .eq('book_id', bookId)
         .order('order_index', { ascending: true });
 
@@ -130,12 +124,12 @@ export const ChapterList = () => {
         query: {
           table: 'chapters',
           filter: `book_id = ${bookId}`,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          method: 'simple_select_without_count'
         },
         response: {
           hasData: !!data,
           dataCount: data?.length || 0,
-          count: count,
           hasError: !!error,
           errorMessage: error?.message,
           errorCode: error?.code,
@@ -144,7 +138,7 @@ export const ChapterList = () => {
         }
       };
 
-      setSupabaseDebug(debugData);
+      setQueryDebug(debugData);
       console.log('📊 Query debug:', debugData);
 
       if (error) {
@@ -212,10 +206,10 @@ export const ChapterList = () => {
     const hasDbAccess = authDebug.databaseTest?.success;
 
     return (
-      <Card className={`${isAuthenticated ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+      <Card className={`${isAuthenticated && hasDbAccess ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
         <CardHeader>
-          <CardTitle className={`text-sm flex items-center ${isAuthenticated ? 'text-green-800' : 'text-red-800'}`}>
-            {isAuthenticated ? <CheckCircle className="h-4 w-4 mr-2" /> : <AlertTriangle className="h-4 w-4 mr-2" />}
+          <CardTitle className={`text-sm flex items-center ${isAuthenticated && hasDbAccess ? 'text-green-800' : 'text-red-800'}`}>
+            {isAuthenticated && hasDbAccess ? <CheckCircle className="h-4 w-4 mr-2" /> : <AlertTriangle className="h-4 w-4 mr-2" />}
             Authentication Status
           </CardTitle>
         </CardHeader>
@@ -235,16 +229,10 @@ export const ChapterList = () => {
                 {authDebug.databaseTest?.error && <div className="text-red-600">Error: {authDebug.databaseTest.error}</div>}
               </div>
               <div>
-                <strong>Supabase URL:</strong> {authDebug.supabaseConfig?.url ? '✅' : '❌'}
+                <strong>Book ID:</strong> {bookId ? '✅' : '❌'}
+                {bookId && <div>{bookId.substring(0, 8)}...</div>}
               </div>
             </div>
-            
-            {!isAuthenticated && (
-              <div className="mt-4 p-2 bg-red-100 rounded text-red-800">
-                <strong>⚠️ Authentication Problem Detected!</strong>
-                <div>Please check your login status and Supabase configuration.</div>
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>
@@ -267,20 +255,23 @@ export const ChapterList = () => {
       {/* Authentication Debug */}
       {renderAuthStatus()}
 
-      {/* Supabase Query Debug */}
-      {supabaseDebug && (
-        <Card className="bg-blue-50 border-blue-200">
+      {/* Query Debug */}
+      {queryDebug && (
+        <Card className={`${queryDebug.response?.hasError ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'}`}>
           <CardHeader>
-            <CardTitle className="text-sm text-blue-800">📊 Database Query Debug</CardTitle>
+            <CardTitle className={`text-sm ${queryDebug.response?.hasError ? 'text-red-800' : 'text-blue-800'}`}>
+              📊 Database Query Debug
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-xs space-y-1 text-blue-700">
-              <div><strong>Table:</strong> {supabaseDebug.query?.table}</div>
-              <div><strong>Filter:</strong> {supabaseDebug.query?.filter}</div>
-              <div><strong>Found:</strong> {supabaseDebug.response?.dataCount} chapters</div>
-              <div><strong>Error:</strong> {supabaseDebug.response?.hasError ? 'Yes' : 'No'}</div>
-              {supabaseDebug.response?.errorMessage && (
-                <div className="text-red-600"><strong>Error Message:</strong> {supabaseDebug.response.errorMessage}</div>
+            <div className="text-xs space-y-1">
+              <div><strong>Table:</strong> {queryDebug.query?.table}</div>
+              <div><strong>Method:</strong> {queryDebug.query?.method}</div>
+              <div><strong>Filter:</strong> {queryDebug.query?.filter}</div>
+              <div><strong>Found:</strong> {queryDebug.response?.dataCount} chapters</div>
+              <div><strong>Error:</strong> {queryDebug.response?.hasError ? 'Yes' : 'No'}</div>
+              {queryDebug.response?.errorMessage && (
+                <div className="text-red-600"><strong>Error Message:</strong> {queryDebug.response.errorMessage}</div>
               )}
             </div>
           </CardContent>
@@ -333,9 +324,9 @@ export const ChapterList = () => {
           <CardContent className="pt-6">
             <div className="text-center py-8">
               <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">📝 No chapters yet</h3>
+              <h3 className="text-lg font-semibold mb-2">📝 No chapters found</h3>
               <p className="text-muted-foreground mb-4">
-                Click 'Add Chapter' to create your first chapter
+                The chapters table exists but no chapters found for this book.
               </p>
               <div className="flex gap-2 justify-center">
                 <Link to={`/books/${bookId}/chapters/new`}>
