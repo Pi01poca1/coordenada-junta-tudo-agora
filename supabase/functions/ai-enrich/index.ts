@@ -101,9 +101,14 @@ serve(async (req) => {
     // Validate chapter ownership
     const { data: chapter, error: chapterError } = await supabaseClient
       .from('chapters')
-      .select('id, book_id, author_id, books(owner_id)')
+      .select(`
+        id, 
+        book_id, 
+        author_id,
+        books!inner(owner_id)
+      `)
       .eq('id', chapterId)
-      .single()
+      .maybeSingle()
 
     if (chapterError || !chapter) {
       throw new Error('Chapter not found')
@@ -111,7 +116,8 @@ serve(async (req) => {
 
     // Check if user is author or book owner
     const isAuthor = chapter.author_id === user.id
-    const isOwner = (chapter.books as any)?.owner_id === user.id
+    const bookData = Array.isArray(chapter.books) ? chapter.books[0] : chapter.books
+    const isOwner = bookData?.owner_id === user.id
     
     if (!isAuthor && !isOwner) {
       throw new Error('Access denied')

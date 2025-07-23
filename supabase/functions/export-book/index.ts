@@ -153,7 +153,7 @@ serve(async (req) => {
       .select('*')
       .eq('id', bookId)
       .eq('owner_id', user.id)
-      .single()
+      .maybeSingle()
 
     if (bookError || !book) {
       throw new Error('Book not found or access denied')
