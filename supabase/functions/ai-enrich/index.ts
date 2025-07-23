@@ -87,22 +87,34 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     )
 
-    // Get user from JWT
+    // Create authenticated client using the session from request
     const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      throw new Error('Authorization header missing')
-    }
+    const token = authHeader?.replace('Bearer ', '') || ''
     
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token)
+    console.log('Processing request with auth header:', !!authHeader)
+    
+    // Create client with user session
+    const authedClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+        auth: {
+          persistSession: false,
+        },
+      }
+    )
 
-    if (authError) {
-      console.error('Auth error:', authError)
-      throw new Error('Invalid authentication: ' + authError.message)
-    }
+    // Get the current user
+    const { data: { user }, error: userError } = await authedClient.auth.getUser()
     
-    if (!user) {
-      throw new Error('User not found')
+    if (userError || !user) {
+      console.error('User authentication failed:', userError)
+      throw new Error('Authentication required')
     }
 
     console.log('Authenticated user:', user.id)
@@ -112,7 +124,7 @@ serve(async (req) => {
     console.log('Looking for chapter:', chapterId)
 
     // Validate chapter ownership
-    const { data: chapter, error: chapterError } = await supabaseClient
+    const { data: chapter, error: chapterError } = await authedClient
       .from('chapters')
       .select(`
         id, 
@@ -148,7 +160,7 @@ serve(async (req) => {
     const result = await aiProvider.enrich(text, goal)
 
     // Log AI session
-    const { error: logError } = await supabaseClient
+    const { error: logError } = await authedClient
       .from('ai_sessions')
       .insert({
         user_id: user.id,
