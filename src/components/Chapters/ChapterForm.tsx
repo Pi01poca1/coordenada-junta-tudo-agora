@@ -283,14 +283,32 @@ export const ChapterForm = () => {
           </Card>
         </div>
 
-        {showAIPanel && (
+        {showAIPanel && chapterId && chapterId !== 'new' && (
           <div className="lg:col-span-1">
             <AIPanel 
-              chapterId={chapterId || 'new'}
+              chapterId={chapterId}
               selectedText={selectedText}
               onTextReplace={handleTextReplace}
               genre={book?.description || 'fantasy'}
             />
+          </div>
+        )}
+        
+        {showAIPanel && (!chapterId || chapterId === 'new') && (
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5" />
+                  AI Assistant
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Save the chapter first to use AI features.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         )}
       </div>

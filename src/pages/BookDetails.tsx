@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Edit, Calendar, Clock } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
+import { ExportPanel } from '@/components/Export/ExportPanel';
 
 interface Book {
   id: string;
@@ -21,6 +22,7 @@ interface Book {
 
 const BookDetails = () => {
   const [book, setBook] = useState<Book | null>(null);
+  const [chapterCount, setChapterCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const { id } = useParams();
   const { user } = useAuth();
@@ -46,6 +48,16 @@ const BookDetails = () => {
 
       if (error) throw error;
       setBook(data);
+
+      // Fetch chapter count
+      const { count, error: countError } = await supabase
+        .from('chapters')
+        .select('*', { count: 'exact', head: true })
+        .eq('book_id', bookId);
+
+      if (!countError) {
+        setChapterCount(count || 0);
+      }
     } catch (error) {
       console.error('Error fetching book:', error);
       toast({
@@ -109,20 +121,21 @@ const BookDetails = () => {
           </Button>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-1">
+        <div className="grid gap-6 lg:grid-cols-4">
+          <div className="lg:col-span-1 space-y-6">
+            {/* Book Info Card */}
             <Card>
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <CardTitle className="text-2xl mb-2">{book.title}</CardTitle>
-                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                    <CardTitle className="text-xl mb-2">{book.title}</CardTitle>
+                    <div className="space-y-1 text-sm text-muted-foreground">
                       <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-1" />
+                        <Calendar className="h-3 w-3 mr-1" />
                         {format(new Date(book.created_at), 'MMM d, yyyy')}
                       </div>
                       <div className="flex items-center">
-                        <Clock className="h-4 w-4 mr-1" />
+                        <Clock className="h-3 w-3 mr-1" />
                         {formatDistanceToNow(new Date(book.updated_at), { addSuffix: true })}
                       </div>
                     </div>
@@ -134,16 +147,23 @@ const BookDetails = () => {
               </CardHeader>
               <CardContent>
                 <Link to={`/books/${book.id}/edit`}>
-                  <Button className="w-full" variant="outline">
+                  <Button className="w-full" variant="outline" size="sm">
                     <Edit className="h-4 w-4 mr-2" />
                     Edit Book Details
                   </Button>
                 </Link>
               </CardContent>
             </Card>
+
+            {/* Export Panel */}
+            <ExportPanel 
+              bookId={book.id} 
+              bookTitle={book.title}
+              totalChapters={chapterCount}
+            />
           </div>
 
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-3">
             <ChapterList bookId={book.id} />
           </div>
         </div>
