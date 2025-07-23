@@ -88,15 +88,28 @@ serve(async (req) => {
     )
 
     // Get user from JWT
-    const authHeader = req.headers.get('Authorization')!
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      throw new Error('Authorization header missing')
+    }
+    
     const token = authHeader.replace('Bearer ', '')
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token)
 
-    if (authError || !user) {
-      throw new Error('Unauthorized')
+    if (authError) {
+      console.error('Auth error:', authError)
+      throw new Error('Invalid authentication: ' + authError.message)
+    }
+    
+    if (!user) {
+      throw new Error('User not found')
     }
 
+    console.log('Authenticated user:', user.id)
+
     const { chapterId, text, goal }: EnrichRequest = await req.json()
+
+    console.log('Looking for chapter:', chapterId)
 
     // Validate chapter ownership
     const { data: chapter, error: chapterError } = await supabaseClient
@@ -110,7 +123,14 @@ serve(async (req) => {
       .eq('id', chapterId)
       .maybeSingle()
 
-    if (chapterError || !chapter) {
+    console.log('Chapter query result:', { chapter, chapterError })
+
+    if (chapterError) {
+      console.error('Chapter query error:', chapterError)
+      throw new Error('Database error: ' + chapterError.message)
+    }
+    
+    if (!chapter) {
       throw new Error('Chapter not found')
     }
 

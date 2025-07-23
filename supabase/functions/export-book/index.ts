@@ -137,15 +137,28 @@ serve(async (req) => {
     )
 
     // Get user from JWT
-    const authHeader = req.headers.get('Authorization')!
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      throw new Error('Authorization header missing')
+    }
+    
     const token = authHeader.replace('Bearer ', '')
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token)
 
-    if (authError || !user) {
-      throw new Error('Unauthorized')
+    if (authError) {
+      console.error('Auth error:', authError)
+      throw new Error('Invalid authentication: ' + authError.message)
+    }
+    
+    if (!user) {
+      throw new Error('User not found')
     }
 
+    console.log('Authenticated user:', user.id)
+
     const { bookId, format, options = {} }: ExportRequest = await req.json()
+
+    console.log('Looking for book:', bookId, 'for user:', user.id)
 
     // Fetch book
     const { data: book, error: bookError } = await supabaseClient
@@ -155,7 +168,14 @@ serve(async (req) => {
       .eq('owner_id', user.id)
       .maybeSingle()
 
-    if (bookError || !book) {
+    console.log('Book query result:', { book, bookError })
+
+    if (bookError) {
+      console.error('Book query error:', bookError)
+      throw new Error('Database error: ' + bookError.message)
+    }
+    
+    if (!book) {
       throw new Error('Book not found or access denied')
     }
 
