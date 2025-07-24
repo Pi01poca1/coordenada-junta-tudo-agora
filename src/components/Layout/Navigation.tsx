@@ -26,6 +26,9 @@ export const Navigation = () => {
             </Link>
           </div>
           <div className="flex items-center space-x-4">
+            <Link to="/statistics" className="text-sm text-muted-foreground hover:text-primary">
+              Estatísticas
+            </Link>
             <Link to="/docs/overview" className="text-sm text-muted-foreground hover:text-primary">
               Docs
             </Link>

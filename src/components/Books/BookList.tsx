@@ -5,7 +5,7 @@ import { BookCard } from './BookCard';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, BookOpen } from 'lucide-react';
+import { Plus, BookOpen, BarChart3 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -101,12 +101,20 @@ export const BookList = () => {
           <h1 className="text-3xl font-bold">My Books</h1>
           <p className="text-muted-foreground">Manage your writing projects</p>
         </div>
-        <Link to="/books/new">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            New Book
-          </Button>
-        </Link>
+        <div className="flex space-x-3">
+          <Link to="/statistics">
+            <Button variant="outline">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Statistics
+            </Button>
+          </Link>
+          <Link to="/books/new">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              New Book
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {books.length === 0 ? (
