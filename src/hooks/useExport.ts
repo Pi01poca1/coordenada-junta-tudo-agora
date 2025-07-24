@@ -24,73 +24,56 @@ export const useExport = () => {
     try {
       console.log('🔍 DEBUG: Starting export for book:', bookId, 'format:', format);
       
-      const { data, error } = await supabase.functions.invoke('export-book', {
-        body: {
-          bookId,
-          format,
-          options
-        }
+      // Get session for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      // Make direct fetch request to edge function
+      const baseUrl = 'https://rfxrguxoqnspsrqzzwlc.supabase.co/functions/v1/export-book';
+      
+      const response = await fetch(baseUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmeHJndXhvcW5zcHNycXp6d2xjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI5NjUwNTIsImV4cCI6MjA2ODU0MTA1Mn0.PJ5jrYu6eXVuaVVel8fJTqRsn9FFWYMTJw2q1u1y8fc'
+        },
+        body: JSON.stringify({ bookId, format, options })
       });
 
-      console.log('🔍 DEBUG: Export function response:', { data, error });
+      console.log('🔍 DEBUG: Export response status:', response.status);
 
-      if (error) {
-        console.error('Export function error:', error);
-        throw new Error(error.message || 'Erro na função de exportação');
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Export failed:', errorText);
+        throw new Error(`Export failed: ${response.status} - ${errorText}`);
       }
 
-      // The function now returns the file content directly
-      if (typeof data === 'string' || data instanceof Uint8Array) {
-        // Determine proper MIME type and create blob
-        let mimeType: string;
-        switch (format) {
-          case 'pdf':
-            mimeType = 'application/pdf';
-            break;
-          case 'docx':
-            mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-            break;
-          case 'epub':
-            mimeType = 'application/epub+zip';
-            break;
-          case 'html':
-            mimeType = 'text/html';
-            break;
-          case 'json':
-            mimeType = 'application/json';
-            break;
-          default:
-            mimeType = 'application/octet-stream';
-        }
-        
-        // Create blob from response with proper MIME type
-        const blob = new Blob([data], { type: mimeType });
-        
-        // Create filename with timestamp
-        const timestamp = new Date().toISOString().slice(0, 10);
-        const filename = `book_export_${timestamp}.${format}`;
-        
-        // Create download link
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        // Clean up the blob URL
-        setTimeout(() => window.URL.revokeObjectURL(url), 100);
+      // Get the response content directly as blob for binary formats
+      const blob = await response.blob();
+      
+      // Create filename with timestamp  
+      const timestamp = new Date().toISOString().slice(0, 10);
+      const filename = `book_export_${timestamp}.${format}`;
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the blob URL
+      setTimeout(() => window.URL.revokeObjectURL(url), 100);
 
-        toast({
-          title: "Exportação concluída!",
-          description: `Livro exportado em ${format.toUpperCase()} com sucesso`,
-        });
+      toast({
+        title: "Exportação concluída!",
+        description: `Livro exportado em ${format.toUpperCase()} com sucesso`,
+      });
 
-        return url;
-      } else {
-        throw new Error('Formato de resposta inválido da função de exportação');
-      }
+      return url;
       
     } catch (error: any) {
       console.error('Export error:', error);

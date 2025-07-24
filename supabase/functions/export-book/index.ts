@@ -74,6 +74,54 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  // Handle GET requests with query parameters (for direct downloads)
+  if (req.method === 'GET') {
+    const url = new URL(req.url);
+    const bookId = url.searchParams.get('bookId');
+    const format = url.searchParams.get('format') as 'pdf' | 'epub' | 'docx' | 'html' | 'json';
+    const options = {
+      template: url.searchParams.get('template') || 'default',
+      includeImages: url.searchParams.get('includeImages') === 'true',
+      chapterRange: url.searchParams.get('chapterStart') ? {
+        start: parseInt(url.searchParams.get('chapterStart') || '1'),
+        end: parseInt(url.searchParams.get('chapterEnd') || '999')
+      } : undefined
+    };
+
+    if (!bookId || !format) {
+      return new Response('Missing bookId or format', { status: 400, headers: corsHeaders });
+    }
+
+    // Process the request with the extracted parameters
+    try {
+      return await processExportRequest(req, { bookId, format, options });
+    } catch (error) {
+      console.error('GET Export error:', error);
+      return new Response(
+        JSON.stringify({ error: error.message || 'Unknown error occurred' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+  }
+
+  // Handle POST requests (original method)
+  if (req.method === 'POST') {
+    try {
+      const { bookId, format, options = {} }: ExportRequest = await req.json();
+      return await processExportRequest(req, { bookId, format, options });
+    } catch (error) {
+      console.error('POST Export error:', error);
+      return new Response(
+        JSON.stringify({ error: error.message || 'Unknown error occurred' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+  }
+
+  return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+});
+
+async function processExportRequest(req: Request, { bookId, format, options = {} }: ExportRequest) {
   try {
     // Get authorization token
     const authHeader = req.headers.get('Authorization');
@@ -109,9 +157,6 @@ serve(async (req) => {
     }
 
     console.log('Authenticated user:', user.id);
-
-    // Parse request body
-    const { bookId, format, options = {} }: ExportRequest = await req.json();
     console.log('Export request:', { bookId, format, options });
 
     // Fetch book and verify ownership
@@ -206,4 +251,4 @@ serve(async (req) => {
       }
     );
   }
-});
+}
