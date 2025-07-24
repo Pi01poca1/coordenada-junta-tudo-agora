@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Edit, Calendar, Clock } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ExportPanel } from '@/components/Export/ExportPanel';
+import { ExportTest } from '@/components/Export/ExportTest';
 
 interface Book {
   id: string;
@@ -161,6 +162,9 @@ const BookDetails = () => {
               bookTitle={book.title}
               totalChapters={chapterCount}
             />
+
+            {/* Export Test Component (for debugging) */}
+            <ExportTest bookId={book.id} />
           </div>
 
           <div className="lg:col-span-3">

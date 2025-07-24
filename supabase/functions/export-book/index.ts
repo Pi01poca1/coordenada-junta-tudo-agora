@@ -16,55 +16,136 @@ interface ExportRequest {
   };
 }
 
-// Simple text-based generators that work
-const generateContent = (book: any, chapters: any[], format: string): string => {
+// Generate DOCX XML structure
+const generateDocxXml = (book: any, chapters: any[]): string => {
   const title = book.title || 'Sem título';
   const description = book.description || '';
-  const timestamp = new Date().toLocaleString('pt-BR');
   
-  if (format === 'json') {
-    return JSON.stringify({
-      book: {
-        id: book.id,
-        title: title,
-        description: description,
-        status: book.status,
-        created_at: book.created_at,
-        updated_at: book.updated_at
-      },
-      chapters: chapters.map(chapter => ({
-        id: chapter.id,
-        title: chapter.title,
-        content: chapter.content,
-        order_index: chapter.order_index,
-        created_at: chapter.created_at,
-        updated_at: chapter.updated_at
-      })),
-      export_date: new Date().toISOString(),
-      version: '1.0'
-    }, null, 2);
-  }
+  let content = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>
+    <w:p>
+      <w:pPr>
+        <w:pStyle w:val="Title"/>
+      </w:pPr>
+      <w:r>
+        <w:t>${title}</w:t>
+      </w:r>
+    </w:p>`;
 
-  // For PDF, HTML, DOCX, EPUB - use simple text format
-  let content = `${title}\n\n`;
   if (description) {
-    content += `${description}\n\n`;
+    content += `
+    <w:p>
+      <w:r>
+        <w:t>${description}</w:t>
+      </w:r>
+    </w:p>`;
   }
-  content += `${'='.repeat(50)}\n\n`;
 
   chapters.forEach((chapter, index) => {
-    content += `CAPÍTULO ${chapter.order_index || index + 1}: ${chapter.title}\n\n`;
+    content += `
+    <w:p>
+      <w:pPr>
+        <w:pStyle w:val="Heading1"/>
+      </w:pPr>
+      <w:r>
+        <w:t>CAPÍTULO ${chapter.order_index || index + 1}: ${chapter.title}</w:t>
+      </w:r>
+    </w:p>`;
+    
     if (chapter.content) {
-      content += `${chapter.content}\n\n`;
-    } else {
-      content += `Sem conteúdo\n\n`;
+      const paragraphs = chapter.content.split('\n').filter(p => p.trim());
+      paragraphs.forEach(paragraph => {
+        content += `
+    <w:p>
+      <w:r>
+        <w:t>${paragraph}</w:t>
+      </w:r>
+    </w:p>`;
+      });
     }
-    content += `${'-'.repeat(30)}\n\n`;
   });
 
-  content += `\nDocumento gerado em: ${timestamp}`;
+  content += `
+  </w:body>
+</w:document>`;
+  
   return content;
 };
+
+// Generate HTML structure  
+const generateHtmlContent = (book: any, chapters: any[], template: string = 'default'): string => {
+  const title = book.title || 'Sem título';
+  const description = book.description || '';
+  
+  const styles = template === 'modern' ? `
+    body { font-family: 'Segoe UI', sans-serif; line-height: 1.8; color: #2c3e50; max-width: 800px; margin: 0 auto; padding: 40px 20px; }
+    h1 { color: #3498db; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+    h2 { color: #e74c3c; margin-top: 40px; }
+    .description { background: #ecf0f1; padding: 20px; border-radius: 8px; font-style: italic; }
+  ` : `
+    body { font-family: Georgia, serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
+    h1 { color: #2c3e50; text-align: center; border-bottom: 2px solid #2c3e50; }
+    h2 { color: #34495e; margin-top: 30px; }
+    .description { font-style: italic; color: #7f8c8d; }
+  `;
+
+  let html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title}</title>
+  <style>${styles}</style>
+</head>
+<body>
+  <h1>${title}</h1>`;
+
+  if (description) {
+    html += `<div class="description">${description}</div>`;
+  }
+
+  chapters.forEach((chapter, index) => {
+    html += `<h2>CAPÍTULO ${chapter.order_index || index + 1}: ${chapter.title}</h2>`;
+    if (chapter.content) {
+      const paragraphs = chapter.content.split('\n').filter(p => p.trim());
+      paragraphs.forEach(paragraph => {
+        html += `<p>${paragraph}</p>`;
+      });
+    }
+  });
+
+  html += `</body></html>`;
+  return html;
+};
+
+// Generate EPUB structure (simplified)
+const generateEpubContent = (book: any, chapters: any[]): string => {
+  const title = book.title || 'Sem título';
+  let content = `<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <metadata>
+    <dc:title xmlns:dc="http://purl.org/dc/elements/1.1/">${title}</dc:title>
+    <dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Author</dc:creator>
+    <dc:language xmlns:dc="http://purl.org/dc/elements/1.1/">pt-BR</dc:language>
+  </metadata>
+  <manifest>
+    <item id="toc" href="toc.ncx" media-type="application/x-dtbncx+xml"/>`;
+
+  chapters.forEach((chapter, index) => {
+    content += `<item id="chapter${index + 1}" href="chapter${index + 1}.xhtml" media-type="application/xhtml+xml"/>`;
+  });
+
+  content += `</manifest><spine toc="toc">`;
+  
+  chapters.forEach((chapter, index) => {
+    content += `<itemref idref="chapter${index + 1}"/>`;
+  });
+
+  content += `</spine></package>`;
+  return content;
+};
+
 
 serve(async (req) => {
   console.log('Export function called with method:', req.method);
@@ -197,8 +278,47 @@ async function processExportRequest(req: Request, { bookId, format, options = {}
 
     console.log('Found chapters:', chapters?.length || 0);
 
-    // Generate content
-    const content = generateContent(book, chapters || [], format);
+    // Generate content based on format
+    let content: string;
+    
+    switch (format) {
+      case 'docx':
+        content = generateDocxXml(book, chapters || []);
+        break;
+      case 'html':
+        content = generateHtmlContent(book, chapters || [], options.template);
+        break;
+      case 'epub':
+        content = generateEpubContent(book, chapters || []);
+        break;
+      case 'json':
+        content = JSON.stringify({
+          book: {
+            id: book.id,
+            title: book.title,
+            description: book.description,
+            status: book.status,
+            created_at: book.created_at,
+            updated_at: book.updated_at
+          },
+          chapters: (chapters || []).map(chapter => ({
+            id: chapter.id,
+            title: chapter.title,
+            content: chapter.content,
+            order_index: chapter.order_index,
+            created_at: chapter.created_at,
+            updated_at: chapter.updated_at
+          })),
+          export_date: new Date().toISOString(),
+          version: '1.0'
+        }, null, 2);
+        break;
+      case 'pdf':
+      default:
+        // For PDF we'll use HTML structure that browsers can print to PDF
+        content = generateHtmlContent(book, chapters || [], options.template);
+        break;
+    }
     
     // Set appropriate content type
     let mimeType: string;

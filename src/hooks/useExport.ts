@@ -28,33 +28,52 @@ export const useExport = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
 
-      // Make direct fetch request to edge function
-      const baseUrl = 'https://rfxrguxoqnspsrqzzwlc.supabase.co/functions/v1/export-book';
-      
-      const response = await fetch(baseUrl, {
-        method: 'POST',
+      // Use Supabase functions invoke method for better reliability
+      const { data, error } = await supabase.functions.invoke('export-book', {
+        body: { bookId, format, options },
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmeHJndXhvcW5zcHNycXp6d2xjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI5NjUwNTIsImV4cCI6MjA2ODU0MTA1Mn0.PJ5jrYu6eXVuaVVel8fJTqRsn9FFWYMTJw2q1u1y8fc'
-        },
-        body: JSON.stringify({ bookId, format, options })
+        }
       });
 
-      console.log('🔍 DEBUG: Export response status:', response.status);
+      console.log('🔍 DEBUG: Export response:', { data, error });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Export failed:', errorText);
-        throw new Error(`Export failed: ${response.status} - ${errorText}`);
+      if (error) {
+        console.error('Export failed:', error);
+        throw new Error(`Export failed: ${error.message}`);
       }
 
-      // Get the response content directly as blob for binary formats
-      const blob = await response.blob();
-      
-      // Create filename with timestamp  
+      // Create filename with timestamp and book info
       const timestamp = new Date().toISOString().slice(0, 10);
-      const filename = `book_export_${timestamp}.${format}`;
+      const filename = `livro_${timestamp}.${format}`;
+      
+      // Handle different response types
+      let blob: Blob;
+      
+      if (format === 'json') {
+        // For JSON, create blob from string data
+        blob = new Blob([typeof data === 'string' ? data : JSON.stringify(data)], {
+          type: 'application/json'
+        });
+      } else if (format === 'html') {
+        // For HTML, create blob from string data
+        blob = new Blob([data], {
+          type: 'text/html'
+        });
+      } else {
+        // For PDF, DOCX, EPUB - handle as binary data
+        if (data instanceof Blob) {
+          blob = data;
+        } else if (typeof data === 'string') {
+          blob = new Blob([data], {
+            type: format === 'pdf' ? 'application/pdf' : 
+                  format === 'docx' ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' :
+                  format === 'epub' ? 'application/epub+zip' : 'text/plain'
+          });
+        } else {
+          blob = new Blob([JSON.stringify(data)], { type: 'application/octet-stream' });
+        }
+      }
       
       // Create download link
       const url = window.URL.createObjectURL(blob);
