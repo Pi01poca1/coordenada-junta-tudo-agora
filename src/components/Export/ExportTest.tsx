@@ -15,7 +15,8 @@ export const ExportTest = ({ bookId }: ExportTestProps) => {
 
   const handleTestExport = async (format: typeof testFormats[number]) => {
     console.log(`🧪 Testing ${format} export for book ${bookId}`);
-    await exportBook(bookId, format, { template: 'default', includeImages: true });
+    const result = await exportBook(bookId, format, { includeImages: true });
+    console.log(`📄 Test result for ${format}:`, result ? 'SUCCESS' : 'FAILED');
   };
 
   return (

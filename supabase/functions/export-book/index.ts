@@ -1,297 +1,441 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+// Importações para geração de arquivos
+import jsPDF from 'https://esm.sh/jspdf@2.5.1'
+import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'https://esm.sh/docx@8.2.2'
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-interface ExportRequest {
-  bookId: string;
-  format: 'pdf' | 'epub' | 'docx' | 'html' | 'json';
-  options?: {
-    template?: string;
-    includeImages?: boolean;
-    chapterRange?: { start: number; end: number };
-  };
-}
-
-// Generate simple text content that works for all formats
-const generateSimpleContent = (book: any, chapters: any[], format: string): string => {
-  const title = book.title || 'Sem título';
-  const description = book.description || '';
-  const timestamp = new Date().toLocaleString('pt-BR');
-  
-  if (format === 'json') {
-    return JSON.stringify({
-      book: {
-        id: book.id,
-        title: title,
-        description: description,
-        status: book.status,
-        created_at: book.created_at,
-        updated_at: book.updated_at
-      },
-      chapters: chapters.map(chapter => ({
-        id: chapter.id,
-        title: chapter.title,
-        content: chapter.content,
-        order_index: chapter.order_index,
-        created_at: chapter.created_at,
-        updated_at: chapter.updated_at
-      })),
-      export_date: new Date().toISOString(),
-      version: '1.0'
-    }, null, 2);
-  }
-
-  if (format === 'html') {
-    let html = `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title}</title>
-  <style>
-    body { font-family: Georgia, serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
-    h1 { color: #2c3e50; text-align: center; border-bottom: 2px solid #2c3e50; }
-    h2 { color: #34495e; margin-top: 30px; }
-    .description { font-style: italic; color: #7f8c8d; }
-    @media print { body { margin: 0; } }
-  </style>
-</head>
-<body>
-  <h1>${title}</h1>`;
-
-    if (description) {
-      html += `<div class="description">${description}</div>`;
-    }
-
-    chapters.forEach((chapter, index) => {
-      html += `<h2>CAPÍTULO ${chapter.order_index || index + 1}: ${chapter.title}</h2>`;
-      if (chapter.content) {
-        const paragraphs = chapter.content.split('\n').filter(p => p.trim());
-        paragraphs.forEach(paragraph => {
-          html += `<p>${paragraph}</p>`;
-        });
-      }
-    });
-
-    html += `</body></html>`;
-    return html;
-  }
-
-  // For PDF and DOCX, use plain text format that browsers can handle
-  let content = `${title}\n`;
-  content += `${'='.repeat(title.length)}\n\n`;
-  
-  if (description) {
-    content += `${description}\n\n`;
-  }
-  
-  content += `${'='.repeat(50)}\n\n`;
-
-  chapters.forEach((chapter, index) => {
-    content += `CAPÍTULO ${chapter.order_index || index + 1}: ${chapter.title}\n`;
-    content += `${'-'.repeat(40)}\n\n`;
-    
-    if (chapter.content) {
-      content += `${chapter.content}\n\n`;
-    } else {
-      content += `Sem conteúdo\n\n`;
-    }
-    
-    content += `\n${'_'.repeat(30)}\n\n`;
-  });
-
-  content += `\n\nDocumento gerado em: ${timestamp}`;
-  return content;
-};
-
-
 serve(async (req) => {
-  console.log('Export function called with method:', req.method);
-
+  console.log('🚀 Export function called with method:', req.method);
+  
   // Handle CORS
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders })
   }
 
-  // Handle GET requests with query parameters (for direct downloads)
-  if (req.method === 'GET') {
-    const url = new URL(req.url);
-    const bookId = url.searchParams.get('bookId');
-    const format = url.searchParams.get('format') as 'pdf' | 'epub' | 'docx' | 'html' | 'json';
-    const options = {
-      template: url.searchParams.get('template') || 'default',
-      includeImages: url.searchParams.get('includeImages') === 'true',
-      chapterRange: url.searchParams.get('chapterStart') ? {
-        start: parseInt(url.searchParams.get('chapterStart') || '1'),
-        end: parseInt(url.searchParams.get('chapterEnd') || '999')
-      } : undefined
-    };
-
-    if (!bookId || !format) {
-      return new Response('Missing bookId or format', { status: 400, headers: corsHeaders });
-    }
-
-    // Process the request with the extracted parameters
-    try {
-      return await processExportRequest(req, { bookId, format, options });
-    } catch (error) {
-      console.error('GET Export error:', error);
-      return new Response(
-        JSON.stringify({ error: error.message || 'Unknown error occurred' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
-    }
-  }
-
-  // Handle POST requests (original method)
-  if (req.method === 'POST') {
-    try {
-      const { bookId, format, options = {} }: ExportRequest = await req.json();
-      return await processExportRequest(req, { bookId, format, options });
-    } catch (error) {
-      console.error('POST Export error:', error);
-      return new Response(
-        JSON.stringify({ error: error.message || 'Unknown error occurred' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
-    }
-  }
-
-  return new Response('Method not allowed', { status: 405, headers: corsHeaders });
-});
-
-async function processExportRequest(req: Request, { bookId, format, options = {} }: ExportRequest) {
   try {
-    // Get authorization token
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Authorization header required');
+    const { bookId, format, options } = await req.json()
+    console.log('📥 Export request:', { bookId, format, options });
+    
+    // Verificar token
+    const authHeader = req.headers.get('authorization');
+    console.log('🔐 Processing request with token present:', !!authHeader);
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new Error('Missing authorization header');
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    console.log('Processing request with token present:', !!token);
-
-    // Create Supabase client
+    const token = authHeader.split(' ')[1];
+    
+    // Inicializar Supabase
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-        auth: {
-          persistSession: false,
-        },
+          headers: { Authorization: `Bearer ${token}` }
+        }
       }
-    );
+    )
 
-    // Verify user authentication
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !user) {
-      console.error('Authentication failed:', userError);
-      throw new Error('Authentication required');
+    // Verificar autenticação
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      throw new Error('Invalid authentication token');
     }
+    console.log('✅ Authenticated user:', user.id);
 
-    console.log('Authenticated user:', user.id);
-    console.log('Export request:', { bookId, format, options });
-
-    // Fetch book and verify ownership
+    // Buscar dados do livro
     const { data: book, error: bookError } = await supabase
       .from('books')
       .select('*')
       .eq('id', bookId)
       .eq('owner_id', user.id)
-      .single();
+      .single()
 
     if (bookError || !book) {
-      console.error('Book not found or access denied:', bookError);
-      throw new Error('Book not found or access denied');
+      throw new Error('Livro não encontrado ou acesso negado')
     }
+    console.log('📚 Found book:', book.title);
 
-    console.log('Found book:', book.title);
-
-    // Fetch chapters
-    let query = supabase
+    // Buscar capítulos
+    const { data: chapters, error: chaptersError } = await supabase
       .from('chapters')
       .select('*')
       .eq('book_id', bookId)
-      .order('order_index', { ascending: true });
-
-    // Apply chapter range filter if specified
-    if (options.chapterRange) {
-      query = query
-        .gte('order_index', options.chapterRange.start)
-        .lte('order_index', options.chapterRange.end);
-    }
-
-    const { data: chapters, error: chaptersError } = await query;
+      .order('order_index', { ascending: true })
 
     if (chaptersError) {
-      console.error('Failed to fetch chapters:', chaptersError);
-      throw new Error('Failed to fetch chapters');
+      throw new Error('Erro ao buscar capítulos')
     }
+    console.log('📄 Found chapters:', chapters?.length || 0);
 
-    console.log('Found chapters:', chapters?.length || 0);
+    let fileBuffer: Uint8Array
+    let mimeType: string
+    let filename: string
 
-    // Generate content based on format
-    const content = generateSimpleContent(book, chapters || [], format);
-    
-    // Set appropriate content type
-    let mimeType: string;
     switch (format) {
-      case 'json':
-        mimeType = 'application/json';
-        break;
-      case 'html':
-        mimeType = 'text/html';
-        break;
       case 'pdf':
-        mimeType = 'application/pdf';
-        break;
+        ({ fileBuffer, mimeType, filename } = await generatePDF(book, chapters || []))
+        break
+      
       case 'docx':
-        mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-        break;
+        ({ fileBuffer, mimeType, filename } = await generateDOCX(book, chapters || []))
+        break
+      
       case 'epub':
-        mimeType = 'application/epub+zip';
-        break;
+        ({ fileBuffer, mimeType, filename } = await generateEPUB(book, chapters || []))
+        break
+      
+      case 'html':
+        ({ fileBuffer, mimeType, filename } = generateHTML(book, chapters || []))
+        break
+      
+      case 'json':
+        ({ fileBuffer, mimeType, filename } = generateJSON(book, chapters || []))
+        break
+      
+      case 'txt':
       default:
-        mimeType = 'text/plain';
+        ({ fileBuffer, mimeType, filename } = generateTXT(book, chapters || []))
+        break
     }
 
-    // Create safe filename
-    const safeTitle = book.title.replace(/[^a-zA-Z0-9_\-\s]/g, '').replace(/\s+/g, '_');
-    const timestamp = new Date().toISOString().slice(0, 10);
-    const filename = `${safeTitle}_${timestamp}.${format}`;
+    // Converter para base64
+    const base64 = btoa(String.fromCharCode(...fileBuffer))
+    console.log('✅ Generated file:', { size: fileBuffer.length, filename, mimeType });
 
-    console.log('Generated content for format:', format, 'filename:', filename);
-
-    // Return content with proper headers
-    const headers = {
-      ...corsHeaders,
-      'Content-Type': mimeType,
-      'Content-Disposition': `attachment; filename="${filename}"`,
-    };
-
-    return new Response(content, { headers });
-
-  } catch (error) {
-    console.error('Export function error:', error);
     return new Response(
       JSON.stringify({
-        success: false,
-        error: error.message || 'Unknown error occurred'
+        success: true,
+        data: base64,
+        mimeType,
+        filename
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
+        status: 200,
       }
-    );
+    )
+
+  } catch (error) {
+    console.error('❌ Erro na export-book:', error)
+    return new Response(
+      JSON.stringify({ success: false, error: error.message }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      }
+    )
+  }
+})
+
+// ===============================
+// GERADORES ESPECÍFICOS
+// ===============================
+
+async function generatePDF(book: any, chapters: any[]): Promise<{fileBuffer: Uint8Array, mimeType: string, filename: string}> {
+  console.log('📄 Generating PDF...');
+  
+  const doc = new jsPDF()
+  let yPosition = 20
+
+  // Título do livro
+  doc.setFontSize(20)
+  doc.setFont(undefined, 'bold')
+  doc.text(book.title, 20, yPosition)
+  yPosition += 15
+
+  // Descrição
+  if (book.description) {
+    doc.setFontSize(12)
+    doc.setFont(undefined, 'normal')
+    const descLines = doc.splitTextToSize(book.description, 170)
+    doc.text(descLines, 20, yPosition)
+    yPosition += (descLines.length * 7) + 10
+  }
+
+  // Capítulos
+  for (const chapter of chapters) {
+    // Verificar se precisa de nova página
+    if (yPosition > 250) {
+      doc.addPage()
+      yPosition = 20
+    }
+
+    // Título do capítulo
+    doc.setFontSize(16)
+    doc.setFont(undefined, 'bold')
+    doc.text(`Capítulo ${chapter.order_index || 'S/N'}: ${chapter.title}`, 20, yPosition)
+    yPosition += 15
+
+    // Conteúdo do capítulo
+    if (chapter.content) {
+      doc.setFontSize(12)
+      doc.setFont(undefined, 'normal')
+      const contentLines = doc.splitTextToSize(chapter.content, 170)
+      
+      for (let i = 0; i < contentLines.length; i++) {
+        if (yPosition > 280) {
+          doc.addPage()
+          yPosition = 20
+        }
+        doc.text(contentLines[i], 20, yPosition)
+        yPosition += 7
+      }
+    }
+    yPosition += 15
+  }
+
+  const pdfBuffer = doc.output('arraybuffer')
+  return {
+    fileBuffer: new Uint8Array(pdfBuffer),
+    mimeType: 'application/pdf',
+    filename: `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
+  }
+}
+
+async function generateDOCX(book: any, chapters: any[]): Promise<{fileBuffer: Uint8Array, mimeType: string, filename: string}> {
+  console.log('📘 Generating DOCX...');
+  
+  const children = []
+
+  // Título do livro
+  children.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: book.title,
+          bold: true,
+          size: 32,
+        }),
+      ],
+      heading: HeadingLevel.TITLE,
+    })
+  )
+
+  // Descrição
+  if (book.description) {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: book.description,
+            size: 20,
+          }),
+        ],
+      })
+    )
+  }
+
+  // Linha em branco
+  children.push(new Paragraph({ children: [new TextRun({ text: "" })] }))
+
+  // Capítulos
+  for (const chapter of chapters) {
+    // Título do capítulo
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: `Capítulo ${chapter.order_index || 'S/N'}: ${chapter.title}`,
+            bold: true,
+            size: 28,
+          }),
+        ],
+        heading: HeadingLevel.HEADING_1,
+      })
+    )
+
+    // Conteúdo do capítulo
+    if (chapter.content) {
+      const paragraphs = chapter.content.split('\n')
+      for (const para of paragraphs) {
+        if (para.trim()) {
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: para,
+                  size: 20,
+                }),
+              ],
+            })
+          )
+        }
+      }
+    }
+
+    // Linha em branco entre capítulos
+    children.push(new Paragraph({ children: [new TextRun({ text: "" })] }))
+  }
+
+  const doc = new Document({
+    sections: [
+      {
+        properties: {},
+        children: children,
+      },
+    ],
+  })
+
+  const buffer = await Packer.toBuffer(doc)
+  return {
+    fileBuffer: new Uint8Array(buffer),
+    mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    filename: `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}.docx`
+  }
+}
+
+async function generateEPUB(book: any, chapters: any[]): Promise<{fileBuffer: Uint8Array, mimeType: string, filename: string}> {
+  console.log('📚 Generating EPUB...');
+  
+  const content = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>${book.title}</title>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: serif; line-height: 1.6; margin: 40px; }
+          h1 { text-align: center; margin-bottom: 40px; }
+          h2 { margin-top: 40px; page-break-before: always; }
+          p { text-indent: 1.5em; margin-bottom: 1em; }
+        </style>
+    </head>
+    <body>
+        <h1>${book.title}</h1>
+        ${book.description ? `<p><em>${book.description}</em></p>` : ''}
+        
+        ${chapters.map(chapter => `
+            <h2>Capítulo ${chapter.order_index || 'S/N'}: ${chapter.title}</h2>
+            <div>${chapter.content ? chapter.content.split('\n').map(p => `<p>${p}</p>`).join('') : '<p>Sem conteúdo</p>'}</div>
+        `).join('')}
+    </body>
+    </html>
+  `
+
+  const encoder = new TextEncoder()
+  const buffer = encoder.encode(content)
+  
+  return {
+    fileBuffer: buffer,
+    mimeType: 'application/epub+zip',
+    filename: `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}.epub`
+  }
+}
+
+function generateHTML(book: any, chapters: any[]): {fileBuffer: Uint8Array, mimeType: string, filename: string} {
+  console.log('🌐 Generating HTML...');
+  
+  const content = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>${book.title}</title>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+          h1 { color: #333; border-bottom: 2px solid #333; text-align: center; }
+          h2 { color: #666; margin-top: 30px; border-left: 4px solid #666; padding-left: 10px; }
+          .chapter { margin-bottom: 30px; }
+          .content { line-height: 1.6; text-align: justify; }
+          .description { font-style: italic; background: #f5f5f5; padding: 15px; margin: 20px 0; }
+        </style>
+    </head>
+    <body>
+        <h1>${book.title}</h1>
+        ${book.description ? `<div class="description">${book.description}</div>` : ''}
+        
+        ${chapters.map(chapter => `
+          <div class="chapter">
+            <h2>Capítulo ${chapter.order_index || 'S/N'}: ${chapter.title}</h2>
+            <div class="content">${chapter.content ? chapter.content.replace(/\n/g, '<br><br>') : 'Sem conteúdo'}</div>
+          </div>
+        `).join('')}
+    </body>
+    </html>
+  `
+
+  const encoder = new TextEncoder()
+  const buffer = encoder.encode(content)
+  
+  return {
+    fileBuffer: buffer,
+    mimeType: 'text/html',
+    filename: `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}.html`
+  }
+}
+
+function generateJSON(book: any, chapters: any[]): {fileBuffer: Uint8Array, mimeType: string, filename: string} {
+  console.log('📋 Generating JSON...');
+  
+  const data = {
+    book: {
+      id: book.id,
+      title: book.title,
+      description: book.description,
+      status: book.status,
+      created_at: book.created_at,
+      updated_at: book.updated_at
+    },
+    chapters: chapters.map(chapter => ({
+      id: chapter.id,
+      title: chapter.title,
+      content: chapter.content,
+      order_index: chapter.order_index,
+      created_at: chapter.created_at,
+      updated_at: chapter.updated_at
+    })),
+    export_metadata: {
+      exported_at: new Date().toISOString(),
+      total_chapters: chapters.length,
+      format: 'json'
+    }
+  }
+
+  const encoder = new TextEncoder()
+  const buffer = encoder.encode(JSON.stringify(data, null, 2))
+  
+  return {
+    fileBuffer: buffer,
+    mimeType: 'application/json',
+    filename: `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}.json`
+  }
+}
+
+function generateTXT(book: any, chapters: any[]): {fileBuffer: Uint8Array, mimeType: string, filename: string} {
+  console.log('📝 Generating TXT...');
+  
+  let content = `${book.title}\n`
+  content += `${'='.repeat(book.title.length)}\n\n`
+  
+  if (book.description) {
+    content += `${book.description}\n\n`
+  }
+  
+  content += `${'='.repeat(50)}\n\n`
+  
+  for (const chapter of chapters) {
+    content += `CAPÍTULO ${chapter.order_index || 'S/N'}: ${chapter.title}\n`
+    content += `${'-'.repeat(30)}\n\n`
+    if (chapter.content) {
+      content += `${chapter.content}\n\n`
+    }
+    content += `\n${'='.repeat(50)}\n\n`
+  }
+
+  const encoder = new TextEncoder()
+  const buffer = encoder.encode(content)
+  
+  return {
+    fileBuffer: buffer,
+    mimeType: 'text/plain',
+    filename: `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}.txt`
   }
 }

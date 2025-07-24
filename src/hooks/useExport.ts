@@ -22,80 +22,77 @@ export const useExport = () => {
     setIsExporting(true);
     
     try {
-      console.log('🔍 DEBUG: Starting export for book:', bookId, 'format:', format);
+      console.log('🚀 Iniciando exportação:', { bookId, format, options });
       
       // Get session for authentication
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
+      if (!session) throw new Error('Não autenticado');
 
-      // Use Supabase functions invoke method for better reliability
+      // Call the new base64-enabled edge function
       const { data, error } = await supabase.functions.invoke('export-book', {
-        body: { bookId, format, options },
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        }
+        body: { bookId, format, options }
       });
 
-      console.log('🔍 DEBUG: Export response:', { data, error });
+      console.log('📥 Resposta da função:', { success: data?.success, error });
 
       if (error) {
-        console.error('Export failed:', error);
-        throw new Error(`Export failed: ${error.message}`);
+        console.error('❌ Export failed:', error);
+        throw new Error(`Erro na função: ${error.message}`);
       }
 
-      // Create filename with timestamp and book info
-      const timestamp = new Date().toISOString().slice(0, 10);
-      const filename = `livro_${timestamp}.${format}`;
-      
-      // Handle different response types
-      let blob: Blob;
-      
-      if (format === 'json') {
-        // For JSON, create blob from string data
-        blob = new Blob([typeof data === 'string' ? data : JSON.stringify(data)], {
-          type: 'application/json'
-        });
-      } else if (format === 'html') {
-        // For HTML, create blob from string data
-        blob = new Blob([data], {
-          type: 'text/html'
-        });
-      } else {
-        // For PDF, DOCX, EPUB - handle as binary data
-        if (data instanceof Blob) {
-          blob = data;
-        } else if (typeof data === 'string') {
-          blob = new Blob([data], {
-            type: format === 'pdf' ? 'application/pdf' : 
-                  format === 'docx' ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' :
-                  format === 'epub' ? 'application/epub+zip' : 'text/plain'
-          });
-        } else {
-          blob = new Blob([JSON.stringify(data)], { type: 'application/octet-stream' });
-        }
+      if (!data || !data.success) {
+        throw new Error(data?.error || 'Erro desconhecido na geração');
       }
+
+      // Extract base64 data and metadata
+      const { data: base64Data, mimeType, filename } = data;
       
-      // Create download link
+      console.log('📄 Processando arquivo:', { 
+        format, 
+        filename, 
+        mimeType,
+        base64Length: base64Data?.length 
+      });
+
+      // Convert base64 to binary
+      const binaryString = atob(base64Data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      // Create blob with correct MIME type
+      const blob = new Blob([bytes], { type: mimeType });
+      
+      console.log('📄 Arquivo criado:', {
+        size: blob.size,
+        type: blob.type,
+        filename
+      });
+
+      // Create download
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = filename;
+      link.style.display = 'none';
+      
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       
-      // Clean up the blob URL
+      // Clean up
       setTimeout(() => window.URL.revokeObjectURL(url), 100);
 
       toast({
         title: "Exportação concluída!",
-        description: `Livro exportado em ${format.toUpperCase()} com sucesso`,
+        description: `${filename} baixado com sucesso`,
       });
 
       return url;
       
     } catch (error: any) {
-      console.error('Export error:', error);
+      console.error('❌ Erro na exportação:', error);
       toast({
         title: "Erro na exportação",
         description: error.message || "Tente novamente",
