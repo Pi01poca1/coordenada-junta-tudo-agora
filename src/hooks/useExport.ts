@@ -22,45 +22,95 @@ export const useExport = () => {
     setIsExporting(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke('export-book', {
-        body: {
+      // Call the export function and get the file directly
+      const response = await fetch('/api/export-book', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({
           bookId,
           format,
           options
-        }
+        })
       });
 
-      if (error) throw error;
-
-      if (!data.success) {
-        throw new Error(data.error || 'Erro na exportação');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro na exportação');
       }
 
-      // Download the file
-      const { downloadUrl, filename } = data.data;
+      // Get the filename from the response headers
+      const contentDisposition = response.headers.get('Content-Disposition');
+      const filename = contentDisposition?.match(/filename="([^"]+)"/)?.[1] || 
+                      `book_export_${new Date().toISOString().slice(0, 10)}.${format}`;
+
+      // Create blob from response
+      const blob = await response.blob();
       
       // Create download link
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = downloadUrl;
+      link.href = url;
       link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      
+      // Clean up the blob URL
+      window.URL.revokeObjectURL(url);
 
       toast({
         title: "Exportação concluída!",
         description: `Livro exportado em ${format.toUpperCase()} com sucesso`,
       });
 
-      return downloadUrl;
+      return url;
     } catch (error: any) {
       console.error('Export error:', error);
-      toast({
-        title: "Erro na exportação",
-        description: error.message || "Tente novamente",
-        variant: "destructive"
-      });
-      return null;
+      
+      // Fallback to the old Supabase function method
+      try {
+        const { data, error: supabaseError } = await supabase.functions.invoke('export-book', {
+          body: {
+            bookId,
+            format,
+            options
+          }
+        });
+
+        if (supabaseError) throw supabaseError;
+
+        if (!data.success) {
+          throw new Error(data.error || 'Erro na exportação');
+        }
+
+        // Download the file using the old method
+        const { downloadUrl, filename } = data.data;
+        
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        toast({
+          title: "Exportação concluída!",
+          description: `Livro exportado em ${format.toUpperCase()} com sucesso`,
+        });
+
+        return downloadUrl;
+      } catch (fallbackError: any) {
+        console.error('Fallback export error:', fallbackError);
+        toast({
+          title: "Erro na exportação",
+          description: fallbackError.message || "Tente novamente",
+          variant: "destructive"
+        });
+        return null;
+      }
     } finally {
       setIsExporting(false);
     }

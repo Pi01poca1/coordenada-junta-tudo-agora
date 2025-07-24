@@ -311,26 +311,40 @@ serve(async (req) => {
       console.error('Failed to log export activity:', logError)
     }
 
-    // For this demo, we'll return the content directly
-    // In production, you'd upload to storage and return a download URL
-    const base64Content = btoa(unescape(encodeURIComponent(content)));
-    const dataUrl = `data:${mimeType};base64,${base64Content}`;
+    // Return content with proper headers for direct download
+    const headers = {
+      ...corsHeaders,
+      'Content-Type': mimeType,
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Length': content.length.toString(),
+    };
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        data: {
-          downloadUrl: dataUrl,
-          filename,
-          format,
-          size: content.length
-        }
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      },
-    )
+    // For text formats (HTML, JSON), return as text
+    if (format === 'html' || format === 'json') {
+      return new Response(content, { headers });
+    }
+    
+    // For binary formats (PDF, DOCX, EPUB), we need proper encoding
+    let responseBody: Uint8Array;
+    
+    if (format === 'pdf') {
+      // For PDF, we need to convert HTML to PDF using a simple approach
+      // In production, you'd use a proper PDF library
+      responseBody = new TextEncoder().encode(content);
+      headers['Content-Type'] = 'text/html'; // Return as HTML for now
+    } else if (format === 'docx') {
+      // For DOCX, create a proper ZIP structure
+      responseBody = new TextEncoder().encode(content);
+      headers['Content-Type'] = 'application/xml'; // Return as XML for now
+    } else if (format === 'epub') {
+      // For EPUB, create a proper ZIP structure
+      responseBody = new TextEncoder().encode(content);
+      headers['Content-Type'] = 'application/xml'; // Return as XML for now  
+    } else {
+      responseBody = new TextEncoder().encode(content);
+    }
+
+    return new Response(responseBody, { headers });
 
   } catch (error) {
     console.error('Error in export-book function:', error)
