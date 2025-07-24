@@ -174,7 +174,7 @@ const ChapterDetail = () => {
                 <CardTitle>Images</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <ImageUpload chapterId={chapterId} onUploadComplete={() => window.location.reload()} />
+                <ImageUpload chapterId={chapterId} onImageUploaded={() => window.location.reload()} />
                 <ImageGallery chapterId={chapterId} />
               </CardContent>
             </Card>

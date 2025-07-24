@@ -3,10 +3,11 @@ import { Navigation } from '@/components/Layout/Navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, BookOpen, FileText, Calendar, TrendingUp, Download, Zap } from 'lucide-react';
+import { ArrowLeft, BookOpen, FileText, Calendar, TrendingUp, Download, Zap, BarChart3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { format, subDays, eachDayOfInterval } from 'date-fns';
 
 interface Stats {
   totalBooks: number;
@@ -16,6 +17,14 @@ interface Stats {
   totalAISessions: number;
   draftBooks: number;
   publishedBooks: number;
+  averageWordsPerChapter: number;
+  averageChaptersPerBook: number;
+  mostProductiveDay: string;
+  weeklyActivity: Array<{
+    date: string;
+    chapters: number;
+    words: number;
+  }>;
   recentActivity: Array<{
     type: 'book' | 'chapter' | 'export' | 'ai';
     title: string;
@@ -33,6 +42,10 @@ export default function Statistics() {
     totalAISessions: 0,
     draftBooks: 0,
     publishedBooks: 0,
+    averageWordsPerChapter: 0,
+    averageChaptersPerBook: 0,
+    mostProductiveDay: '',
+    weeklyActivity: [],
     recentActivity: []
   });
   const [loading, setLoading] = useState(true);
@@ -72,11 +85,48 @@ export default function Statistics() {
       const publishedBooks = books?.filter(book => book.status === 'published').length || 0;
       const totalAISessions = aiSessions?.length || 0;
 
-      // Calcular total de palavras
-      const totalWords = chapters?.reduce((total, chapter) => {
-        const wordCount = chapter.content ? chapter.content.split(/\s+/).length : 0;
-        return total + wordCount;
-      }, 0) || 0;
+      // Calcular total de palavras e médias
+      const chaptersWithWords = chapters?.map(ch => ({
+        ...ch,
+        wordCount: ch.content ? ch.content.split(/\s+/).length : 0
+      })) || [];
+
+      const totalWords = chaptersWithWords.reduce((total, ch) => total + ch.wordCount, 0);
+      const averageWordsPerChapter = totalChapters > 0 ? Math.round(totalWords / totalChapters) : 0;
+      const averageChaptersPerBook = totalBooks > 0 ? Math.round(totalChapters / totalBooks) : 0;
+
+      // Atividade semanal
+      const last7Days = eachDayOfInterval({
+        start: subDays(new Date(), 6),
+        end: new Date()
+      });
+
+      const weeklyActivity = last7Days.map(date => {
+        const dayStart = new Date(date);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(date);
+        dayEnd.setHours(23, 59, 59, 999);
+
+        const dayChapters = chapters?.filter(ch => {
+          const chapterDate = new Date(ch.created_at);
+          return chapterDate >= dayStart && chapterDate <= dayEnd;
+        }) || [];
+
+        const dayWords = dayChapters.reduce((sum, ch) => 
+          sum + (ch.content ? ch.content.split(/\s+/).length : 0), 0
+        );
+
+        return {
+          date: format(date, 'MMM dd'),
+          chapters: dayChapters.length,
+          words: dayWords
+        };
+      });
+
+      const mostProductiveDay = weeklyActivity.reduce((most, current) => 
+        current.words > most.words ? current : most, 
+        weeklyActivity[0]
+      )?.date || '';
 
       // Atividade recente
       const recentActivity = [
@@ -107,6 +157,10 @@ export default function Statistics() {
         totalAISessions,
         draftBooks,
         publishedBooks,
+        averageWordsPerChapter,
+        averageChaptersPerBook,
+        mostProductiveDay,
+        weeklyActivity,
         recentActivity
       });
     } catch (error) {
@@ -219,6 +273,94 @@ export default function Statistics() {
               <p className="text-xs text-muted-foreground mt-2">
                 Assistência utilizada
               </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Cards adicionais */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <BarChart3 className="h-5 w-5" />
+                <span>Médias de Escrita</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <div className="text-2xl font-bold">
+                  {stats.averageWordsPerChapter.toLocaleString()}
+                </div>
+                <p className="text-sm text-muted-foreground">Palavras por capítulo</p>
+              </div>
+              <div>
+                <div className="text-2xl font-bold">
+                  {stats.averageChaptersPerBook}
+                </div>
+                <p className="text-sm text-muted-foreground">Capítulos por livro</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <TrendingUp className="h-5 w-5" />
+                <span>Produtividade</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div>
+                <div className="text-xl font-bold">
+                  {stats.mostProductiveDay || 'N/A'}
+                </div>
+                <p className="text-sm text-muted-foreground">Dia mais produtivo (esta semana)</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Calendar className="h-5 w-5" />
+                <span>Atividade Semanal</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-end space-x-1 h-20">
+                  {stats.weeklyActivity.map((day, index) => (
+                    <div key={index} className="flex-1 flex flex-col items-center">
+                      <div 
+                        className="w-full bg-primary/20 rounded-t"
+                        style={{ 
+                          height: `${Math.max(day.words / Math.max(...stats.weeklyActivity.map(d => d.words), 1) * 100, 5)}%` 
+                        }}
+                      >
+                        <div 
+                          className="w-full bg-primary rounded-t"
+                          style={{ 
+                            height: `${Math.max(day.chapters / Math.max(...stats.weeklyActivity.map(d => d.chapters), 1) * 100, 10)}%` 
+                          }}
+                        />
+                      </div>
+                      <div className="text-xs mt-1 text-center">
+                        <div>{day.date}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-center space-x-4 text-xs">
+                  <div className="flex items-center space-x-1">
+                    <div className="w-2 h-2 bg-primary rounded" />
+                    <span>Capítulos</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-2 h-2 bg-primary/20 rounded" />
+                    <span>Palavras</span>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
