@@ -12,61 +12,163 @@ interface EnrichRequest {
   goal: 'improve' | 'ideas' | 'expand' | 'grammar' | 'style';
 }
 
-// Local AI Provider - Heuristic rules
+// Enhanced AI Provider with better text processing
 class LocalAIProvider {
   async enrich(text: string, goal: string): Promise<{ enrichedText: string; confidence: number }> {
     let enrichedText = text;
-    let confidence = 0.7;
+    let confidence = 0.8;
+
+    // Analyze text context for better suggestions
+    const sentences = text.split(/[.!?]+/).filter(s => s.trim());
+    const words = text.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+    const isDialogue = text.includes('"') || text.includes('—');
+    const isNarrative = !isDialogue && sentences.length > 1;
 
     switch (goal) {
       case 'improve':
-        // Simple text improvements
+        // Advanced text improvements
         enrichedText = text
-          .replace(/\b(muito|bem|mais)\b/g, (match) => {
+          // Replace common words with more sophisticated alternatives
+          .replace(/\b(muito|bem|mais|coisa|pessoa)\b/gi, (match) => {
             const alternatives = {
-              'muito': ['extremamente', 'consideravelmente', 'notavelmente'],
-              'bem': ['adequadamente', 'satisfatoriamente', 'apropriadamente'],
-              'mais': ['adicionalmente', 'além disso', 'outrossim']
+              'muito': ['extremamente', 'consideravelmente', 'notavelmente', 'extraordinariamente'],
+              'bem': ['adequadamente', 'magistralmente', 'primorosamente', 'habilmente'],
+              'mais': ['adicionalmente', 'outrossim', 'ademais', 'igualmente'],
+              'coisa': ['elemento', 'aspecto', 'fenômeno', 'questão'],
+              'pessoa': ['indivíduo', 'sujeito', 'personagem', 'figura']
+            };
+            const alts = alternatives[match.toLowerCase() as keyof typeof alternatives];
+            return alts ? alts[Math.floor(Math.random() * alts.length)] : match;
+          })
+          // Improve sentence structure
+          .replace(/\b(E|Mas|Porque)\b/g, (match) => {
+            const alternatives = {
+              'E': ['Ademais,', 'Outrossim,', 'Além disso,', 'Por conseguinte,'],
+              'Mas': ['Contudo,', 'Todavia,', 'Não obstante,', 'Entretanto,'],
+              'Porque': ['uma vez que', 'dado que', 'visto que', 'em virtude de']
             };
             const alts = alternatives[match as keyof typeof alternatives];
             return alts[Math.floor(Math.random() * alts.length)];
           })
-          .replace(/\.\s+/g, '. ')
-          .replace(/,\s+/g, ', ');
+          // Clean up spacing
+          .replace(/\s+/g, ' ')
+          .replace(/\s*([,.!?])/g, '$1');
         break;
 
       case 'expand':
-        // Add descriptive elements
-        enrichedText = text.replace(/(\w+)\s+(disse|falou|respondeu)/g, '$1 declarou com convicção');
-        enrichedText = enrichedText.replace(/(\w+)\s+(andou|caminhou)/g, '$1 percorreu cautelosamente');
+        // Context-aware expansion
+        if (isDialogue) {
+          enrichedText = text.replace(/(disse|falou|respondeu|murmurou)/gi, (match) => {
+            const dialogueVerbs = ['declarou enfaticamente', 'murmurou pensativo', 'exclamou com fervor', 
+                                 'respondeu cautelosamente', 'sussurrou misteriosamente', 'afirmou convictamente'];
+            return dialogueVerbs[Math.floor(Math.random() * dialogueVerbs.length)];
+          });
+        } else {
+          // Add sensory details and atmosphere
+          enrichedText = text.replace(/\b(olhou|viu|sentiu|ouviu)\b/gi, (match) => {
+            const sensoryExpansions = {
+              'olhou': 'contemplou atentamente',
+              'viu': 'observou com crescente interesse',
+              'sentiu': 'experimentou uma sensação',
+              'ouviu': 'percebeu distintamente'
+            };
+            return sensoryExpansions[match.toLowerCase() as keyof typeof sensoryExpansions] || match;
+          });
+          
+          // Add environmental details
+          if (sentences.length > 1) {
+            const environmentalDetails = [
+              ' O ambiente ao redor parecia sustentar a intensidade do momento.',
+              ' Uma atmosfera peculiar permeava o espaço.',
+              ' O silêncio que se seguiu era quase palpável.',
+              ' O ar carregava uma tensão indescritível.'
+            ];
+            enrichedText += environmentalDetails[Math.floor(Math.random() * environmentalDetails.length)];
+          }
+        }
         break;
 
       case 'style':
-        // Literary style improvements
+        // Literary style enhancement
         enrichedText = text
-          .replace(/\be\s+/g, 'e então ')
-          .replace(/\bmas\s+/g, 'contudo, ')
-          .replace(/\bporque\s+/g, 'uma vez que ');
+          .replace(/\b(então|aí|daí)\b/gi, (match) => {
+            const connectors = ['nesse momento', 'em seguida', 'posteriormente', 'subsequentemente'];
+            return connectors[Math.floor(Math.random() * connectors.length)];
+          })
+          .replace(/\b(grande|pequeno|bonito|feio)\b/gi, (match) => {
+            const descriptives = {
+              'grande': ['majestoso', 'imponente', 'colossal', 'monumental'],
+              'pequeno': ['diminuto', 'singelo', 'delicado', 'sutil'],
+              'bonito': ['deslumbrante', 'esplêndido', 'magnífico', 'sublime'],
+              'feio': ['repulsivo', 'grotesco', 'desagradável', 'abjeto']
+            };
+            const alts = descriptives[match.toLowerCase() as keyof typeof descriptives];
+            return alts ? alts[Math.floor(Math.random() * alts.length)] : match;
+          });
         break;
 
       case 'grammar':
-        // Basic grammar fixes
+        // Enhanced grammar correction
         enrichedText = text
-          .replace(/\bmim\s+/g, 'eu ')
-          .replace(/\bonde\s+que\b/g, 'em que')
-          .replace(/\baonde\s+/g, 'onde ');
+          .replace(/\b(mim|eu)\s+(que|quem)/gi, 'eu que')
+          .replace(/\bonde\s+que\b/gi, 'em que')
+          .replace(/\baonde\s+/gi, 'onde ')
+          .replace(/\b(tem|têm)\s+(que|de)\b/gi, 'deve')
+          .replace(/\b(mais|mas)\b/gi, (match, offset) => {
+            // Context-aware mais/mas correction
+            const before = text.substring(0, offset).split(' ').pop() || '';
+            const after = text.substring(offset + match.length).split(' ')[0] || '';
+            
+            if (['não', 'nada', 'nenhum'].includes(before.toLowerCase()) || 
+                ['do', 'que', 'de'].includes(after.toLowerCase())) {
+              return 'mais';
+            } else if (['porém', 'contudo', 'entretanto'].some(word => 
+                      text.toLowerCase().includes(word))) {
+              return 'mas';
+            }
+            return match;
+          });
         break;
 
       case 'ideas':
-        // Add creative suggestions
-        const ideas = [
-          "Talvez adicionar uma descrição do ambiente aqui.",
-          "Considere explorar os sentimentos do personagem.",
-          "Que tal adicionar um diálogo mais específico?",
-          "Pode ser interessante incluir detalhes sensoriais."
-        ];
-        enrichedText = text + "\n\n[SUGESTÃO: " + ideas[Math.floor(Math.random() * ideas.length)] + "]";
-        confidence = 0.6;
+        // Context-specific creative suggestions
+        const contextualIdeas = [];
+        
+        if (isDialogue) {
+          contextualIdeas.push(
+            "💭 Considere adicionar gestos ou expressões faciais aos diálogos",
+            "💭 Que tal explorar as motivações ocultas por trás dessas palavras?",
+            "💭 Adicione pausas dramáticas ou hesitações para criar tensão"
+          );
+        }
+        
+        if (isNarrative) {
+          contextualIdeas.push(
+            "💭 Explore os cinco sentidos para enriquecer a cena",
+            "💭 Considere o contraste entre aparência e realidade",
+            "💭 Adicione detalhes que revelem a personalidade dos personagens"
+          );
+        }
+        
+        if (words.some(w => ['amor', 'ódio', 'medo', 'alegria'].includes(w))) {
+          contextualIdeas.push(
+            "💭 Explore as nuances dessa emoção através de metáforas",
+            "💭 Considere o impacto físico dessa emoção no personagem"
+          );
+        }
+        
+        // Fallback general ideas
+        if (contextualIdeas.length === 0) {
+          contextualIdeas.push(
+            "💭 Considere adicionar um conflito interno ao personagem",
+            "💭 Que tal introduzir um elemento de surpresa?",
+            "💭 Explore as implicações mais profundas desta situação"
+          );
+        }
+        
+        const selectedIdea = contextualIdeas[Math.floor(Math.random() * contextualIdeas.length)];
+        enrichedText = text + "\n\n" + selectedIdea;
+        confidence = 0.85;
         break;
     }
 

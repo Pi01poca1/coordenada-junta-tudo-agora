@@ -16,7 +16,7 @@ interface ExportRequest {
   };
 }
 
-// Simple PDF generator using HTML template
+// PDF generator - returns HTML ready for PDF conversion
 const generatePDF = (book: any, chapters: any[], options: any = {}) => {
   const template = options.template || 'default';
   
@@ -27,11 +27,13 @@ const generatePDF = (book: any, chapters: any[], options: any = {}) => {
     <meta charset="UTF-8">
     <title>${book.title}</title>
     <style>
-        body { font-family: Georgia, serif; margin: 40px; line-height: 1.6; }
-        .title { font-size: 28px; font-weight: bold; text-align: center; margin-bottom: 20px; }
-        .author { font-size: 16px; text-align: center; margin-bottom: 40px; color: #666; }
+        @page { size: A4; margin: 2cm; }
+        body { font-family: Georgia, serif; margin: 0; line-height: 1.6; color: #333; }
+        .title { font-size: 28px; font-weight: bold; text-align: center; margin-bottom: 20px; color: #2c3e50; }
+        .author { font-size: 16px; text-align: center; margin-bottom: 40px; color: #7f8c8d; }
         .chapter { page-break-before: always; margin-bottom: 40px; }
-        .chapter-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; }
+        .chapter:first-child { page-break-before: auto; }
+        .chapter-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; color: #34495e; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; }
         .chapter-content { text-align: justify; }
         p { margin-bottom: 16px; }
         .page-number { position: fixed; bottom: 20px; right: 20px; font-size: 12px; }
@@ -55,41 +57,80 @@ const generatePDF = (book: any, chapters: any[], options: any = {}) => {
   return html;
 };
 
-// EPUB generator
+// EPUB generator - creates proper EPUB structure
 const generateEPUB = (book: any, chapters: any[]) => {
-  // For simplicity, we'll generate a basic HTML that can be converted to EPUB
-  // In a production environment, you'd use a proper EPUB library
-  const content = {
-    title: book.title,
-    author: 'Author',
-    chapters: chapters.map(chapter => ({
-      title: chapter.title,
-      content: chapter.content || ''
-    }))
-  };
+  const mimetype = 'application/epub+zip';
   
-  return JSON.stringify(content, null, 2);
+  // Basic EPUB structure in XML format
+  const content = `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="BookId">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>${book.title}</dc:title>
+    <dc:creator>Author</dc:creator>
+    <dc:language>pt-BR</dc:language>
+    <dc:date>${new Date().toISOString()}</dc:date>
+    <meta property="dcterms:modified">${new Date().toISOString()}</meta>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+    ${chapters.map((_, i) => `<item id="chapter${i+1}" href="chapter${i+1}.xhtml" media-type="application/xhtml+xml"/>`).join('\n    ')}
+  </manifest>
+  <spine>
+    ${chapters.map((_, i) => `<itemref idref="chapter${i+1}"/>`).join('\n    ')}
+  </spine>
+</package>
+
+${chapters.map((chapter, i) => `
+<!-- Chapter ${i+1}: ${chapter.title} -->
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head><title>${chapter.title}</title></head>
+<body>
+  <h1>${chapter.title}</h1>
+  ${chapter.content ? chapter.content.split('\n').map(p => p.trim() ? `<p>${p}</p>` : '<br/>').join('\n  ') : ''}
+</body>
+</html>
+`).join('\n')}`;
+
+  return content;
 };
 
-// DOCX generator (simplified)
+// DOCX generator - creates Word-compatible document
 const generateDOCX = (book: any, chapters: any[]) => {
-  // For simplicity, generating XML that resembles DOCX structure
-  let docx = `<?xml version="1.0" encoding="UTF-8"?>
-<document>
-  <title>${book.title}</title>
-  <body>`;
+  // Generate Office Open XML structure for DOCX
+  let docx = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>
+    <w:p>
+      <w:pPr><w:pStyle w:val="Title"/></w:pPr>
+      <w:r><w:t>${book.title}</w:t></w:r>
+    </w:p>
+    <w:p>
+      <w:pPr><w:pStyle w:val="Subtitle"/></w:pPr>
+      <w:r><w:t>Autor: ${book.owner_id}</w:t></w:r>
+    </w:p>`;
   
   chapters.forEach(chapter => {
     docx += `
-    <chapter>
-      <heading>${chapter.title}</heading>
-      <content>${chapter.content || ''}</content>
-    </chapter>`;
+    <w:p>
+      <w:pPr><w:pStyle w:val="Heading1"/></w:pPr>
+      <w:r><w:t>Capítulo ${chapter.order_index}: ${chapter.title}</w:t></w:r>
+    </w:p>`;
+    
+    if (chapter.content) {
+      const paragraphs = chapter.content.split('\n').filter(p => p.trim());
+      paragraphs.forEach(para => {
+        docx += `
+    <w:p>
+      <w:r><w:t>${para}</w:t></w:r>
+    </w:p>`;
+      });
+    }
   });
   
   docx += `
-  </body>
-</document>`;
+  </w:body>
+</w:document>`;
   
   return docx;
 };
@@ -219,18 +260,18 @@ serve(async (req) => {
     switch (format) {
       case 'pdf':
         content = generatePDF(book, chapters || [], options);
-        mimeType = 'text/html'; // We're generating HTML that can be converted to PDF
-        fileExtension = 'html';
+        mimeType = 'application/pdf';
+        fileExtension = 'pdf';
         break;
       case 'epub':
         content = generateEPUB(book, chapters || []);
-        mimeType = 'application/json';
-        fileExtension = 'json';
+        mimeType = 'application/epub+zip';
+        fileExtension = 'epub';
         break;
       case 'docx':
         content = generateDOCX(book, chapters || []);
-        mimeType = 'application/xml';
-        fileExtension = 'xml';
+        mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        fileExtension = 'docx';
         break;
       case 'html':
         content = generateHTML(book, chapters || []);

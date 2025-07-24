@@ -17,52 +17,151 @@ interface PromptRequest {
 }
 
 class LocalPromptGenerator {
-  generateImagePrompt(text: string, context: any = {}): { prompt: string; suggestions: string[]; confidence: number } {
+  generateWritingPrompt(text: string, context: any = {}): { prompt: string; suggestions: string[]; confidence: number } {
     const { genre = 'general', mood = 'neutral', style = 'realistic' } = context;
 
-    // Extract key elements from text
-    const characters = this.extractCharacters(text);
-    const setting = this.extractSetting(text);
-    const action = this.extractAction(text);
-    const emotions = this.extractEmotions(text);
+    // Enhanced text analysis
+    const sentences = text.split(/[.!?]+/).filter(s => s.trim());
+    const words = text.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+    const isDialogue = text.includes('"') || text.includes('—');
+    const hasCharacters = /\b(ele|ela|personagem|protagonista|herói|heroína)\b/i.test(text);
+    const isAction = /\b(correu|saltou|gritou|lutou|fugiu|atacou)\b/i.test(text);
+    const isEmotional = /\b(amor|ódio|medo|alegria|tristeza|raiva|paixão)\b/i.test(text);
+    
+    let prompts = [];
+    
+    // Genre and mood-specific prompts
+    if (genre && genre !== 'general') {
+      switch (genre.toLowerCase()) {
+        case 'romance':
+          prompts.push(
+            `Desenvolva a tensão romântica entre os personagens a partir desta cena: "${text.slice(-100)}"`,
+            `Crie um momento íntimo que revele os sentimentos ocultos dos personagens baseado em: ${text.slice(0, 80)}...`,
+            `Explore o conflito interno do protagonista sobre seus sentimentos: ${text.slice(-80)}`
+          );
+          break;
+        case 'suspense':
+          prompts.push(
+            `Aumente a tensão e o mistério desenvolvendo: "${text.slice(-100)}"`,
+            `Introduza uma reviravolta inesperada na narrativa a partir de: ${text.slice(0, 80)}...`,
+            `Crie uma atmosfera de perigo iminente baseada em: ${text.slice(-80)}`
+          );
+          break;
+        case 'fantasia':
+          prompts.push(
+            `Expanda o mundo mágico e suas regras a partir de: "${text.slice(-100)}"`,
+            `Desenvolva os poderes e habilidades especiais dos personagens: ${text.slice(0, 80)}...`,
+            `Crie uma profecia ou lenda que se conecte com: ${text.slice(-80)}`
+          );
+          break;
+      }
+    }
+    
+    // Context-specific prompts
+    if (isDialogue) {
+      prompts.push(
+        `Continue este diálogo revelando mais sobre as motivações dos personagens: "${text.slice(-150)}"`,
+        `Adicione subtexto e tensão não dita a esta conversa: ${text.slice(-100)}`,
+        `Desenvolva o conflito através do diálogo iniciado em: ${text.slice(-120)}`
+      );
+    }
+    
+    if (hasCharacters) {
+      prompts.push(
+        `Aprofunde a caracterização e background deste personagem: ${text.slice(-100)}`,
+        `Explore a psicologia e dilemas internos do protagonista baseado em: ${text.slice(0, 100)}...`,
+        `Revele aspectos ocultos da personalidade através das ações em: ${text.slice(-80)}`
+      );
+    }
+    
+    if (isAction) {
+      prompts.push(
+        `Intensifique a sequência de ação desenvolvendo: "${text.slice(-100)}"`,
+        `Adicione consequências dramáticas para a ação descrita em: ${text.slice(-80)}`,
+        `Crie uma perseguição ou confronto épico a partir de: ${text.slice(0, 80)}...`
+      );
+    }
+    
+    if (isEmotional) {
+      prompts.push(
+        `Explore as profundezas emocionais e vulnerabilidades do personagem: ${text.slice(-100)}`,
+        `Desenvolva como essa emoção afeta as decisões e ações: ${text.slice(-80)}`,
+        `Crie um momento de catarse emocional baseado em: ${text.slice(0, 80)}...`
+      );
+    }
+    
+    // Mood-specific additions
+    if (mood && mood !== 'neutral') {
+      switch (mood.toLowerCase()) {
+        case 'sombrio':
+          prompts.push(
+            `Intensifique a atmosfera sombria e melancólica: ${text.slice(-100)}`,
+            `Explore os aspectos mais obscuros da situação em: ${text.slice(-80)}`
+          );
+          break;
+        case 'esperançoso':
+          prompts.push(
+            `Desenvolva elementos de esperança e redenção: ${text.slice(-100)}`,
+            `Crie um momento de luz em meio à escuridão: ${text.slice(-80)}`
+          );
+          break;
+        case 'épico':
+          prompts.push(
+            `Eleve a narrativa para proporções épicas: ${text.slice(-100)}`,
+            `Crie um momento heroico memorável: ${text.slice(-80)}`
+          );
+          break;
+      }
+    }
+    
+    // Fallback general prompts if none specific were added
+    if (prompts.length === 0) {
+      prompts = [
+        `Continue a narrativa desenvolvendo as consequências de: "${text.slice(-100)}"`,
+        `Aprofunde o conflito central da história a partir de: ${text.slice(0, 100)}...`,
+        `Crie uma reviravolta dramática baseada nos eventos de: ${text.slice(-80)}`,
+        `Desenvolva a atmosfera e ambiente da cena: ${text.slice(-100)}`,
+        `Explore as motivações ocultas dos personagens em: ${text.slice(-80)}`
+      ];
+    }
+    
+    const selectedPrompt = prompts[Math.floor(Math.random() * prompts.length)];
 
-    // Build base prompt
-    let prompt = '';
-    
-    if (setting) {
-      prompt += `${setting}, `;
-    }
-    
-    if (characters.length > 0) {
-      prompt += `featuring ${characters.join(' and ')}, `;
-    }
-    
-    if (action) {
-      prompt += `${action}, `;
-    }
-
-    // Add style and mood
-    prompt += `${style} style, ${mood} atmosphere`;
-    
-    // Add genre-specific elements
-    const genreElements = this.getGenreElements(genre);
-    if (genreElements) {
-      prompt += `, ${genreElements}`;
-    }
-
-    // Generate alternative suggestions
-    const suggestions = [
-      `Wide angle view: ${prompt}, cinematic composition`,
-      `Close-up focus: ${prompt}, detailed portrait`,
-      `Atmospheric scene: ${prompt}, dramatic lighting`,
-      `Minimalist approach: ${prompt}, simple composition`
-    ];
+    // Generate contextual suggestions
+    const suggestions = this.generateContextualSuggestions(text, genre, mood);
 
     return {
-      prompt: prompt.trim(),
+      prompt: selectedPrompt,
       suggestions,
-      confidence: 0.75
+      confidence: 0.88
     };
+  }
+
+  private generateContextualSuggestions(text: string, genre: string, mood: string): string[] {
+    const suggestions = [];
+    
+    // Add perspective suggestions
+    suggestions.push(
+      `📝 Tente escrever esta cena sob a perspectiva de outro personagem`,
+      `🔄 Reescreva este trecho mudando o tempo narrativo (passado/presente)`,
+      `💭 Adicione pensamentos internos para revelar motivações ocultas`
+    );
+    
+    // Add technical suggestions
+    suggestions.push(
+      `🎬 Use técnicas cinematográficas: close-up, panorâmica, slow motion`,
+      `🎭 Adicione conflito através de objetivos contraditórios`,
+      `⚡ Crie tensão através do que NÃO é dito`
+    );
+    
+    // Add sensory suggestions
+    suggestions.push(
+      `👁️ Explore todos os cinco sentidos na descrição`,
+      `🌡️ Use a temperatura e clima para refletir emoções`,
+      `🎵 Adicione sons ambiente para criar atmosfera`
+    );
+
+    return suggestions;
   }
 
   private extractCharacters(text: string): string[] {
@@ -219,7 +318,7 @@ serve(async (req) => {
 
     // Generate prompt using local AI
     const promptGenerator = new LocalPromptGenerator()
-    const result = promptGenerator.generateImagePrompt(text, context)
+    const result = promptGenerator.generateWritingPrompt(text, context)
 
     // Log AI session
     const { error: logError } = await authedClient
