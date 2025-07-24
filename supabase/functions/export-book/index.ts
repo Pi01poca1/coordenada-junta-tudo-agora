@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { JSZip } from "https://deno.land/x/jszip@0.11.0/mod.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -58,81 +59,203 @@ const generatePDF = (book: any, chapters: any[], options: any = {}) => {
 };
 
 // EPUB generator - creates proper EPUB structure
-const generateEPUB = (book: any, chapters: any[]) => {
-  const mimetype = 'application/epub+zip';
+const generateEPUB = async (book: any, chapters: any[]) => {
+  const zip = new JSZip();
   
-  // Basic EPUB structure in XML format
-  const content = `<?xml version="1.0" encoding="UTF-8"?>
+  // Add mimetype file (must be first and uncompressed)
+  zip.addFile("mimetype", "application/epub+zip", { compression: "STORE" });
+  
+  // META-INF/container.xml
+  zip.addFile("META-INF/container.xml", `<?xml version="1.0" encoding="UTF-8"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>`);
+
+  // OEBPS/content.opf (package document)
+  zip.addFile("OEBPS/content.opf", `<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="BookId">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:identifier id="BookId">${book.id}</dc:identifier>
     <dc:title>${book.title}</dc:title>
-    <dc:creator>Author</dc:creator>
+    <dc:creator>Autor</dc:creator>
     <dc:language>pt-BR</dc:language>
-    <dc:date>${new Date().toISOString()}</dc:date>
+    <dc:date>${new Date().toISOString().split('T')[0]}</dc:date>
     <meta property="dcterms:modified">${new Date().toISOString()}</meta>
   </metadata>
   <manifest>
     <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
     ${chapters.map((_, i) => `<item id="chapter${i+1}" href="chapter${i+1}.xhtml" media-type="application/xhtml+xml"/>`).join('\n    ')}
   </manifest>
-  <spine>
+  <spine toc="ncx">
     ${chapters.map((_, i) => `<itemref idref="chapter${i+1}"/>`).join('\n    ')}
   </spine>
-</package>
+</package>`);
 
-${chapters.map((chapter, i) => `
-<!-- Chapter ${i+1}: ${chapter.title} -->
-<?xml version="1.0" encoding="UTF-8"?>
+  // OEBPS/nav.xhtml (navigation document)
+  zip.addFile("OEBPS/nav.xhtml", `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+<head>
+  <title>Navegação</title>
+</head>
+<body>
+  <nav xmlns:epub="http://www.idpf.org/2007/ops" epub:type="toc">
+    <h1>Sumário</h1>
+    <ol>
+      ${chapters.map((chapter, i) => `<li><a href="chapter${i+1}.xhtml">${chapter.title}</a></li>`).join('\n      ')}
+    </ol>
+  </nav>
+</body>
+</html>`);
+
+  // OEBPS/toc.ncx (NCX navigation)
+  zip.addFile("OEBPS/toc.ncx", `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN" "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
+  <head>
+    <meta name="dtb:uid" content="${book.id}"/>
+    <meta name="dtb:depth" content="1"/>
+    <meta name="dtb:totalPageCount" content="0"/>
+    <meta name="dtb:maxPageNumber" content="0"/>
+  </head>
+  <docTitle><text>${book.title}</text></docTitle>
+  <navMap>
+    ${chapters.map((chapter, i) => `
+    <navPoint id="navpoint-${i+1}" playOrder="${i+1}">
+      <navLabel><text>${chapter.title}</text></navLabel>
+      <content src="chapter${i+1}.xhtml"/>
+    </navPoint>`).join('')}
+  </navMap>
+</ncx>`);
+
+  // Add each chapter as XHTML
+  chapters.forEach((chapter, i) => {
+    const chapterContent = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
-<head><title>${chapter.title}</title></head>
+<head>
+  <title>${chapter.title}</title>
+  <style>
+    body { font-family: serif; line-height: 1.6; margin: 2em; }
+    h1 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
+    p { margin-bottom: 1em; text-align: justify; }
+  </style>
+</head>
 <body>
   <h1>${chapter.title}</h1>
-  ${chapter.content ? chapter.content.split('\n').map(p => p.trim() ? `<p>${p}</p>` : '<br/>').join('\n  ') : ''}
+  ${chapter.content ? chapter.content.split('\n').map(p => p.trim() ? `<p>${p}</p>` : '').filter(Boolean).join('\n  ') : '<p>Sem conteúdo</p>'}
 </body>
-</html>
-`).join('\n')}`;
+</html>`;
+    
+    zip.addFile(`OEBPS/chapter${i+1}.xhtml`, chapterContent);
+  });
 
-  return content;
+  return await zip.generateAsync({ type: "uint8array" });
 };
 
 // DOCX generator - creates Word-compatible document
-const generateDOCX = (book: any, chapters: any[]) => {
-  // Generate Office Open XML structure for DOCX
-  let docx = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+const generateDOCX = async (book: any, chapters: any[]) => {
+  const zip = new JSZip();
+  
+  // [Content_Types].xml
+  zip.addFile("[Content_Types].xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>`);
+
+  // _rels/.rels
+  zip.addFile("_rels/.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`);
+
+  // word/_rels/document.xml.rels
+  zip.addFile("word/_rels/document.xml.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+</Relationships>`);
+
+  // word/document.xml
+  let documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
   <w:body>
     <w:p>
-      <w:pPr><w:pStyle w:val="Title"/></w:pPr>
-      <w:r><w:t>${book.title}</w:t></w:r>
+      <w:pPr>
+        <w:jc w:val="center"/>
+        <w:rPr>
+          <w:sz w:val="48"/>
+          <w:b/>
+        </w:rPr>
+      </w:pPr>
+      <w:r>
+        <w:rPr>
+          <w:sz w:val="48"/>
+          <w:b/>
+        </w:rPr>
+        <w:t>${book.title}</w:t>
+      </w:r>
     </w:p>
     <w:p>
-      <w:pPr><w:pStyle w:val="Subtitle"/></w:pPr>
-      <w:r><w:t>Autor: ${book.owner_id}</w:t></w:r>
-    </w:p>`;
-  
-  chapters.forEach(chapter => {
-    docx += `
+      <w:pPr>
+        <w:jc w:val="center"/>
+      </w:pPr>
+      <w:r>
+        <w:t>por Autor</w:t>
+      </w:r>
+    </w:p>
+    <w:p><w:r><w:t></w:t></w:r></w:p>`;
+
+  chapters.forEach((chapter, index) => {
+    // Chapter title
+    documentXml += `
     <w:p>
-      <w:pPr><w:pStyle w:val="Heading1"/></w:pPr>
-      <w:r><w:t>Capítulo ${chapter.order_index}: ${chapter.title}</w:t></w:r>
-    </w:p>`;
-    
+      <w:pPr>
+        <w:rPr>
+          <w:sz w:val="32"/>
+          <w:b/>
+        </w:rPr>
+      </w:pPr>
+      <w:r>
+        <w:rPr>
+          <w:sz w:val="32"/>
+          <w:b/>
+        </w:rPr>
+        <w:t>Capítulo ${chapter.order_index || index + 1}: ${chapter.title}</w:t>
+      </w:r>
+    </w:p>
+    <w:p><w:r><w:t></w:t></w:r></w:p>`;
+
+    // Chapter content
     if (chapter.content) {
       const paragraphs = chapter.content.split('\n').filter(p => p.trim());
-      paragraphs.forEach(para => {
-        docx += `
+      paragraphs.forEach(paragraph => {
+        documentXml += `
     <w:p>
-      <w:r><w:t>${para}</w:t></w:r>
+      <w:r>
+        <w:t>${paragraph.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</w:t>
+      </w:r>
     </w:p>`;
       });
     }
+    
+    documentXml += `<w:p><w:r><w:t></w:t></w:r></w:p>`;
   });
-  
-  docx += `
+
+  documentXml += `
+    <w:sectPr>
+      <w:pgSz w:w="12240" w:h="15840"/>
+      <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/>
+    </w:sectPr>
   </w:body>
 </w:document>`;
-  
-  return docx;
+
+  zip.addFile("word/document.xml", documentXml);
+
+  return await zip.generateAsync({ type: "uint8array" });
 };
 
 // HTML generator
@@ -253,23 +376,23 @@ serve(async (req) => {
     }
 
     // Generate content based on format
-    let content: string;
+    let content: string | Uint8Array;
     let mimeType: string;
     let fileExtension: string;
 
     switch (format) {
       case 'pdf':
         content = generatePDF(book, chapters || [], options);
-        mimeType = 'application/pdf';
-        fileExtension = 'pdf';
+        mimeType = 'text/html'; // Will be converted to PDF on client side
+        fileExtension = 'html'; // Temporary until we have proper PDF generation
         break;
       case 'epub':
-        content = generateEPUB(book, chapters || []);
+        content = await generateEPUB(book, chapters || []);
         mimeType = 'application/epub+zip';
         fileExtension = 'epub';
         break;
       case 'docx':
-        content = generateDOCX(book, chapters || []);
+        content = await generateDOCX(book, chapters || []);
         mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
         fileExtension = 'docx';
         break;
@@ -316,35 +439,24 @@ serve(async (req) => {
       ...corsHeaders,
       'Content-Type': mimeType,
       'Content-Disposition': `attachment; filename="${filename}"`,
-      'Content-Length': content.length.toString(),
     };
 
     // For text formats (HTML, JSON), return as text
-    if (format === 'html' || format === 'json') {
+    if (format === 'html' || format === 'json' || format === 'pdf') {
+      headers['Content-Length'] = (content as string).length.toString();
+      return new Response(content as string, { headers });
+    }
+    
+    // For binary formats (DOCX, EPUB), return as binary
+    if (content instanceof Uint8Array) {
+      headers['Content-Length'] = content.length.toString();
       return new Response(content, { headers });
     }
     
-    // For binary formats (PDF, DOCX, EPUB), we need proper encoding
-    let responseBody: Uint8Array;
-    
-    if (format === 'pdf') {
-      // For PDF, we need to convert HTML to PDF using a simple approach
-      // In production, you'd use a proper PDF library
-      responseBody = new TextEncoder().encode(content);
-      headers['Content-Type'] = 'text/html'; // Return as HTML for now
-    } else if (format === 'docx') {
-      // For DOCX, create a proper ZIP structure
-      responseBody = new TextEncoder().encode(content);
-      headers['Content-Type'] = 'application/xml'; // Return as XML for now
-    } else if (format === 'epub') {
-      // For EPUB, create a proper ZIP structure
-      responseBody = new TextEncoder().encode(content);
-      headers['Content-Type'] = 'application/xml'; // Return as XML for now  
-    } else {
-      responseBody = new TextEncoder().encode(content);
-    }
-
-    return new Response(responseBody, { headers });
+    // Fallback for other formats
+    const textContent = content as string;
+    headers['Content-Length'] = textContent.length.toString();
+    return new Response(textContent, { headers });
 
   } catch (error) {
     console.error('Error in export-book function:', error)
