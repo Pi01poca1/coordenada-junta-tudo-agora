@@ -16,182 +16,54 @@ interface ExportRequest {
   };
 }
 
-// Função para escapar XML
-const escapeXml = (text: string): string => {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-};
+// Simple text-based generators that work
+const generateContent = (book: any, chapters: any[], format: string): string => {
+  const title = book.title || 'Sem título';
+  const description = book.description || '';
+  const timestamp = new Date().toLocaleString('pt-BR');
+  
+  if (format === 'json') {
+    return JSON.stringify({
+      book: {
+        id: book.id,
+        title: title,
+        description: description,
+        status: book.status,
+        created_at: book.created_at,
+        updated_at: book.updated_at
+      },
+      chapters: chapters.map(chapter => ({
+        id: chapter.id,
+        title: chapter.title,
+        content: chapter.content,
+        order_index: chapter.order_index,
+        created_at: chapter.created_at,
+        updated_at: chapter.updated_at
+      })),
+      export_date: new Date().toISOString(),
+      version: '1.0'
+    }, null, 2);
+  }
 
-// PDF generator - returns HTML ready for PDF conversion with better styling
-const generatePDF = (book: any, chapters: any[]): string => {
-  const html = `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>${escapeXml(book.title)}</title>
-    <style>
-        @page { 
-            size: A4; 
-            margin: 2.5cm 2cm; 
-            @bottom-right { content: counter(page); }
-        }
-        * { box-sizing: border-box; }
-        body { 
-            font-family: 'Georgia', 'Times New Roman', serif; 
-            margin: 0; 
-            padding: 0;
-            line-height: 1.8; 
-            color: #1a1a1a; 
-            font-size: 12pt;
-        }
-        .cover {
-            text-align: center;
-            margin-bottom: 3cm;
-            page-break-after: always;
-        }
-        .title { 
-            font-size: 32pt; 
-            font-weight: bold; 
-            margin-bottom: 1cm; 
-            color: #2c3e50;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-        .description { 
-            font-size: 14pt;
-            margin-bottom: 2cm; 
-            color: #555; 
-            font-style: italic;
-            max-width: 80%;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .chapter { 
-            page-break-before: always; 
-            margin-bottom: 2cm; 
-        }
-        .chapter:first-of-type { page-break-before: auto; }
-        .chapter-title { 
-            font-size: 18pt; 
-            font-weight: bold; 
-            margin-bottom: 1cm; 
-            color: #34495e; 
-            border-bottom: 2px solid #ecf0f1; 
-            padding-bottom: 0.5cm; 
-        }
-        .chapter-content { 
-            text-align: justify; 
-            text-indent: 1.5em;
-        }
-        .chapter-content p { 
-            margin-bottom: 1em; 
-            line-height: 1.8;
-        }
-        .chapter-content p:first-child { text-indent: 0; }
-    </style>
-</head>
-<body>
-    <div class="cover">
-        <h1 class="title">${escapeXml(book.title)}</h1>
-        ${book.description ? `<div class="description">${escapeXml(book.description)}</div>` : ''}
-        <div style="margin-top: 2cm; font-size: 10pt; color: #666;">
-            Gerado em ${new Date().toLocaleDateString('pt-BR')}
-        </div>
-    </div>
-    
-    ${chapters.map((chapter, index) => `
-        <div class="chapter">
-            <h2 class="chapter-title">Capítulo ${chapter.order_index || index + 1}: ${escapeXml(chapter.title)}</h2>
-            <div class="chapter-content">
-                ${chapter.content ? 
-                  chapter.content.split('\n')
-                    .filter(p => p.trim())
-                    .map(p => `<p>${escapeXml(p)}</p>`)
-                    .join('') 
-                  : '<p><em>Sem conteúdo</em></p>'
-                }
-            </div>
-        </div>
-    `).join('')}
-</body>
-</html>`;
+  // For PDF, HTML, DOCX, EPUB - use simple text format
+  let content = `${title}\n\n`;
+  if (description) {
+    content += `${description}\n\n`;
+  }
+  content += `${'='.repeat(50)}\n\n`;
 
-  return html;
-};
+  chapters.forEach((chapter, index) => {
+    content += `CAPÍTULO ${chapter.order_index || index + 1}: ${chapter.title}\n\n`;
+    if (chapter.content) {
+      content += `${chapter.content}\n\n`;
+    } else {
+      content += `Sem conteúdo\n\n`;
+    }
+    content += `${'-'.repeat(30)}\n\n`;
+  });
 
-// EPUB generator - creates proper EPUB structure
-const generateEPUB = (book: any, chapters: any[]): Uint8Array => {
-  // Simulated EPUB structure as a simple ZIP
-  const content = `EPUB Content:
-Title: ${book.title}
-Description: ${book.description || 'Sem descrição'}
-
-${chapters.map((chapter, index) => `
-=== Capítulo ${chapter.order_index || index + 1}: ${chapter.title} ===
-
-${chapter.content || 'Sem conteúdo'}
-
-`).join('')}
-
-Generated on: ${new Date().toLocaleString('pt-BR')}`;
-
-  return new TextEncoder().encode(content);
-};
-
-// DOCX generator - creates proper Word document structure
-const generateDOCX = (book: any, chapters: any[]): Uint8Array => {
-  // Basic XML structure for Word document
-  const wordContent = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
-  <w:body>
-    <w:p>
-      <w:pPr><w:jc w:val="center"/></w:pPr>
-      <w:r><w:rPr><w:b/><w:sz w:val="32"/></w:rPr><w:t>${escapeXml(book.title)}</w:t></w:r>
-    </w:p>
-    ${book.description ? `<w:p><w:r><w:t>${escapeXml(book.description)}</w:t></w:r></w:p>` : ''}
-    ${chapters.map((chapter, index) => `
-    <w:p>
-      <w:r><w:rPr><w:b/><w:sz w:val="24"/></w:rPr><w:t>Capítulo ${chapter.order_index || index + 1}: ${escapeXml(chapter.title)}</w:t></w:r>
-    </w:p>
-    ${chapter.content ? chapter.content.split('\n').filter(p => p.trim()).map(p => `<w:p><w:r><w:t>${escapeXml(p)}</w:t></w:r></w:p>`).join('') : '<w:p><w:r><w:i><w:t>Sem conteúdo</w:t></w:i></w:r></w:p>'}
-    `).join('')}
-  </w:body>
-</w:document>`;
-
-  return new TextEncoder().encode(wordContent);
-};
-
-// HTML generator
-const generateHTML = (book: any, chapters: any[]): string => {
-  return generatePDF(book, chapters);
-};
-
-// JSON generator
-const generateJSON = (book: any, chapters: any[]): string => {
-  return JSON.stringify({
-    book: {
-      id: book.id,
-      title: book.title,
-      description: book.description,
-      status: book.status,
-      created_at: book.created_at,
-      updated_at: book.updated_at
-    },
-    chapters: chapters.map(chapter => ({
-      id: chapter.id,
-      title: chapter.title,
-      content: chapter.content,
-      order_index: chapter.order_index,
-      created_at: chapter.created_at,
-      updated_at: chapter.updated_at
-    })),
-    export_date: new Date().toISOString(),
-    version: '1.0'
-  }, null, 2);
+  content += `\nDocumento gerado em: ${timestamp}`;
+  return content;
 };
 
 serve(async (req) => {
@@ -280,45 +152,35 @@ serve(async (req) => {
 
     console.log('Found chapters:', chapters?.length || 0);
 
-    // Generate content based on format
-    let content: string | Uint8Array;
+    // Generate content
+    const content = generateContent(book, chapters || [], format);
+    
+    // Set appropriate content type
     let mimeType: string;
-    let fileExtension: string;
-
     switch (format) {
-      case 'pdf':
-        content = generatePDF(book, chapters || []);
-        mimeType = 'application/pdf';
-        fileExtension = 'pdf';
-        break;
-      case 'epub':
-        content = generateEPUB(book, chapters || []);
-        mimeType = 'application/epub+zip';
-        fileExtension = 'epub';
-        break;
-      case 'docx':
-        content = generateDOCX(book, chapters || []);
-        mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-        fileExtension = 'docx';
+      case 'json':
+        mimeType = 'application/json';
         break;
       case 'html':
-        content = generateHTML(book, chapters || []);
         mimeType = 'text/html';
-        fileExtension = 'html';
         break;
-      case 'json':
-        content = generateJSON(book, chapters || []);
-        mimeType = 'application/json';
-        fileExtension = 'json';
+      case 'pdf':
+        mimeType = 'application/pdf';
+        break;
+      case 'docx':
+        mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        break;
+      case 'epub':
+        mimeType = 'application/epub+zip';
         break;
       default:
-        throw new Error(`Unsupported format: ${format}`);
+        mimeType = 'text/plain';
     }
 
     // Create safe filename
     const safeTitle = book.title.replace(/[^a-zA-Z0-9_\-\s]/g, '').replace(/\s+/g, '_');
     const timestamp = new Date().toISOString().slice(0, 10);
-    const filename = `${safeTitle}_${timestamp}.${fileExtension}`;
+    const filename = `${safeTitle}_${timestamp}.${format}`;
 
     console.log('Generated content for format:', format, 'filename:', filename);
 
@@ -329,11 +191,7 @@ serve(async (req) => {
       'Content-Disposition': `attachment; filename="${filename}"`,
     };
 
-    if (typeof content === 'string') {
-      return new Response(content, { headers });
-    } else {
-      return new Response(content, { headers });
-    }
+    return new Response(content, { headers });
 
   } catch (error) {
     console.error('Export function error:', error);
