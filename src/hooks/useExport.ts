@@ -22,95 +22,67 @@ export const useExport = () => {
     setIsExporting(true);
     
     try {
-      // Call the export function and get the file directly
-      const response = await fetch('/api/export-book', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        },
-        body: JSON.stringify({
+      console.log('🔍 DEBUG: Starting export for book:', bookId, 'format:', format);
+      
+      const { data, error } = await supabase.functions.invoke('export-book', {
+        body: {
           bookId,
           format,
           options
-        })
+        }
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro na exportação');
+      console.log('🔍 DEBUG: Export function response:', { data, error });
+
+      if (error) {
+        console.error('Export function error:', error);
+        throw new Error(error.message || 'Erro na função de exportação');
       }
 
-      // Get the filename from the response headers
-      const contentDisposition = response.headers.get('Content-Disposition');
-      const filename = contentDisposition?.match(/filename="([^"]+)"/)?.[1] || 
-                      `book_export_${new Date().toISOString().slice(0, 10)}.${format}`;
-
-      // Create blob from response
-      const blob = await response.blob();
-      
-      // Create download link
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      // Clean up the blob URL
-      window.URL.revokeObjectURL(url);
-
-      toast({
-        title: "Exportação concluída!",
-        description: `Livro exportado em ${format.toUpperCase()} com sucesso`,
-      });
-
-      return url;
-    } catch (error: any) {
-      console.error('Export error:', error);
-      
-      // Fallback to the old Supabase function method
-      try {
-        const { data, error: supabaseError } = await supabase.functions.invoke('export-book', {
-          body: {
-            bookId,
-            format,
-            options
-          }
+      // The function now returns the file content directly
+      if (typeof data === 'string' || data instanceof Uint8Array) {
+        // Create blob from response
+        const blob = new Blob([data], { 
+          type: format === 'json' ? 'application/json' : 
+                format === 'html' ? 'text/html' :
+                format === 'pdf' ? 'text/html' : // PDF returns HTML for conversion
+                'application/octet-stream'
         });
-
-        if (supabaseError) throw supabaseError;
-
-        if (!data.success) {
-          throw new Error(data.error || 'Erro na exportação');
-        }
-
-        // Download the file using the old method
-        const { downloadUrl, filename } = data.data;
         
+        // Create filename
+        const timestamp = new Date().toISOString().slice(0, 10);
+        const filename = `book_export_${timestamp}.${format}`;
+        
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.href = downloadUrl;
+        link.href = url;
         link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        
+        // Clean up the blob URL
+        window.URL.revokeObjectURL(url);
 
         toast({
           title: "Exportação concluída!",
           description: `Livro exportado em ${format.toUpperCase()} com sucesso`,
         });
 
-        return downloadUrl;
-      } catch (fallbackError: any) {
-        console.error('Fallback export error:', fallbackError);
-        toast({
-          title: "Erro na exportação",
-          description: fallbackError.message || "Tente novamente",
-          variant: "destructive"
-        });
-        return null;
+        return url;
+      } else {
+        throw new Error('Formato de resposta inválido da função de exportação');
       }
+      
+    } catch (error: any) {
+      console.error('Export error:', error);
+      toast({
+        title: "Erro na exportação",
+        description: error.message || "Tente novamente",
+        variant: "destructive"
+      });
+      return null;
     } finally {
       setIsExporting(false);
     }
