@@ -26,7 +26,7 @@ const escapeXml = (text: string): string => {
     .replace(/'/g, '&apos;');
 };
 
-// PDF generator - returns HTML ready for PDF conversion
+// PDF generator - returns HTML ready for PDF conversion with better styling
 const generatePDF = (book: any, chapters: any[]): string => {
   const html = `<!DOCTYPE html>
 <html>
@@ -34,21 +34,74 @@ const generatePDF = (book: any, chapters: any[]): string => {
     <meta charset="UTF-8">
     <title>${escapeXml(book.title)}</title>
     <style>
-        @page { size: A4; margin: 2cm; }
-        body { font-family: Georgia, serif; margin: 0; line-height: 1.6; color: #333; }
-        .title { font-size: 28px; font-weight: bold; text-align: center; margin-bottom: 20px; color: #2c3e50; }
-        .description { text-align: center; margin-bottom: 40px; color: #7f8c8d; font-style: italic; }
-        .chapter { page-break-before: always; margin-bottom: 40px; }
-        .chapter:first-child { page-break-before: auto; }
-        .chapter-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; color: #34495e; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; }
-        .chapter-content { text-align: justify; }
-        p { margin-bottom: 16px; text-indent: 1.5em; }
-        .page-number { position: fixed; bottom: 20px; right: 20px; font-size: 12px; }
+        @page { 
+            size: A4; 
+            margin: 2.5cm 2cm; 
+            @bottom-right { content: counter(page); }
+        }
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Georgia', 'Times New Roman', serif; 
+            margin: 0; 
+            padding: 0;
+            line-height: 1.8; 
+            color: #1a1a1a; 
+            font-size: 12pt;
+        }
+        .cover {
+            text-align: center;
+            margin-bottom: 3cm;
+            page-break-after: always;
+        }
+        .title { 
+            font-size: 32pt; 
+            font-weight: bold; 
+            margin-bottom: 1cm; 
+            color: #2c3e50;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .description { 
+            font-size: 14pt;
+            margin-bottom: 2cm; 
+            color: #555; 
+            font-style: italic;
+            max-width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .chapter { 
+            page-break-before: always; 
+            margin-bottom: 2cm; 
+        }
+        .chapter:first-of-type { page-break-before: auto; }
+        .chapter-title { 
+            font-size: 18pt; 
+            font-weight: bold; 
+            margin-bottom: 1cm; 
+            color: #34495e; 
+            border-bottom: 2px solid #ecf0f1; 
+            padding-bottom: 0.5cm; 
+        }
+        .chapter-content { 
+            text-align: justify; 
+            text-indent: 1.5em;
+        }
+        .chapter-content p { 
+            margin-bottom: 1em; 
+            line-height: 1.8;
+        }
+        .chapter-content p:first-child { text-indent: 0; }
     </style>
 </head>
 <body>
-    <div class="title">${escapeXml(book.title)}</div>
-    ${book.description ? `<div class="description">${escapeXml(book.description)}</div>` : ''}
+    <div class="cover">
+        <h1 class="title">${escapeXml(book.title)}</h1>
+        ${book.description ? `<div class="description">${escapeXml(book.description)}</div>` : ''}
+        <div style="margin-top: 2cm; font-size: 10pt; color: #666;">
+            Gerado em ${new Date().toLocaleDateString('pt-BR')}
+        </div>
+    </div>
     
     ${chapters.map((chapter, index) => `
         <div class="chapter">
@@ -89,22 +142,27 @@ Generated on: ${new Date().toLocaleString('pt-BR')}`;
   return new TextEncoder().encode(content);
 };
 
-// DOCX generator - creates simple Word-compatible document
+// DOCX generator - creates proper Word document structure
 const generateDOCX = (book: any, chapters: any[]): Uint8Array => {
-  const content = `${book.title}
+  // Basic XML structure for Word document
+  const wordContent = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>
+    <w:p>
+      <w:pPr><w:jc w:val="center"/></w:pPr>
+      <w:r><w:rPr><w:b/><w:sz w:val="32"/></w:rPr><w:t>${escapeXml(book.title)}</w:t></w:r>
+    </w:p>
+    ${book.description ? `<w:p><w:r><w:t>${escapeXml(book.description)}</w:t></w:r></w:p>` : ''}
+    ${chapters.map((chapter, index) => `
+    <w:p>
+      <w:r><w:rPr><w:b/><w:sz w:val="24"/></w:rPr><w:t>Capítulo ${chapter.order_index || index + 1}: ${escapeXml(chapter.title)}</w:t></w:r>
+    </w:p>
+    ${chapter.content ? chapter.content.split('\n').filter(p => p.trim()).map(p => `<w:p><w:r><w:t>${escapeXml(p)}</w:t></w:r></w:p>`).join('') : '<w:p><w:r><w:i><w:t>Sem conteúdo</w:t></w:i></w:r></w:p>'}
+    `).join('')}
+  </w:body>
+</w:document>`;
 
-${book.description ? book.description + '\n\n' : ''}
-
-${chapters.map((chapter, index) => `
-Capítulo ${chapter.order_index || index + 1}: ${chapter.title}
-
-${chapter.content || 'Sem conteúdo'}
-
-`).join('')}
-
-Documento gerado em: ${new Date().toLocaleString('pt-BR')}`;
-
-  return new TextEncoder().encode(content);
+  return new TextEncoder().encode(wordContent);
 };
 
 // HTML generator
@@ -230,8 +288,8 @@ serve(async (req) => {
     switch (format) {
       case 'pdf':
         content = generatePDF(book, chapters || []);
-        mimeType = 'text/html';
-        fileExtension = 'html';
+        mimeType = 'application/pdf';
+        fileExtension = 'pdf';
         break;
       case 'epub':
         content = generateEPUB(book, chapters || []);

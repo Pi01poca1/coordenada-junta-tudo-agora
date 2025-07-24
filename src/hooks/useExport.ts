@@ -41,15 +41,32 @@ export const useExport = () => {
 
       // The function now returns the file content directly
       if (typeof data === 'string' || data instanceof Uint8Array) {
-        // Create blob from response
-        const blob = new Blob([data], { 
-          type: format === 'json' ? 'application/json' : 
-                format === 'html' ? 'text/html' :
-                format === 'pdf' ? 'text/html' : // PDF returns HTML for conversion
-                'application/octet-stream'
-        });
+        // Determine proper MIME type and create blob
+        let mimeType: string;
+        switch (format) {
+          case 'pdf':
+            mimeType = 'application/pdf';
+            break;
+          case 'docx':
+            mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+            break;
+          case 'epub':
+            mimeType = 'application/epub+zip';
+            break;
+          case 'html':
+            mimeType = 'text/html';
+            break;
+          case 'json':
+            mimeType = 'application/json';
+            break;
+          default:
+            mimeType = 'application/octet-stream';
+        }
         
-        // Create filename
+        // Create blob from response with proper MIME type
+        const blob = new Blob([data], { type: mimeType });
+        
+        // Create filename with timestamp
         const timestamp = new Date().toISOString().slice(0, 10);
         const filename = `book_export_${timestamp}.${format}`;
         
@@ -63,7 +80,7 @@ export const useExport = () => {
         document.body.removeChild(link);
         
         // Clean up the blob URL
-        window.URL.revokeObjectURL(url);
+        setTimeout(() => window.URL.revokeObjectURL(url), 100);
 
         toast({
           title: "Exportação concluída!",
