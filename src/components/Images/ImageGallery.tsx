@@ -1,194 +1,274 @@
-import React, { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { deleteImage } from '@/lib/supabaseStorage';
-import { supabase } from '@/integrations/supabase/client';
+import { Search, Copy, Download, Trash2, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Trash2, Eye } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Image {
   id: string;
-  storage_path: string;
-  width: number | null;
-  height: number | null;
-  alt_text: string | null;
+  filename: string;
+  url: string;
+  alt_text: string;
+  file_size: number;
+  mime_type: string;
   created_at: string;
+  book_id: string | null;
+  chapter_id: string | null;
 }
 
 interface ImageGalleryProps {
-  chapterId: string;
+  bookId?: string;
+  chapterId?: string;
+  onSelectImage?: (imageUrl: string, imageId: string) => void;
+  selectable?: boolean;
 }
 
-export const ImageGallery: React.FC<ImageGalleryProps> = ({ chapterId }) => {
+export const ImageGallery = ({ bookId, chapterId, onSelectImage, selectable = false }: ImageGalleryProps) => {
   const [images, setImages] = useState<Image[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedImage, setSelectedImage] = useState<Image | null>(null);
-  const [deleting, setDeleting] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchImages();
-  }, [chapterId]);
+    if (user) {
+      fetchImages();
+    }
+  }, [user, bookId, chapterId]);
 
   const fetchImages = async () => {
     if (!user) return;
 
     try {
-    const { data, error } = await supabase
-      .from('images')
-      .select('*')
-      .eq('chapter_id', chapterId)
-      .order('created_at', { ascending: false });
+      let query = supabase
+        .from('images')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      // Filtrar por contexto se especificado
+      if (chapterId) {
+        query = query.eq('chapter_id', chapterId);
+      } else if (bookId) {
+        query = query.eq('book_id', bookId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setImages(data || []);
     } catch (error) {
-      console.error('Error fetching images:', error);
+      console.error('Erro ao buscar imagens:', error);
       toast({
-        title: "Error",
-        description: "Failed to load images",
-        variant: "destructive",
+        title: "Erro",
+        description: "Falha ao carregar galeria de imagens",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (image: Image) => {
-    if (!user) return;
+  const filteredImages = images.filter(image =>
+    image.filename.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    image.alt_text.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-    setDeleting(image.id);
+  const copyImageUrl = (url: string) => {
+    navigator.clipboard.writeText(url);
+    toast({
+      title: "URL copiada!",
+      description: "URL da imagem copiada para a área de transferência"
+    });
+  };
+
+  const downloadImage = async (url: string, filename: string) => {
     try {
-      // Extract path from storage_path URL
-      const urlParts = image.storage_path.split('/');
-      const pathIndex = urlParts.findIndex(part => part === 'chapter-images');
-      const storagePath = urlParts.slice(pathIndex + 1).join('/');
-
-      // Delete from storage
-      await deleteImage(storagePath);
-
-      // Delete from database
-      const { error: dbError } = await supabase
-        .from('images')
-        .delete()
-        .eq('id', image.id);
-
-      if (dbError) {
-        if (dbError.message.includes('row-level security') || dbError.message.includes('policy')) {
-          toast({
-            title: "Not allowed",
-            description: "You don't have permission to delete this image",
-            variant: "destructive",
-          });
-        } else {
-          throw dbError;
-        }
-        return;
-      }
-
-      setImages(images.filter(img => img.id !== image.id));
-      setSelectedImage(null);
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const downloadUrl = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      link.click();
+      
+      URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Erro no download:', error);
       toast({
-        title: "Success",
-        description: "Image deleted successfully",
+        title: "Erro",
+        description: "Falha ao baixar imagem",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteImage = async (imageId: string, storagePath: string) => {
+    try {
+      // Remover do storage
+      const pathParts = storagePath.split('/');
+      const actualPath = pathParts.slice(1).join('/'); // Remove user_id prefix
+      await supabase.storage.from('images').remove([actualPath]);
+      
+      // Remover do banco
+      await supabase.from('images').delete().eq('id', imageId);
+
+      // Atualizar lista local
+      setImages(prev => prev.filter(img => img.id !== imageId));
+
+      toast({
+        title: "Imagem removida",
+        description: "Imagem deletada com sucesso"
       });
     } catch (error) {
-      console.error('Delete error:', error);
+      console.error('Erro ao remover imagem:', error);
       toast({
-        title: "Error",
-        description: "Failed to delete image",
-        variant: "destructive",
+        title: "Erro",
+        description: "Falha ao remover imagem",
+        variant: "destructive"
       });
-    } finally {
-      setDeleting(null);
     }
+  };
+
+  const handleSelectImage = (image: Image) => {
+    if (selectable && onSelectImage) {
+      setSelectedImageId(image.id);
+      onSelectImage(image.url, image.id);
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-32">
-        <div className="text-muted-foreground">Loading images...</div>
-      </div>
-    );
-  }
-
-  if (images.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <div className="text-muted-foreground">No images uploaded yet</div>
-      </div>
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-center text-muted-foreground">
+            Carregando galeria de imagens...
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <>
-      <div className="grid grid-cols-3 gap-4">
-        {images.map((image) => (
-          <div key={image.id} className="group relative aspect-square">
-            <img
-              src={image.storage_path}
-              alt={image.alt_text || 'Chapter image'}
-              className="w-full h-full object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => setSelectedImage(image)}
-            />
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-              <div className="flex space-x-2">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => setSelectedImage(image)}
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => handleDelete(image)}
-                  disabled={deleting === image.id}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <ImageIcon className="h-5 w-5" />
+            <span>Galeria de Imagens</span>
+            <Badge variant="secondary">{filteredImages.length}</Badge>
           </div>
-        ))}
-      </div>
+        </CardTitle>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar imagens..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </CardHeader>
+      <CardContent>
+        {filteredImages.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            {searchTerm ? 'Nenhuma imagem encontrada para a busca' : 'Nenhuma imagem na galeria'}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {filteredImages.map((image) => (
+              <div 
+                key={image.id} 
+                className={`group relative border rounded-lg overflow-hidden ${
+                  selectable && selectedImageId === image.id 
+                    ? 'ring-2 ring-primary' 
+                    : ''
+                } ${selectable ? 'cursor-pointer hover:ring-1 hover:ring-primary' : ''}`}
+                onClick={() => handleSelectImage(image)}
+              >
+                <div className="aspect-square">
+                  <img
+                    src={image.url}
+                    alt={image.alt_text}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+                
+                {/* Overlay com ações */}
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200">
+                  <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex space-x-1">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          copyImageUrl(image.url);
+                        }}
+                        className="flex-1"
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          downloadImage(image.url, image.filename);
+                        }}
+                        className="flex-1"
+                      >
+                        <Download className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteImage(image.id, image.url);
+                        }}
+                        className="flex-1"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
 
-      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>
-              {selectedImage?.alt_text || 'Chapter Image'}
-            </DialogTitle>
-          </DialogHeader>
-          {selectedImage && (
-            <div className="space-y-4">
-              <img
-                src={selectedImage.storage_path}
-                alt={selectedImage.alt_text || 'Chapter image'}
-                className="w-full max-h-96 object-contain rounded-lg"
-              />
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">
-                  {selectedImage.width && selectedImage.height && (
-                    <span>{selectedImage.width} × {selectedImage.height}px</span>
+                {/* Informações da imagem */}
+                <div className="p-2 bg-background">
+                  <p className="text-xs font-medium truncate" title={image.filename}>
+                    {image.filename}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatFileSize(image.file_size)}
+                  </p>
+                  {image.alt_text && (
+                    <p className="text-xs text-muted-foreground truncate" title={image.alt_text}>
+                      {image.alt_text}
+                    </p>
                   )}
                 </div>
-                <Button
-                  variant="destructive"
-                  onClick={() => handleDelete(selectedImage)}
-                  disabled={deleting === selectedImage.id}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
-                </Button>
               </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };

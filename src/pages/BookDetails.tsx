@@ -12,6 +12,8 @@ import { ArrowLeft, Edit, Calendar, Clock } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ExportPanel } from '@/components/Export/ExportPanel';
 import { ExportTest } from '@/components/Export/ExportTest';
+import { ImageUpload } from '@/components/Images/ImageUpload';
+import { ImageGallery } from '@/components/Images/ImageGallery';
 
 interface Book {
   id: string;
@@ -165,6 +167,12 @@ const BookDetails = () => {
 
             {/* Export Test Component (for debugging) */}
             <ExportTest bookId={book.id} />
+
+            {/* Image Upload */}
+            <ImageUpload bookId={book.id} />
+
+            {/* Image Gallery */}
+            <ImageGallery bookId={book.id} />
           </div>
 
           <div className="lg:col-span-3">
