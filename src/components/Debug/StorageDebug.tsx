@@ -40,17 +40,17 @@ export default function StorageDebug({ bookId }: StorageDebugProps) {
       });
 
       // 2. Verificar bucket
-      addResult('bucket', 'warning', 'Verificando bucket chapter-images...');
+      addResult('bucket', 'warning', 'Verificando bucket book-images...');
       const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
       
       if (bucketError) {
         addResult('bucket', 'error', 'Erro ao listar buckets', bucketError);
       } else {
-        const chapterImagesBucket = buckets.find(b => b.id === 'chapter-images');
-        if (chapterImagesBucket) {
-          addResult('bucket', 'success', 'Bucket chapter-images encontrado', chapterImagesBucket);
+        const bookImagesBucket = buckets.find(b => b.id === 'book-images');
+        if (bookImagesBucket) {
+          addResult('bucket', 'success', 'Bucket book-images encontrado', bookImagesBucket);
         } else {
-          addResult('bucket', 'error', 'Bucket chapter-images não encontrado', { available_buckets: buckets.map(b => b.id) });
+          addResult('bucket', 'error', 'Bucket book-images não encontrado', { available_buckets: buckets.map(b => b.id) });
         }
       }
 
@@ -58,7 +58,7 @@ export default function StorageDebug({ bookId }: StorageDebugProps) {
       addResult('storage_list', 'warning', 'Testando listagem de arquivos...');
       const userPath = `${user.id}/`;
       const { data: files, error: listError } = await supabase.storage
-        .from('chapter-images')
+        .from('book-images')
         .list(userPath);
 
       if (listError) {
@@ -86,7 +86,7 @@ export default function StorageDebug({ bookId }: StorageDebugProps) {
       const testPath = `${user.id}/test-${Date.now()}.txt`;
       
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('chapter-images')
+        .from('book-images')
         .upload(testPath, testBlob);
 
       if (uploadError) {
@@ -95,7 +95,7 @@ export default function StorageDebug({ bookId }: StorageDebugProps) {
         addResult('upload_test', 'success', 'Teste de upload bem-sucedido', uploadData);
         
         // Limpar arquivo de teste
-        await supabase.storage.from('chapter-images').remove([testPath]);
+        await supabase.storage.from('book-images').remove([testPath]);
       }
 
       // 6. Verificar se bookId foi fornecido e existe

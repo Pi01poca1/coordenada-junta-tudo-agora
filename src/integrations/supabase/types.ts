@@ -14,7 +14,305 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ai_sessions: {
+        Row: {
+          book_id: string | null
+          chapter_id: string | null
+          created_at: string | null
+          id: string
+          input_prompt: string | null
+          output_content: string | null
+          provider: string | null
+          user_id: string
+        }
+        Insert: {
+          book_id?: string | null
+          chapter_id?: string | null
+          created_at?: string | null
+          id?: string
+          input_prompt?: string | null
+          output_content?: string | null
+          provider?: string | null
+          user_id: string
+        }
+        Update: {
+          book_id?: string | null
+          chapter_id?: string | null
+          created_at?: string | null
+          id?: string
+          input_prompt?: string | null
+          output_content?: string | null
+          provider?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_sessions_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_sessions_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      book_covers: {
+        Row: {
+          book_id: string
+          created_at: string | null
+          id: string
+          image_id: string
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          created_at?: string | null
+          id?: string
+          image_id: string
+          user_id: string
+        }
+        Update: {
+          book_id?: string
+          created_at?: string | null
+          id?: string
+          image_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_covers_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "images"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      books: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          owner_id: string
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          owner_id: string
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          owner_id?: string
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      chapters: {
+        Row: {
+          author_id: string
+          book_id: string
+          content: string | null
+          created_at: string | null
+          id: string
+          order_index: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          author_id: string
+          book_id: string
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          order_index?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          author_id?: string
+          book_id?: string
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          order_index?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chapters_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      images: {
+        Row: {
+          alt_text: string | null
+          book_id: string | null
+          chapter_id: string
+          created_at: string | null
+          file_size: number | null
+          filename: string | null
+          height: number | null
+          id: string
+          layout: string | null
+          mime_type: string | null
+          position_x: number | null
+          position_y: number | null
+          scale: number | null
+          storage_path: string
+          text_wrap: string | null
+          url: string | null
+          user_id: string | null
+          width: number | null
+          z_index: number | null
+        }
+        Insert: {
+          alt_text?: string | null
+          book_id?: string | null
+          chapter_id: string
+          created_at?: string | null
+          file_size?: number | null
+          filename?: string | null
+          height?: number | null
+          id?: string
+          layout?: string | null
+          mime_type?: string | null
+          position_x?: number | null
+          position_y?: number | null
+          scale?: number | null
+          storage_path: string
+          text_wrap?: string | null
+          url?: string | null
+          user_id?: string | null
+          width?: number | null
+          z_index?: number | null
+        }
+        Update: {
+          alt_text?: string | null
+          book_id?: string | null
+          chapter_id?: string
+          created_at?: string | null
+          file_size?: number | null
+          filename?: string | null
+          height?: number | null
+          id?: string
+          layout?: string | null
+          mime_type?: string | null
+          position_x?: number | null
+          position_y?: number | null
+          scale?: number | null
+          storage_path?: string
+          text_wrap?: string | null
+          url?: string | null
+          user_id?: string | null
+          width?: number | null
+          z_index?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "images_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          role: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          role?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          role?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      table_of_contents: {
+        Row: {
+          auto_generated: boolean | null
+          book_id: string
+          chapter_id: string
+          created_at: string | null
+          id: string
+          level: number | null
+          page_number: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          auto_generated?: boolean | null
+          book_id: string
+          chapter_id: string
+          created_at?: string | null
+          id?: string
+          level?: number | null
+          page_number?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          auto_generated?: boolean | null
+          book_id?: string
+          chapter_id?: string
+          created_at?: string | null
+          id?: string
+          level?: number | null
+          page_number?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "table_of_contents_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
