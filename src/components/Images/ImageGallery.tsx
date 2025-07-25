@@ -114,7 +114,7 @@ export const ImageGallery = ({ bookId, chapterId, onSelectImage, selectable = fa
       // Remover do storage
       const pathParts = storagePath.split('/');
       const actualPath = pathParts.slice(1).join('/'); // Remove user_id prefix
-      await supabase.storage.from('images').remove([actualPath]);
+      await supabase.storage.from('chapter-images').remove([actualPath]);
       
       // Remover do banco
       await supabase.from('images').delete().eq('id', imageId);
