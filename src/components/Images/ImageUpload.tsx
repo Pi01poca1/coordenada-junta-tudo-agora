@@ -73,7 +73,7 @@ export const ImageUpload = ({ bookId, chapterId, onImageUploaded }: ImageUploadP
 
         // Upload para Supabase Storage
         const { data: storageData, error: storageError } = await supabase.storage
-          .from('images')
+          .from('chapter-images')
           .upload(fileName, file);
 
         if (storageError) {
@@ -88,7 +88,7 @@ export const ImageUpload = ({ bookId, chapterId, onImageUploaded }: ImageUploadP
 
         // Obter URL pública
         const { data: urlData } = supabase.storage
-          .from('images')
+          .from('chapter-images')
           .getPublicUrl(fileName);
 
         // Salvar metadados no banco
@@ -111,7 +111,7 @@ export const ImageUpload = ({ bookId, chapterId, onImageUploaded }: ImageUploadP
         if (dbError) {
           console.error('Erro ao salvar metadados:', dbError);
           // Limpar arquivo do storage se falhou salvar no banco
-          await supabase.storage.from('images').remove([fileName]);
+          await supabase.storage.from('chapter-images').remove([fileName]);
           continue;
         }
 
@@ -161,7 +161,7 @@ export const ImageUpload = ({ bookId, chapterId, onImageUploaded }: ImageUploadP
   const removeImage = async (imageId: string, storagePath: string) => {
     try {
       // Remover do storage
-      await supabase.storage.from('images').remove([storagePath]);
+      await supabase.storage.from('chapter-images').remove([storagePath]);
       
       // Remover do banco
       await supabase.from('images').delete().eq('id', imageId);
