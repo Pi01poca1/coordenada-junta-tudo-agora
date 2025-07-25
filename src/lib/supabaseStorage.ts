@@ -2,7 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const supabaseStorageClient = supabase;
 
-export const BUCKET_NAME = 'book-images';
+export const BUCKET_NAME = 'chapter-images';
 
 export const uploadImage = async (chapterId: string, file: File) => {
   const filePath = `${chapterId}/${file.name}`;

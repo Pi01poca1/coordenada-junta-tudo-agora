@@ -57,11 +57,11 @@ export const ImageUpload = ({ bookId, chapterId, onImageUploaded }: ImageUploadP
           continue;
         }
 
-        // Validar tamanho (máximo 5MB)
-        if (file.size > 5 * 1024 * 1024) {
+        // Validar tamanho (máximo 50MB)
+        if (file.size > 50 * 1024 * 1024) {
           toast({
             title: "Arquivo muito grande",
-            description: `${file.name} excede o limite de 5MB`,
+            description: `${file.name} excede o limite de 50MB`,
             variant: "destructive"
           });
           continue;
@@ -69,7 +69,10 @@ export const ImageUpload = ({ bookId, chapterId, onImageUploaded }: ImageUploadP
 
         // Gerar nome único para o arquivo
         const fileExtension = file.name.split('.').pop();
-        const fileName = `${user.id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExtension}`;
+        const timestamp = Date.now();
+        const randomString = Math.random().toString(36).substring(2);
+        const uniqueFileName = `${timestamp}_${randomString}.${fileExtension}`;
+        const fileName = `${user.id}/${chapterId || bookId}/${uniqueFileName}`;
 
         // Upload para Supabase Storage
         const { data: storageData, error: storageError } = await supabase.storage
@@ -204,7 +207,7 @@ export const ImageUpload = ({ bookId, chapterId, onImageUploaded }: ImageUploadP
             className="file:mr-4 file:py-1 file:px-4 file:rounded-md file:border-0 file:text-sm file:bg-primary file:text-primary-foreground hover:file:bg-primary/80"
           />
           <p className="text-xs text-muted-foreground">
-            Aceita JPG, PNG, GIF, WebP. Máximo 5MB por arquivo.
+            Aceita JPG, PNG, GIF, WebP. Máximo 50MB por arquivo.
           </p>
         </div>
 
