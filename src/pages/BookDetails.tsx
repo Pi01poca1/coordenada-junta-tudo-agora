@@ -14,6 +14,7 @@ import { ExportPanel } from '@/components/Export/ExportPanel';
 import { ExportTest } from '@/components/Export/ExportTest';
 import { ImageUpload } from '@/components/Images/ImageUpload';
 import { ImageGallery } from '@/components/Images/ImageGallery';
+import StorageDebug from '@/components/Debug/StorageDebug';
 
 interface Book {
   id: string;
@@ -157,6 +158,9 @@ const BookDetails = () => {
                 </Link>
               </CardContent>
             </Card>
+
+            {/* Storage Debug (temporary) */}
+            <StorageDebug bookId={book.id} />
 
             {/* Export Panel */}
             <ExportPanel 
