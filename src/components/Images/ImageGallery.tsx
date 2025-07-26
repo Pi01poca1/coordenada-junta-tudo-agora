@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Copy, Download, Trash2, Image as ImageIcon, Settings } from 'lucide-react';
+import { Search, Copy, Download, Trash2, Image as ImageIcon, Settings, Move } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ImageEditor } from './ImageEditor';
+import { ImagePositioner } from './ImagePositioner';
 
 interface Image {
   id: string;
@@ -42,6 +43,7 @@ export const ImageGallery = ({ bookId, chapterId, onSelectImage, selectable = fa
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   const [editingImage, setEditingImage] = useState<Image | null>(null);
+  const [positioningImage, setPositioningImage] = useState<Image | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -228,52 +230,70 @@ export const ImageGallery = ({ bookId, chapterId, onSelectImage, selectable = fa
                 {/* Overlay com ações */}
                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200">
                   <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="flex space-x-1">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingImage(image);
-                        }}
-                        className="flex-1"
-                        title="Editar propriedades"
-                      >
-                        <Settings className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          copyImageUrl(image.url);
-                        }}
-                        className="flex-1"
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          downloadImage(image.url, image.filename);
-                        }}
-                        className="flex-1"
-                      >
-                        <Download className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteImage(image.id, image.url);
-                        }}
-                        className="flex-1"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+                    <div className="space-y-1">
+                      <div className="flex space-x-1">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingImage(image);
+                          }}
+                          className="flex-1"
+                          title="Editar propriedades"
+                        >
+                          <Settings className="h-3 w-3" />
+                        </Button>
+                        
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPositioningImage(image);
+                          }}
+                          className="flex-1"
+                          title="Posicionar imagem"
+                        >
+                          <Move className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      
+                      <div className="flex space-x-1">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            copyImageUrl(image.url);
+                          }}
+                          className="flex-1"
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            downloadImage(image.url, image.filename);
+                          }}
+                          className="flex-1"
+                        >
+                          <Download className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteImage(image.id, image.url);
+                          }}
+                          className="flex-1"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -306,6 +326,20 @@ export const ImageGallery = ({ bookId, chapterId, onSelectImage, selectable = fa
               onUpdate={() => {
                 fetchImages();
                 setEditingImage(null);
+              }}
+            />
+          </div>
+        )}
+
+        {/* Modal de Posicionamento */}
+        {positioningImage && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <ImagePositioner
+              image={positioningImage}
+              onClose={() => setPositioningImage(null)}
+              onUpdate={() => {
+                fetchImages();
+                setPositioningImage(null);
               }}
             />
           </div>

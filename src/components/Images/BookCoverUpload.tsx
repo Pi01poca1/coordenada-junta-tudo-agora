@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Upload, BookOpen, Star } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { CoverSelector } from './CoverSelector';
 
 interface BookCoverUploadProps {
   bookId: string;
@@ -192,6 +193,19 @@ export const BookCoverUpload = ({ bookId, onCoverUploaded }: BookCoverUploadProp
           <Star className="h-4 w-4 mr-2" />
           {uploading ? 'Definindo Capa...' : 'Definir como Capa'}
         </Button>
+
+        {/* Divisor */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">ou</span>
+          </div>
+        </div>
+
+        {/* Seletor da galeria */}
+        <CoverSelector bookId={bookId} onCoverSelected={onCoverUploaded} />
 
         {/* Preview do arquivo selecionado */}
         {selectedFile && (
