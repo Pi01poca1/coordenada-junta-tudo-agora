@@ -138,16 +138,31 @@ serve(async (req) => {
     }
 
     // Converter para base64
+    console.log('📦 Convertendo para base64, tamanho do buffer:', fileBuffer.length);
     const base64 = btoa(String.fromCharCode(...fileBuffer))
-    console.log('✅ Generated file:', { size: fileBuffer.length, filename, mimeType });
+    console.log('✅ Generated file:', { 
+      size: fileBuffer.length, 
+      filename, 
+      mimeType,
+      base64Length: base64.length 
+    });
+
+    const response = {
+      success: true,
+      data: base64,
+      mimeType,
+      filename
+    };
+
+    console.log('📤 Enviando resposta com dados:', {
+      success: response.success,
+      mimeType: response.mimeType,
+      filename: response.filename,
+      dataLength: response.data.length
+    });
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        data: base64,
-        mimeType,
-        filename
-      }),
+      JSON.stringify(response),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,

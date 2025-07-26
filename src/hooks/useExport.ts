@@ -28,12 +28,14 @@ export const useExport = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Não autenticado');
 
+      console.log('🔐 Sessão obtida, fazendo chamada para edge function...');
+
       // Call the new base64-enabled edge function
       const { data, error } = await supabase.functions.invoke('export-book', {
         body: { bookId, format, options }
       });
 
-      console.log('📥 Resposta da função:', { success: data?.success, error });
+      console.log('📥 Resposta da função - Raw response:', { data, error });
 
       if (error) {
         console.error('❌ Export failed:', error);
