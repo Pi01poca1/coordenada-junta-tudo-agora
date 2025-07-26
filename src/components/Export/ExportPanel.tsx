@@ -100,8 +100,8 @@ export const ExportPanel = ({ bookId, bookTitle, totalChapters }: ExportPanelPro
 
         <Separator />
 
-        {/* Template Selection (for PDF/HTML) */}
-        {(selectedFormat === 'pdf' || selectedFormat === 'html') && (
+        {/* Template Selection */}
+        {(selectedFormat === 'pdf' || selectedFormat === 'html' || selectedFormat === 'docx') && (
           <div className="space-y-3">
             <Label>Template</Label>
             <Select value={template} onValueChange={setTemplate}>
@@ -110,8 +110,9 @@ export const ExportPanel = ({ bookId, bookTitle, totalChapters }: ExportPanelPro
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="default">Padrão - Simples e elegante</SelectItem>
-                <SelectItem value="classic">Clássico - Estilo tradicional</SelectItem>
-                <SelectItem value="modern">Moderno - Design contemporâneo</SelectItem>
+                <SelectItem value="professional">Profissional - Estrutura completa</SelectItem>
+                <SelectItem value="abnt">ABNT - Padrão acadêmico brasileiro</SelectItem>
+                <SelectItem value="academic">Acadêmico - Estilo universitário</SelectItem>
               </SelectContent>
             </Select>
           </div>

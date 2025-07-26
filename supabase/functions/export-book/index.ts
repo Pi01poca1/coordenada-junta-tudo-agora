@@ -75,17 +75,48 @@ serve(async (req) => {
     }
     console.log('📄 Found chapters:', chapters?.length || 0);
 
+    // Buscar imagem de capa
+    const { data: coverImage, error: coverError } = await supabase
+      .from('book_covers')
+      .select(`
+        *,
+        images (
+          url,
+          filename,
+          storage_path,
+          mime_type
+        )
+      `)
+      .eq('book_id', bookId)
+      .single()
+
+    if (coverError && coverError.code !== 'PGRST116') {
+      console.warn('Aviso ao buscar capa:', coverError)
+    }
+    console.log('🖼️ Cover image found:', !!coverImage);
+
+    // Buscar todas as imagens do livro para inclusão nos capítulos
+    const { data: bookImages, error: imagesError } = await supabase
+      .from('images')
+      .select('*')
+      .eq('book_id', bookId)
+
+    if (imagesError) {
+      console.warn('Aviso ao buscar imagens:', imagesError)
+    }
+    console.log('🖼️ Book images found:', bookImages?.length || 0);
+
     let fileBuffer: Uint8Array
     let mimeType: string
     let filename: string
 
     switch (format) {
       case 'pdf':
-        ({ fileBuffer, mimeType, filename } = await generatePDF(book, chapters || []))
+        ({ fileBuffer, mimeType, filename } = await generatePDF(book, chapters || [], coverImage, bookImages || [], options))
         break
       
       case 'docx':
-        ({ fileBuffer, mimeType, filename } = await generateDOCX(book, chapters || []))
+        ({ fileBuffer, mimeType, filename } = await generateDOCX(book, chapters || [], coverImage, bookImages || [], options))
         break
       
       case 'epub':
@@ -139,157 +170,486 @@ serve(async (req) => {
 // GERADORES ESPECÍFICOS
 // ===============================
 
-async function generatePDF(book: any, chapters: any[]): Promise<{fileBuffer: Uint8Array, mimeType: string, filename: string}> {
-  console.log('📄 Generating PDF...');
+async function generatePDF(book: any, chapters: any[], coverImage: any, bookImages: any[], options: any): Promise<{fileBuffer: Uint8Array, mimeType: string, filename: string}> {
+  console.log('📄 Generating professional PDF...');
   
-  const doc = new jsPDF()
-  let yPosition = 20
-
-  // Título do livro
-  doc.setFontSize(20)
-  doc.setFont(undefined, 'bold')
-  doc.text(book.title, 20, yPosition)
-  yPosition += 15
-
-  // Descrição
-  if (book.description) {
-    doc.setFontSize(12)
-    doc.setFont(undefined, 'normal')
-    const descLines = doc.splitTextToSize(book.description, 170)
-    doc.text(descLines, 20, yPosition)
-    yPosition += (descLines.length * 7) + 10
+  const isABNT = options?.template === 'abnt';
+  const doc = new jsPDF();
+  
+  // PÁGINA 1: CAPA
+  await addCoverPage(doc, book, coverImage, isABNT);
+  
+  // PÁGINA 2: CONTRA-CAPA/PREFÁCIO
+  doc.addPage();
+  addPreface(doc, book, isABNT);
+  
+  // PÁGINA 3: SUMÁRIO
+  doc.addPage();
+  const tocPageNumbers = addTableOfContents(doc, chapters, isABNT);
+  
+  // CAPÍTULOS
+  let currentPage = doc.internal.getNumberOfPages();
+  for (let i = 0; i < chapters.length; i++) {
+    const chapter = chapters[i];
+    doc.addPage();
+    currentPage++;
+    
+    // Atualizar número da página no sumário
+    tocPageNumbers[i] = currentPage;
+    
+    addChapterContent(doc, chapter, bookImages, isABNT);
   }
+  
+  // Voltar e atualizar o sumário com os números de página corretos
+  updateTableOfContents(doc, chapters, tocPageNumbers, isABNT);
 
-  // Capítulos
-  for (const chapter of chapters) {
-    // Verificar se precisa de nova página
-    if (yPosition > 250) {
-      doc.addPage()
-      yPosition = 20
-    }
-
-    // Título do capítulo
-    doc.setFontSize(16)
-    doc.setFont(undefined, 'bold')
-    doc.text(`Capítulo ${chapter.order_index || 'S/N'}: ${chapter.title}`, 20, yPosition)
-    yPosition += 15
-
-    // Conteúdo do capítulo
-    if (chapter.content) {
-      doc.setFontSize(12)
-      doc.setFont(undefined, 'normal')
-      const contentLines = doc.splitTextToSize(chapter.content, 170)
-      
-      for (let i = 0; i < contentLines.length; i++) {
-        if (yPosition > 280) {
-          doc.addPage()
-          yPosition = 20
-        }
-        doc.text(contentLines[i], 20, yPosition)
-        yPosition += 7
-      }
-    }
-    yPosition += 15
-  }
-
-  const pdfBuffer = doc.output('arraybuffer')
+  const pdfBuffer = doc.output('arraybuffer');
   return {
     fileBuffer: new Uint8Array(pdfBuffer),
     mimeType: 'application/pdf',
-    filename: `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
+    filename: `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}_${isABNT ? 'ABNT' : 'profissional'}.pdf`
+  };
+}
+
+async function addCoverPage(doc: any, book: any, coverImage: any, isABNT: boolean) {
+  const pageWidth = doc.internal.pageSize.width;
+  const pageHeight = doc.internal.pageSize.height;
+  
+  if (coverImage?.images?.url) {
+    try {
+      // Tentar carregar e adicionar a imagem de capa
+      const response = await fetch(coverImage.images.url);
+      const imageBlob = await response.blob();
+      const base64 = await blobToBase64(imageBlob);
+      
+      // Adicionar imagem ocupando toda a página
+      doc.addImage(base64, 'JPEG', 0, 0, pageWidth, pageHeight);
+    } catch (error) {
+      console.warn('Erro ao carregar imagem de capa, usando layout text:', error);
+      addTextCover(doc, book, isABNT);
+    }
+  } else {
+    addTextCover(doc, book, isABNT);
   }
 }
 
-async function generateDOCX(book: any, chapters: any[]): Promise<{fileBuffer: Uint8Array, mimeType: string, filename: string}> {
-  console.log('📘 Generating DOCX...');
+function addTextCover(doc: any, book: any, isABNT: boolean) {
+  const pageWidth = doc.internal.pageSize.width;
+  const centerX = pageWidth / 2;
   
-  const children = []
+  if (isABNT) {
+    // Layout ABNT
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('UNIVERSIDADE FEDERAL DO BRASIL', centerX, 30, { align: 'center' });
+    doc.text('CURSO DE LETRAS', centerX, 40, { align: 'center' });
+    
+    doc.setFontSize(24);
+    doc.text(book.title.toUpperCase(), centerX, 150, { align: 'center' });
+    
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'normal');
+    doc.text('Autor: [Nome do Autor]', centerX, 200, { align: 'center' });
+    
+    doc.text('Cidade', centerX, 250, { align: 'center' });
+    doc.text(new Date().getFullYear().toString(), centerX, 260, { align: 'center' });
+  } else {
+    // Layout profissional
+    doc.setFontSize(32);
+    doc.setFont(undefined, 'bold');
+    doc.text(book.title, centerX, 120, { align: 'center' });
+    
+    if (book.description) {
+      doc.setFontSize(14);
+      doc.setFont(undefined, 'italic');
+      const descLines = doc.splitTextToSize(book.description, 150);
+      doc.text(descLines, centerX, 150, { align: 'center' });
+    }
+    
+    doc.setFontSize(16);
+    doc.setFont(undefined, 'normal');
+    doc.text('Autor: [Nome do Autor]', centerX, 220, { align: 'center' });
+    doc.text(new Date().getFullYear().toString(), centerX, 250, { align: 'center' });
+  }
+}
 
-  // Título do livro
+function addPreface(doc: any, book: any, isABNT: boolean) {
+  const margin = isABNT ? 30 : 20;
+  let yPosition = margin + 20;
+  
+  // Título
+  doc.setFontSize(isABNT ? 14 : 18);
+  doc.setFont(undefined, 'bold');
+  doc.text(isABNT ? 'PREFÁCIO' : 'Prefácio', margin, yPosition);
+  yPosition += 20;
+  
+  // Conteúdo do prefácio
+  doc.setFontSize(12);
+  doc.setFont(undefined, 'normal');
+  
+  const prefaceText = book.description || 
+    `Esta obra representa um trabalho dedicado ao tema proposto, desenvolvido com rigor acadêmico e compromisso com a qualidade do conteúdo apresentado.
+    
+    O livro "${book.title}" foi estruturado de forma a proporcionar uma leitura fluida e compreensiva, abordando os principais aspectos do assunto de maneira clara e objetiva.
+    
+    Esperamos que este material possa contribuir significativamente para o conhecimento e desenvolvimento dos leitores.`;
+  
+  const prefaceLines = doc.splitTextToSize(prefaceText, 170 - (isABNT ? 20 : 0));
+  doc.text(prefaceLines, margin, yPosition);
+  
+  if (isABNT) {
+    yPosition = 250;
+    doc.text('O Autor', margin, yPosition);
+    doc.text(new Date().getFullYear().toString(), margin, yPosition + 10);
+  }
+}
+
+function addTableOfContents(doc: any, chapters: any[], isABNT: boolean): number[] {
+  const margin = isABNT ? 30 : 20;
+  let yPosition = margin + 20;
+  const tocPageNumbers: number[] = [];
+  
+  // Título
+  doc.setFontSize(isABNT ? 14 : 18);
+  doc.setFont(undefined, 'bold');
+  doc.text(isABNT ? 'SUMÁRIO' : 'Sumário', margin, yPosition);
+  yPosition += 20;
+  
+  // Entradas do sumário
+  doc.setFontSize(12);
+  doc.setFont(undefined, 'normal');
+  
+  for (let i = 0; i < chapters.length; i++) {
+    const chapter = chapters[i];
+    const chapterTitle = `${chapter.order_index || (i + 1)}. ${chapter.title}`;
+    const placeholder = '...'; // Será atualizado depois
+    
+    tocPageNumbers.push(0); // Placeholder para o número da página
+    
+    doc.text(chapterTitle, margin, yPosition);
+    doc.text(placeholder, 180, yPosition);
+    yPosition += 10;
+    
+    if (yPosition > 250) {
+      doc.addPage();
+      yPosition = margin + 20;
+    }
+  }
+  
+  return tocPageNumbers;
+}
+
+function updateTableOfContents(doc: any, chapters: any[], pageNumbers: number[], isABNT: boolean) {
+  // Voltar para a página do sumário (página 3)
+  const currentPage = doc.internal.getNumberOfPages();
+  doc.setPage(3);
+  
+  const margin = isABNT ? 30 : 20;
+  let yPosition = margin + 40; // Após o título "SUMÁRIO"
+  
+  doc.setFontSize(12);
+  doc.setFont(undefined, 'normal');
+  
+  for (let i = 0; i < chapters.length; i++) {
+    const pageNum = pageNumbers[i].toString();
+    
+    // Limpar a área do número da página e adicionar o correto
+    doc.setFillColor(255, 255, 255);
+    doc.rect(175, yPosition - 5, 20, 8, 'F');
+    doc.text(pageNum, 180, yPosition);
+    yPosition += 10;
+    
+    if (yPosition > 250) {
+      yPosition = margin + 20;
+    }
+  }
+  
+  // Voltar para a última página
+  doc.setPage(currentPage);
+}
+
+function addChapterContent(doc: any, chapter: any, bookImages: any[], isABNT: boolean) {
+  const margin = isABNT ? 30 : 20;
+  let yPosition = margin + 20;
+  
+  // Título do capítulo
+  doc.setFontSize(isABNT ? 14 : 16);
+  doc.setFont(undefined, 'bold');
+  const chapterTitle = `${chapter.order_index || 'S/N'}. ${chapter.title.toUpperCase()}`;
+  doc.text(chapterTitle, margin, yPosition);
+  yPosition += 20;
+  
+  // Conteúdo do capítulo
+  if (chapter.content) {
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'normal');
+    
+    // Dividir conteúdo em parágrafos
+    const paragraphs = chapter.content.split('\n').filter((p: string) => p.trim());
+    
+    for (const paragraph of paragraphs) {
+      if (yPosition > 270) {
+        doc.addPage();
+        yPosition = margin + 20;
+      }
+      
+      const lines = doc.splitTextToSize(paragraph, 170 - (isABNT ? 20 : 0));
+      
+      for (const line of lines) {
+        if (yPosition > 270) {
+          doc.addPage();
+          yPosition = margin + 20;
+        }
+        doc.text(line, margin + (isABNT ? 15 : 0), yPosition); // Recuo ABNT
+        yPosition += 6;
+      }
+      yPosition += 6; // Espaço entre parágrafos
+    }
+  }
+}
+
+async function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      resolve(result.split(',')[1]); // Remove data:image/jpeg;base64, prefix
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function generateDOCX(book: any, chapters: any[], coverImage: any, bookImages: any[], options: any): Promise<{fileBuffer: Uint8Array, mimeType: string, filename: string}> {
+  console.log('📘 Generating professional DOCX...');
+  
+  const isABNT = options?.template === 'abnt';
+  const children = [];
+
+  // CAPA
   children.push(
     new Paragraph({
       children: [
         new TextRun({
-          text: book.title,
+          text: isABNT ? 'UNIVERSIDADE FEDERAL DO BRASIL' : '',
           bold: true,
-          size: 32,
+          size: 24,
         }),
       ],
-      heading: HeadingLevel.TITLE,
+      alignment: 'center',
+      spacing: { after: 200 }
     })
-  )
+  );
 
-  // Descrição
-  if (book.description) {
+  if (isABNT) {
     children.push(
       new Paragraph({
         children: [
           new TextRun({
-            text: book.description,
+            text: 'CURSO DE LETRAS',
+            bold: true,
             size: 20,
           }),
         ],
+        alignment: 'center',
+        spacing: { after: 800 }
       })
-    )
+    );
   }
 
-  // Linha em branco
-  children.push(new Paragraph({ children: [new TextRun({ text: "" })] }))
+  children.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: book.title.toUpperCase(),
+          bold: true,
+          size: isABNT ? 28 : 36,
+        }),
+      ],
+      alignment: 'center',
+      spacing: { after: 800 }
+    })
+  );
 
-  // Capítulos
+  children.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: 'Autor: [Nome do Autor]',
+          size: 20,
+        }),
+      ],
+      alignment: 'center',
+      spacing: { after: 400 }
+    })
+  );
+
+  children.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: `Cidade\n${new Date().getFullYear()}`,
+          size: 18,
+        }),
+      ],
+      alignment: 'center',
+      pageBreakBefore: false
+    })
+  );
+
+  // QUEBRA DE PÁGINA
+  children.push(
+    new Paragraph({
+      children: [new TextRun({ text: "", break: 1 })],
+      pageBreakBefore: true
+    })
+  );
+
+  // PREFÁCIO
+  children.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: isABNT ? 'PREFÁCIO' : 'Prefácio',
+          bold: true,
+          size: isABNT ? 24 : 28,
+        }),
+      ],
+      alignment: isABNT ? 'center' : 'left',
+      spacing: { after: 400 }
+    })
+  );
+
+  const prefaceText = book.description || 
+    `Esta obra representa um trabalho dedicado ao tema proposto, desenvolvido com rigor acadêmico e compromisso com a qualidade do conteúdo apresentado.\n\nO livro "${book.title}" foi estruturado de forma a proporcionar uma leitura fluida e compreensiva, abordando os principais aspectos do assunto de maneira clara e objetiva.\n\nEsperamos que este material possa contribuir significativamente para o conhecimento e desenvolvimento dos leitores.`;
+
+  children.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: prefaceText,
+          size: 20,
+        }),
+      ],
+      alignment: 'justify',
+      spacing: { after: 400 }
+    })
+  );
+
+  // QUEBRA DE PÁGINA PARA SUMÁRIO
+  children.push(
+    new Paragraph({
+      children: [new TextRun({ text: "", break: 1 })],
+      pageBreakBefore: true
+    })
+  );
+
+  // SUMÁRIO
+  children.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: isABNT ? 'SUMÁRIO' : 'Sumário',
+          bold: true,
+          size: isABNT ? 24 : 28,
+        }),
+      ],
+      alignment: isABNT ? 'center' : 'left',
+      spacing: { after: 400 }
+    })
+  );
+
+  // Entradas do sumário
+  for (let i = 0; i < chapters.length; i++) {
+    const chapter = chapters[i];
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: `${chapter.order_index || (i + 1)}. ${chapter.title}`,
+            size: 20,
+          }),
+          new TextRun({
+            text: `.............................. ${i + 4}`, // Página estimada
+            size: 20,
+          }),
+        ],
+        spacing: { after: 100 }
+      })
+    );
+  }
+
+  // CAPÍTULOS
   for (const chapter of chapters) {
+    // Quebra de página antes de cada capítulo
+    children.push(
+      new Paragraph({
+        children: [new TextRun({ text: "", break: 1 })],
+        pageBreakBefore: true
+      })
+    );
+
     // Título do capítulo
     children.push(
       new Paragraph({
         children: [
           new TextRun({
-            text: `Capítulo ${chapter.order_index || 'S/N'}: ${chapter.title}`,
+            text: `${chapter.order_index || 'S/N'}. ${chapter.title.toUpperCase()}`,
             bold: true,
-            size: 28,
+            size: isABNT ? 24 : 28,
           }),
         ],
         heading: HeadingLevel.HEADING_1,
+        alignment: isABNT ? 'left' : 'left',
+        spacing: { after: 400 }
       })
-    )
+    );
 
     // Conteúdo do capítulo
     if (chapter.content) {
-      const paragraphs = chapter.content.split('\n')
+      const paragraphs = chapter.content.split('\n').filter((p: string) => p.trim());
       for (const para of paragraphs) {
-        if (para.trim()) {
-          children.push(
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: para,
-                  size: 20,
-                }),
-              ],
-            })
-          )
-        }
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: para,
+                size: 20,
+              }),
+            ],
+            alignment: 'justify',
+            spacing: { after: 200 },
+            indent: isABNT ? { firstLine: 720 } : undefined // Recuo ABNT
+          })
+        );
       }
     }
-
-    // Linha em branco entre capítulos
-    children.push(new Paragraph({ children: [new TextRun({ text: "" })] }))
   }
 
   const doc = new Document({
     sections: [
       {
-        properties: {},
+        properties: {
+          page: {
+            margin: {
+              top: isABNT ? 1134 : 1440, // 2cm ou 2.5cm
+              right: isABNT ? 567 : 1440, // 1cm ou 2.5cm  
+              bottom: isABNT ? 567 : 1440, // 1cm ou 2.5cm
+              left: isABNT ? 1134 : 1440, // 2cm ou 2.5cm
+            },
+          },
+        },
         children: children,
       },
     ],
-  })
+  });
 
-  const buffer = await Packer.toBuffer(doc)
+  const buffer = await Packer.toBuffer(doc);
   return {
     fileBuffer: new Uint8Array(buffer),
     mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    filename: `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}.docx`
-  }
+    filename: `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}_${isABNT ? 'ABNT' : 'profissional'}.docx`
+  };
 }
 
 async function generateEPUB(book: any, chapters: any[]): Promise<{fileBuffer: Uint8Array, mimeType: string, filename: string}> {
