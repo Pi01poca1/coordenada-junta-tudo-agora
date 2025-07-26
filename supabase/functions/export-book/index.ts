@@ -215,20 +215,30 @@ async function addCoverPage(doc: any, book: any, coverImage: any, isABNT: boolea
   const pageWidth = doc.internal.pageSize.width;
   const pageHeight = doc.internal.pageSize.height;
   
-  if (coverImage?.images?.url) {
+  // Corrigir acesso à URL da imagem - coverImage vem com join da tabela images
+  const imageUrl = coverImage?.images?.url;
+  
+  if (imageUrl) {
     try {
+      console.log('🖼️ Carregando imagem de capa:', imageUrl);
       // Tentar carregar e adicionar a imagem de capa
-      const response = await fetch(coverImage.images.url);
+      const response = await fetch(imageUrl);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const imageBlob = await response.blob();
       const base64 = await blobToBase64(imageBlob);
       
       // Adicionar imagem ocupando toda a página
       doc.addImage(base64, 'JPEG', 0, 0, pageWidth, pageHeight);
+      console.log('✅ Imagem de capa adicionada com sucesso');
     } catch (error) {
-      console.warn('Erro ao carregar imagem de capa, usando layout text:', error);
+      console.warn('Erro ao carregar imagem de capa, usando layout texto:', error);
       addTextCover(doc, book, isABNT);
     }
   } else {
+    console.log('📝 Usando capa de texto (sem imagem)');
     addTextCover(doc, book, isABNT);
   }
 }
