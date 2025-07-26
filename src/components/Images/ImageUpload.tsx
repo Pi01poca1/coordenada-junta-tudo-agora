@@ -74,9 +74,12 @@ export const ImageUpload = ({ bookId, chapterId, onImageUploaded }: ImageUploadP
         const uniqueFileName = `${timestamp}_${randomString}.${fileExtension}`;
         const fileName = `${user.id}/${chapterId || bookId}/${uniqueFileName}`;
 
+        // Determinar bucket baseado no tipo
+        const bucketName = chapterId ? 'chapter-images' : 'book-images';
+
         // Upload para Supabase Storage
         const { data: storageData, error: storageError } = await supabase.storage
-          .from('chapter-images')
+          .from(bucketName)
           .upload(fileName, file);
 
         if (storageError) {
@@ -91,7 +94,7 @@ export const ImageUpload = ({ bookId, chapterId, onImageUploaded }: ImageUploadP
 
         // Obter URL pública
         const { data: urlData } = supabase.storage
-          .from('chapter-images')
+          .from(bucketName)
           .getPublicUrl(fileName);
 
         // Salvar metadados no banco
@@ -114,7 +117,7 @@ export const ImageUpload = ({ bookId, chapterId, onImageUploaded }: ImageUploadP
         if (dbError) {
           console.error('Erro ao salvar metadados:', dbError);
           // Limpar arquivo do storage se falhou salvar no banco
-          await supabase.storage.from('chapter-images').remove([fileName]);
+          await supabase.storage.from(bucketName).remove([fileName]);
           continue;
         }
 
@@ -163,8 +166,11 @@ export const ImageUpload = ({ bookId, chapterId, onImageUploaded }: ImageUploadP
 
   const removeImage = async (imageId: string, storagePath: string) => {
     try {
+      // Determinar bucket baseado no tipo (reutilizar lógica)
+      const bucketName = chapterId ? 'chapter-images' : 'book-images';
+      
       // Remover do storage
-      await supabase.storage.from('chapter-images').remove([storagePath]);
+      await supabase.storage.from(bucketName).remove([storagePath]);
       
       // Remover do banco
       await supabase.from('images').delete().eq('id', imageId);
