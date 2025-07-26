@@ -186,44 +186,58 @@ serve(async (req) => {
 // ===============================
 
 async function generatePDF(book: any, chapters: any[], coverImage: any, bookImages: any[], options: any): Promise<{fileBuffer: Uint8Array, mimeType: string, filename: string}> {
-  console.log('📄 Generating professional PDF...');
+  console.log('📄 Generating simplified PDF...');
   
-  const isABNT = options?.template === 'abnt';
-  const doc = new jsPDF();
-  
-  // PÁGINA 1: CAPA
-  await addCoverPage(doc, book, coverImage, isABNT);
-  
-  // PÁGINA 2: CONTRA-CAPA/PREFÁCIO
-  doc.addPage();
-  addPreface(doc, book, isABNT);
-  
-  // PÁGINA 3: SUMÁRIO
-  doc.addPage();
-  const tocPageNumbers = addTableOfContents(doc, chapters, isABNT);
-  
-  // CAPÍTULOS
-  let currentPage = doc.internal.getNumberOfPages();
-  for (let i = 0; i < chapters.length; i++) {
-    const chapter = chapters[i];
-    doc.addPage();
-    currentPage++;
+  try {
+    const isABNT = options?.template === 'abnt';
+    console.log('📋 Criando novo documento PDF...');
+    const doc = new jsPDF();
     
-    // Atualizar número da página no sumário
-    tocPageNumbers[i] = currentPage;
+    console.log('📄 Adicionando página de capa...');
+    // PÁGINA 1: CAPA SIMPLES
+    doc.setFontSize(24);
+    doc.setFont(undefined, 'bold');
+    doc.text(book.title || 'Livro sem título', 20, 50);
     
-    addChapterContent(doc, chapter, bookImages, isABNT);
-  }
-  
-  // Voltar e atualizar o sumário com os números de página corretos
-  updateTableOfContents(doc, chapters, tocPageNumbers, isABNT);
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Criado em: ${new Date().toLocaleDateString()}`, 20, 70);
+    
+    console.log('📄 Adicionando capítulos...');
+    // CAPÍTULOS
+    for (let i = 0; i < chapters.length; i++) {
+      const chapter = chapters[i];
+      console.log(`📖 Processando capítulo ${i + 1}: ${chapter.title}`);
+      
+      doc.addPage();
+      
+      // Título do capítulo
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'bold');
+      doc.text(`Capítulo ${chapter.order_index || i + 1}: ${chapter.title}`, 20, 30);
+      
+      // Conteúdo do capítulo
+      if (chapter.content) {
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'normal');
+        const splitText = doc.splitTextToSize(chapter.content, 170);
+        doc.text(splitText, 20, 50);
+      }
+    }
 
-  const pdfBuffer = doc.output('arraybuffer');
-  return {
-    fileBuffer: new Uint8Array(pdfBuffer),
-    mimeType: 'application/pdf',
-    filename: `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}_${isABNT ? 'ABNT' : 'profissional'}.pdf`
-  };
+    console.log('📄 Gerando buffer do PDF...');
+    const pdfBuffer = doc.output('arraybuffer');
+    console.log('✅ PDF gerado com sucesso, tamanho:', pdfBuffer.byteLength);
+    
+    return {
+      fileBuffer: new Uint8Array(pdfBuffer),
+      mimeType: 'application/pdf',
+      filename: `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}_simplified.pdf`
+    };
+  } catch (error) {
+    console.error('❌ Erro ao gerar PDF:', error);
+    throw new Error(`Falha na geração do PDF: ${error.message}`);
+  }
 }
 
 async function addCoverPage(doc: any, book: any, coverImage: any, isABNT: boolean) {
