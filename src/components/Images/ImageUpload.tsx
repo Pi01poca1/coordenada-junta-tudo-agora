@@ -38,7 +38,17 @@ export const ImageUpload = ({ bookId, chapterId, onImageUploaded }: ImageUploadP
   };
 
   const uploadImages = async () => {
-    if (!selectedFiles || !user) return;
+    if (!selectedFiles || !user) {
+      console.log('❌ Upload stopped: no files or no user', { selectedFiles: !!selectedFiles, user: !!user });
+      return;
+    }
+
+    console.log('🚀 Starting upload process...', { 
+      fileCount: selectedFiles.length, 
+      bookId, 
+      chapterId,
+      userId: user.id 
+    });
 
     setUploading(true);
     const newImages: UploadedImage[] = [];
