@@ -186,53 +186,53 @@ serve(async (req) => {
 // ===============================
 
 async function generatePDF(book: any, chapters: any[], coverImage: any, bookImages: any[], options: any): Promise<{fileBuffer: Uint8Array, mimeType: string, filename: string}> {
-  console.log('📄 Generating simplified PDF...');
+  console.log('📄 Generating professional PDF...');
   
   try {
     const isABNT = options?.template === 'abnt';
-    console.log('📋 Criando novo documento PDF...');
     const doc = new jsPDF();
     
-    console.log('📄 Adicionando página de capa...');
-    // PÁGINA 1: CAPA SIMPLES
-    doc.setFontSize(24);
-    doc.setFont(undefined, 'bold');
-    doc.text(book.title || 'Livro sem título', 20, 50);
+    // PÁGINA 1: CAPA
+    console.log('📄 Adicionando capa...');
+    await addCoverPageSafe(doc, book, coverImage, isABNT);
     
-    doc.setFontSize(12);
-    doc.setFont(undefined, 'normal');
-    doc.text(`Criado em: ${new Date().toLocaleDateString()}`, 20, 70);
+    // PÁGINA 2: CONTRA-CAPA/PREFÁCIO
+    console.log('📄 Adicionando prefácio...');
+    doc.addPage();
+    addPreface(doc, book, isABNT);
     
-    console.log('📄 Adicionando capítulos...');
+    // PÁGINA 3: SUMÁRIO
+    console.log('📄 Adicionando sumário...');
+    doc.addPage();
+    const tocPageNumbers = addTableOfContents(doc, chapters, isABNT);
+    
     // CAPÍTULOS
+    console.log('📄 Adicionando capítulos...');
+    let currentPage = doc.internal.getNumberOfPages();
     for (let i = 0; i < chapters.length; i++) {
       const chapter = chapters[i];
       console.log(`📖 Processando capítulo ${i + 1}: ${chapter.title}`);
       
       doc.addPage();
+      currentPage++;
       
-      // Título do capítulo
-      doc.setFontSize(16);
-      doc.setFont(undefined, 'bold');
-      doc.text(`Capítulo ${chapter.order_index || i + 1}: ${chapter.title}`, 20, 30);
+      // Atualizar número da página no sumário
+      tocPageNumbers[i] = currentPage;
       
-      // Conteúdo do capítulo
-      if (chapter.content) {
-        doc.setFontSize(12);
-        doc.setFont(undefined, 'normal');
-        const splitText = doc.splitTextToSize(chapter.content, 170);
-        doc.text(splitText, 20, 50);
-      }
+      await addChapterContentSafe(doc, chapter, bookImages, isABNT);
     }
+    
+    // Voltar e atualizar o sumário com os números de página corretos
+    console.log('📄 Atualizando sumário...');
+    updateTableOfContentsSafe(doc, chapters, tocPageNumbers, isABNT);
 
     console.log('📄 Gerando buffer do PDF...');
     const pdfBuffer = doc.output('arraybuffer');
-    console.log('✅ PDF gerado com sucesso, tamanho:', pdfBuffer.byteLength);
     
     return {
       fileBuffer: new Uint8Array(pdfBuffer),
       mimeType: 'application/pdf',
-      filename: `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}_simplified.pdf`
+      filename: `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}_${isABNT ? 'ABNT' : 'profissional'}.pdf`
     };
   } catch (error) {
     console.error('❌ Erro ao gerar PDF:', error);
@@ -456,6 +456,230 @@ async function blobToBase64(blob: Blob): Promise<string> {
     };
     reader.onerror = reject;
     reader.readAsDataURL(blob);
+  });
+}
+
+// ===============================
+// VERSÕES SEGURAS DAS FUNÇÕES
+// ===============================
+
+async function addCoverPageSafe(doc: any, book: any, coverImage: any, isABNT: boolean) {
+  console.log('🖼️ Processando capa de forma segura...');
+  try {
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+    
+    // Corrigir acesso à URL da imagem - coverImage vem com join da tabela images
+    const imageUrl = coverImage?.images?.url;
+    
+    if (imageUrl) {
+      console.log('🖼️ Carregando imagem de capa:', imageUrl);
+      // Tentar carregar e adicionar a imagem de capa com timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+      
+      try {
+        const response = await fetch(imageUrl, { 
+          signal: controller.signal,
+          headers: { 'User-Agent': 'Mozilla/5.0' }
+        });
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const imageBlob = await response.blob();
+        console.log('🖼️ Blob carregado:', imageBlob.size, 'bytes');
+        
+        const base64 = await blobToBase64Safe(imageBlob);
+        console.log('🖼️ Base64 convertido:', base64.length, 'chars');
+        
+        // Adicionar imagem ocupando toda a página
+        doc.addImage(base64, 'JPEG', 0, 0, pageWidth, pageHeight);
+        console.log('✅ Imagem de capa adicionada com sucesso');
+        return;
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        console.warn('Erro ao carregar imagem de capa:', fetchError);
+      }
+    }
+    
+    // Fallback para capa de texto
+    console.log('📝 Usando capa de texto (sem imagem)');
+    addTextCover(doc, book, isABNT);
+    
+  } catch (error) {
+    console.error('❌ Erro na função addCoverPageSafe:', error);
+    addTextCover(doc, book, isABNT);
+  }
+}
+
+async function addChapterContentSafe(doc: any, chapter: any, bookImages: any[], isABNT: boolean) {
+  console.log('📖 Processando capítulo de forma segura:', chapter.title);
+  try {
+    const margin = isABNT ? 30 : 20;
+    let yPosition = margin + 20;
+    
+    // Título do capítulo
+    doc.setFontSize(isABNT ? 14 : 16);
+    doc.setFont(undefined, 'bold');
+    const chapterTitle = `${chapter.order_index || 'S/N'}. ${chapter.title.toUpperCase()}`;
+    doc.text(chapterTitle, margin, yPosition);
+    yPosition += 20;
+    
+    // Conteúdo do capítulo
+    if (chapter.content) {
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'normal');
+      
+      // Dividir conteúdo em parágrafos
+      const paragraphs = chapter.content.split('\n').filter((p: string) => p.trim());
+      
+      for (const paragraph of paragraphs) {
+        if (yPosition > 270) {
+          doc.addPage();
+          yPosition = margin + 20;
+        }
+        
+        const lines = doc.splitTextToSize(paragraph, 170 - (isABNT ? 20 : 0));
+        
+        for (const line of lines) {
+          if (yPosition > 270) {
+            doc.addPage();
+            yPosition = margin + 20;
+          }
+          doc.text(line, margin + (isABNT ? 15 : 0), yPosition); // Recuo ABNT
+          yPosition += 6;
+        }
+        yPosition += 6; // Espaço entre parágrafos
+      }
+    }
+    
+    // Tentar adicionar imagens relacionadas ao capítulo
+    const chapterImages = bookImages.filter(img => img.chapter_id === chapter.id);
+    if (chapterImages.length > 0) {
+      console.log(`🖼️ Encontradas ${chapterImages.length} imagens para o capítulo`);
+      for (const image of chapterImages.slice(0, 3)) { // Máximo 3 imagens por capítulo
+        try {
+          await addImageToChapterSafe(doc, image, yPosition, margin);
+          yPosition += 60; // Espaço para a imagem
+        } catch (imgError) {
+          console.warn('Erro ao adicionar imagem:', imgError);
+        }
+      }
+    }
+    
+  } catch (error) {
+    console.error('❌ Erro na função addChapterContentSafe:', error);
+    // Continuar mesmo com erro
+  }
+}
+
+function updateTableOfContentsSafe(doc: any, chapters: any[], pageNumbers: number[], isABNT: boolean) {
+  console.log('📋 Atualizando sumário de forma segura...');
+  try {
+    // Voltar para a página do sumário (página 3)
+    const currentPage = doc.internal.getNumberOfPages();
+    doc.setPage(3);
+    
+    const margin = isABNT ? 30 : 20;
+    let yPosition = margin + 40; // Após o título "SUMÁRIO"
+    
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'normal');
+    
+    for (let i = 0; i < chapters.length && i < pageNumbers.length; i++) {
+      const pageNum = pageNumbers[i]?.toString() || '?';
+      
+      // Limpar a área do número da página e adicionar o correto
+      doc.setFillColor(255, 255, 255);
+      doc.rect(175, yPosition - 5, 20, 8, 'F');
+      doc.text(pageNum, 180, yPosition);
+      yPosition += 10;
+      
+      if (yPosition > 250) {
+        yPosition = margin + 20;
+      }
+    }
+    
+    // Voltar para a última página
+    doc.setPage(currentPage);
+    
+  } catch (error) {
+    console.error('❌ Erro na função updateTableOfContentsSafe:', error);
+    // Continuar mesmo com erro
+  }
+}
+
+async function addImageToChapterSafe(doc: any, image: any, yPosition: number, margin: number) {
+  console.log('🖼️ Adicionando imagem ao capítulo:', image.filename);
+  try {
+    if (!image.url) return;
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout para imagens
+    
+    const response = await fetch(image.url, { 
+      signal: controller.signal,
+      headers: { 'User-Agent': 'Mozilla/5.0' }
+    });
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    
+    const imageBlob = await response.blob();
+    const base64 = await blobToBase64Safe(imageBlob);
+    
+    // Adicionar imagem em tamanho menor
+    const imgWidth = 100;
+    const imgHeight = 60;
+    
+    if (yPosition + imgHeight > 270) {
+      doc.addPage();
+      yPosition = margin + 20;
+    }
+    
+    doc.addImage(base64, 'JPEG', margin, yPosition, imgWidth, imgHeight);
+    
+    // Adicionar legenda se houver
+    if (image.alt_text) {
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'italic');
+      doc.text(image.alt_text, margin, yPosition + imgHeight + 10);
+    }
+    
+  } catch (error) {
+    console.warn('Erro ao adicionar imagem:', error);
+  }
+}
+
+async function blobToBase64Safe(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    try {
+      const reader = new FileReader();
+      const timeout = setTimeout(() => {
+        reader.abort();
+        reject(new Error('Timeout na conversão base64'));
+      }, 8000);
+      
+      reader.onload = () => {
+        clearTimeout(timeout);
+        const result = reader.result as string;
+        resolve(result.split(',')[1]); // Remove data:image/jpeg;base64, prefix
+      };
+      
+      reader.onerror = () => {
+        clearTimeout(timeout);
+        reject(new Error('Erro na leitura do blob'));
+      };
+      
+      reader.readAsDataURL(blob);
+    } catch (error) {
+      reject(error);
+    }
   });
 }
 
