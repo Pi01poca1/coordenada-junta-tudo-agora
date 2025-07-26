@@ -87,10 +87,14 @@ export const ImageUpload = ({ bookId, chapterId, onImageUploaded }: ImageUploadP
         // Determinar bucket baseado no tipo
         const bucketName = chapterId ? 'chapter-images' : 'book-images';
 
+        console.log('📁 Tentando upload para storage:', { fileName, bucket: bucketName });
+
         // Upload para Supabase Storage
         const { data: storageData, error: storageError } = await supabase.storage
           .from(bucketName)
           .upload(fileName, file);
+
+        console.log('📁 Resultado do storage:', { storageData, storageError });
 
         if (storageError) {
           console.error('Erro no upload:', storageError);

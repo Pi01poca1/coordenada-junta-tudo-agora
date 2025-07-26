@@ -30,6 +30,13 @@ export const BookCoverUpload = ({ bookId, onCoverUploaded }: BookCoverUploadProp
   const uploadCover = async () => {
     if (!selectedFile || !user) return;
 
+    console.log('🖼️ BookCoverUpload - Iniciando upload:', { 
+      fileName: selectedFile.name, 
+      fileSize: selectedFile.size,
+      userId: user.id,
+      bookId 
+    });
+
     setUploading(true);
 
     try {
@@ -59,10 +66,14 @@ export const BookCoverUpload = ({ bookId, onCoverUploaded }: BookCoverUploadProp
       const uniqueFileName = `cover_${timestamp}.${fileExtension}`;
       const fileName = `${user.id}/${bookId}/${uniqueFileName}`;
 
+      console.log('📁 Tentando upload para storage:', { fileName, bucket: 'book-images' });
+
       // Upload para Supabase Storage
       const { data: storageData, error: storageError } = await supabase.storage
         .from('book-images')
         .upload(fileName, selectedFile);
+
+      console.log('📁 Resultado do storage:', { storageData, storageError });
 
       if (storageError) {
         console.error('Erro no upload:', storageError);
@@ -78,6 +89,8 @@ export const BookCoverUpload = ({ bookId, onCoverUploaded }: BookCoverUploadProp
       const { data: urlData } = supabase.storage
         .from('book-images')
         .getPublicUrl(fileName);
+
+      console.log('💾 Salvando metadados no banco...');
 
       // Salvar metadados no banco (como imagem do livro)
       const { data: imageData, error: dbError } = await supabase
@@ -96,6 +109,8 @@ export const BookCoverUpload = ({ bookId, onCoverUploaded }: BookCoverUploadProp
         })
         .select()
         .single();
+
+      console.log('💾 Resultado do banco - images:', { imageData, dbError });
 
       if (dbError) {
         console.error('Erro ao salvar metadados:', dbError);
