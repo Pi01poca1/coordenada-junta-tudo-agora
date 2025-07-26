@@ -169,7 +169,7 @@ export type Database = {
         Row: {
           alt_text: string | null
           book_id: string | null
-          chapter_id: string
+          chapter_id: string | null
           created_at: string | null
           file_size: number | null
           filename: string | null
@@ -190,7 +190,7 @@ export type Database = {
         Insert: {
           alt_text?: string | null
           book_id?: string | null
-          chapter_id: string
+          chapter_id?: string | null
           created_at?: string | null
           file_size?: number | null
           filename?: string | null
@@ -211,7 +211,7 @@ export type Database = {
         Update: {
           alt_text?: string | null
           book_id?: string | null
-          chapter_id?: string
+          chapter_id?: string | null
           created_at?: string | null
           file_size?: number | null
           filename?: string | null
