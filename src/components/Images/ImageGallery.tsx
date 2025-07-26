@@ -53,14 +53,17 @@ export const ImageGallery = ({ bookId, chapterId, onSelectImage, selectable = fa
 
       // Filtrar por contexto se especificado
       if (chapterId) {
+        console.log('🔍 ImageGallery: Filtering by chapterId:', chapterId);
         query = query.eq('chapter_id', chapterId);
       } else if (bookId) {
+        console.log('🔍 ImageGallery: Filtering by bookId:', bookId, 'and chapter_id is null');
         query = query.eq('book_id', bookId).is('chapter_id', null);
       }
 
       const { data, error } = await query;
 
       if (error) throw error;
+      console.log('🔍 ImageGallery: Query completed. Data:', data?.length || 0, 'images, Error:', error);
       setImages(data || []);
     } catch (error) {
       console.error('Erro ao buscar imagens:', error);

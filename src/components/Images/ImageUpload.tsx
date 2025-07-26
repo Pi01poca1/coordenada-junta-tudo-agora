@@ -134,6 +134,8 @@ export const ImageUpload = ({ bookId, chapterId, onImageUploaded }: ImageUploadP
         if (onImageUploaded) {
           onImageUploaded(urlData.publicUrl, imageData.id);
         }
+        
+        console.log('✅ ImageUpload: Uploaded successfully:', imageData.filename, 'BookId:', bookId, 'ChapterId:', chapterId);
       }
 
       setUploadedImages(prev => [...prev, ...newImages]);

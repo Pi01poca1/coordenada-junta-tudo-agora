@@ -28,6 +28,7 @@ const BookDetails = () => {
   const [book, setBook] = useState<Book | null>(null);
   const [chapterCount, setChapterCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [refreshGallery, setRefreshGallery] = useState(0);
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -173,10 +174,13 @@ const BookDetails = () => {
             <ExportTest bookId={book.id} />
 
             {/* Image Upload */}
-            <ImageUpload bookId={book.id} />
+            <ImageUpload 
+              bookId={book.id} 
+              onImageUploaded={() => setRefreshGallery(prev => prev + 1)} 
+            />
 
             {/* Image Gallery */}
-            <ImageGallery bookId={book.id} />
+            <ImageGallery bookId={book.id} key={refreshGallery} />
           </div>
 
           <div className="lg:col-span-3">
