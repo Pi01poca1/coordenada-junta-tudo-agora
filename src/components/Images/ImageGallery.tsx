@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Copy, Download, Trash2, Image as ImageIcon } from 'lucide-react';
+import { Search, Copy, Download, Trash2, Image as ImageIcon, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { ImageEditor } from './ImageEditor';
 
 interface Image {
   id: string;
@@ -18,6 +19,14 @@ interface Image {
   created_at: string;
   book_id: string | null;
   chapter_id: string | null;
+  position_x: number | null;
+  position_y: number | null;
+  scale: number | null;
+  text_wrap: string | null;
+  layout: string | null;
+  z_index: number | null;
+  width: number | null;
+  height: number | null;
 }
 
 interface ImageGalleryProps {
@@ -32,6 +41,7 @@ export const ImageGallery = ({ bookId, chapterId, onSelectImage, selectable = fa
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
+  const [editingImage, setEditingImage] = useState<Image | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -224,6 +234,18 @@ export const ImageGallery = ({ bookId, chapterId, onSelectImage, selectable = fa
                         variant="secondary"
                         onClick={(e) => {
                           e.stopPropagation();
+                          setEditingImage(image);
+                        }}
+                        className="flex-1"
+                        title="Editar propriedades"
+                      >
+                        <Settings className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={(e) => {
+                          e.stopPropagation();
                           copyImageUrl(image.url);
                         }}
                         className="flex-1"
@@ -272,6 +294,20 @@ export const ImageGallery = ({ bookId, chapterId, onSelectImage, selectable = fa
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Modal de Edição */}
+        {editingImage && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <ImageEditor
+              image={editingImage}
+              onClose={() => setEditingImage(null)}
+              onUpdate={() => {
+                fetchImages();
+                setEditingImage(null);
+              }}
+            />
           </div>
         )}
       </CardContent>

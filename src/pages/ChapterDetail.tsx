@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Navigation } from '@/components/Layout/Navigation';
 import { ImageUpload } from '@/components/Images/ImageUpload';
 import { ImageGallery } from '@/components/Images/ImageGallery';
+import { ImageRenderer } from '@/components/Images/ImageRenderer';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -159,6 +160,10 @@ const ChapterDetail = () => {
               {chapter.content && (
                 <CardContent>
                   <div className="prose max-w-none">
+                    {/* Renderizar imagens posicionadas */}
+                    <ImageRenderer chapterId={chapterId} />
+                    
+                    {/* Conteúdo do texto */}
                     {chapter.content.split('\n').map((paragraph, index) => (
                       <p key={index} className="mb-4">
                         {paragraph}
