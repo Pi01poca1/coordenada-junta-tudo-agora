@@ -151,43 +151,67 @@ const BookDetails = () => {
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-3">
                 <Link to={`/books/${book.id}/edit`}>
                   <Button className="w-full" variant="outline" size="sm">
                     <Edit className="h-4 w-4 mr-2" />
-                    Edit Book Details
+                    Editar Livro
                   </Button>
                 </Link>
               </CardContent>
             </Card>
 
-            {/* Storage Debug (temporary) */}
-            <StorageDebug bookId={book.id} />
+            {/* Imagens do Livro */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">📸 Imagens</CardTitle>
+                <CardDescription>
+                  Gerencie a capa e imagens do seu livro
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Capa do Livro */}
+                <div>
+                  <h4 className="font-medium mb-2 text-sm">🖼️ Capa do Livro</h4>
+                  <BookCoverUpload 
+                    bookId={book.id} 
+                    onCoverUploaded={() => setRefreshGallery(prev => prev + 1)} 
+                  />
+                </div>
+                
+                {/* Outras Imagens */}
+                <div>
+                  <h4 className="font-medium mb-2 text-sm">📷 Outras Imagens</h4>
+                  <ImageUpload 
+                    bookId={book.id} 
+                    onImageUploaded={() => setRefreshGallery(prev => prev + 1)} 
+                  />
+                </div>
+                
+                {/* Galeria */}
+                <div>
+                  <h4 className="font-medium mb-2 text-sm">🖼️ Galeria</h4>
+                  <ImageGallery bookId={book.id} key={refreshGallery} />
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Export Panel */}
-            <ExportPanel 
-              bookId={book.id} 
-              bookTitle={book.title}
-              totalChapters={chapterCount}
-            />
-
-            {/* Export Test Component (for debugging) */}
-            <ExportTest bookId={book.id} />
-
-            {/* Capa do Livro */}
-            <BookCoverUpload 
-              bookId={book.id} 
-              onCoverUploaded={() => setRefreshGallery(prev => prev + 1)} 
-            />
-
-            {/* Outras Imagens do Livro */}
-            <ImageUpload 
-              bookId={book.id} 
-              onImageUploaded={() => setRefreshGallery(prev => prev + 1)} 
-            />
-
-            {/* Galeria de Imagens */}
-            <ImageGallery bookId={book.id} key={refreshGallery} />
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">📄 Exportar Livro</CardTitle>
+                <CardDescription>
+                  Baixe seu livro em diferentes formatos
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ExportPanel 
+                  bookId={book.id} 
+                  bookTitle={book.title}
+                  totalChapters={chapterCount}
+                />
+              </CardContent>
+            </Card>
           </div>
 
           <div className="lg:col-span-3">
