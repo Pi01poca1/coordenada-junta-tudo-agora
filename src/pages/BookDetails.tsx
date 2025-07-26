@@ -14,6 +14,7 @@ import { ExportPanel } from '@/components/Export/ExportPanel';
 import { ExportTest } from '@/components/Export/ExportTest';
 import { ImageUpload } from '@/components/Images/ImageUpload';
 import { ImageGallery } from '@/components/Images/ImageGallery';
+import { BookCoverUpload } from '@/components/Images/BookCoverUpload';
 import StorageDebug from '@/components/Debug/StorageDebug';
 
 interface Book {
@@ -173,13 +174,19 @@ const BookDetails = () => {
             {/* Export Test Component (for debugging) */}
             <ExportTest bookId={book.id} />
 
-            {/* Image Upload */}
+            {/* Capa do Livro */}
+            <BookCoverUpload 
+              bookId={book.id} 
+              onCoverUploaded={() => setRefreshGallery(prev => prev + 1)} 
+            />
+
+            {/* Outras Imagens do Livro */}
             <ImageUpload 
               bookId={book.id} 
               onImageUploaded={() => setRefreshGallery(prev => prev + 1)} 
             />
 
-            {/* Image Gallery */}
+            {/* Galeria de Imagens */}
             <ImageGallery bookId={book.id} key={refreshGallery} />
           </div>
 
