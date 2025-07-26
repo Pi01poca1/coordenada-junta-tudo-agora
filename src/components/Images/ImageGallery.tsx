@@ -55,7 +55,7 @@ export const ImageGallery = ({ bookId, chapterId, onSelectImage, selectable = fa
       if (chapterId) {
         query = query.eq('chapter_id', chapterId);
       } else if (bookId) {
-        query = query.eq('book_id', bookId);
+        query = query.eq('book_id', bookId).is('chapter_id', null);
       }
 
       const { data, error } = await query;
@@ -111,10 +111,13 @@ export const ImageGallery = ({ bookId, chapterId, onSelectImage, selectable = fa
 
   const deleteImage = async (imageId: string, storagePath: string) => {
     try {
+      // Determinar bucket baseado na presença de chapterId
+      const bucketName = chapterId ? 'chapter-images' : 'book-images';
+      
       // Remover do storage
       const pathParts = storagePath.split('/');
       const actualPath = pathParts.slice(1).join('/'); // Remove user_id prefix
-      await supabase.storage.from('chapter-images').remove([actualPath]);
+      await supabase.storage.from(bucketName).remove([actualPath]);
       
       // Remover do banco
       await supabase.from('images').delete().eq('id', imageId);
