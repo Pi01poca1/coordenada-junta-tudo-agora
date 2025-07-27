@@ -1,4 +1,4 @@
-// scripts/gen-audit.mjs
+﻿// scripts/gen-audit.mjs
 import { promises as fs } from "fs";
 import path from "path";
 
@@ -52,7 +52,7 @@ function section(title, body) {
     } catch {}
   }
 
-  // Indexação de componentes relacionados a imagens/capítulos
+  // Indexar arquivos de capítulos/imagens
   const candidates = [];
   async function indexByPattern(dir, patterns = [/image/i, /chapter/i, /editor/i, /position/i]) {
     try {
