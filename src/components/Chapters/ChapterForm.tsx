@@ -1,23 +1,4 @@
-i/*
-=== SOLUÇÕES IMPLEMENTADAS PARA FEEDBACK VISUAL INSTANTÂNEO ===
-
-🚀 PROBLEMAS RESOLVIDOS:
-✅ Mudanças visuais aplicadas INSTANTANEAMENTE (sem precisar recarregar)
-✅ Estado local atualizado ANTES do banco (feedback imediato)
-✅ Re-render forçado com keys dinâmicas
-✅ Transições CSS suaves para melhor UX
-✅ Rollback automático em caso de erro
-✅ Performance otimizada com useCallback
-
-🎯 COMO FUNCIONA:
-1. Usuário muda um controle (ex: tamanho)
-2. Interface atualiza IMEDIATAMENTE (estado local)
-3. Banco salva em background
-4. Toast confirma sucesso
-5. Se erro: reverte mudança automaticamente
-
-⚡ FEEDBACK INSTANTÂNEO GARANTIDO!
-*/import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,7 +18,6 @@ import {
   Type, RotateCcw, X, Save
 } from 'lucide-react';
 
-// Interface para imagens
 interface Image {
   id: string;
   url: string;
@@ -56,7 +36,6 @@ interface Image {
   updated_at: string;
 }
 
-// Componente de Edição Inline de Imagens
 const InlineImageEditor = ({ 
   chapterContent, 
   images, 
@@ -73,10 +52,9 @@ const InlineImageEditor = ({
   editMode: boolean;
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
-  const [renderKey, setRenderKey] = useState(0); // Força re-render
+  const [renderKey, setRenderKey] = useState(0);
   const selectedImage = selectedImageId ? images.find(img => img.id === selectedImageId) : null;
 
-  // Força re-render quando imagens mudam
   useEffect(() => {
     setRenderKey(prev => prev + 1);
   }, [images]);
@@ -89,22 +67,8 @@ const InlineImageEditor = ({
 
   const updateImageProperty = async (property: keyof Image, value: any) => {
     if (selectedImageId) {
-      // Atualiza imediatamente para feedback visual
       await onUpdateImage(selectedImageId, { [property]: value });
-      
-      // Força re-render da interface
       setRenderKey(prev => prev + 1);
-      
-      // Força re-paint do navegador
-      requestAnimationFrame(() => {
-        const container = contentRef.current;
-        if (container) {
-          container.style.transform = 'translateZ(0)';
-          setTimeout(() => {
-            container.style.transform = '';
-          }, 10);
-        }
-      });
     }
   };
 
@@ -130,8 +94,8 @@ const InlineImageEditor = ({
       cursor: editMode ? 'pointer' : 'default',
       border: selectedImageId === image.id ? '3px solid #3b82f6' : '2px solid transparent',
       borderRadius: '8px',
-      transition: 'all 0.3s ease', // Transição mais suave
-      willChange: 'transform, opacity' // Otimização de performance
+      transition: 'all 0.3s ease',
+      willChange: 'transform, opacity'
     };
 
     switch (image.layout) {
@@ -165,7 +129,7 @@ const InlineImageEditor = ({
     }
 
     return style;
-  }, [editMode, selectedImageId, renderKey]); // Dependências que forçam recálculo
+  }, [editMode, selectedImageId, renderKey]);
 
   const renderContentWithImages = () => {
     if (!chapterContent.trim()) {
@@ -183,7 +147,7 @@ const InlineImageEditor = ({
     return (
       <div 
         ref={contentRef}
-        key={`content-${renderKey}`} // Key dinâmica força re-render completo
+        key={`content-${renderKey}`}
         className="prose prose-lg max-w-none leading-relaxed relative"
         style={{ minHeight: '500px' }}
       >
@@ -192,10 +156,9 @@ const InlineImageEditor = ({
             <p className="text-gray-700 leading-relaxed">
               {paragraph}
             </p>
-            {/* Inserir imagens após parágrafos específicos */}
             {index === Math.floor(paragraphs.length / 3) && images.map(image => (
               <img
-                key={`${image.id}-${image.scale}-${image.layout}-${image.z_index}`} // Key dinâmica força re-render
+                key={`${image.id}-${image.scale}-${image.layout}-${image.z_index}`}
                 data-image-id={image.id}
                 src={image.url}
                 alt={image.alt_text || image.filename}
@@ -216,7 +179,6 @@ const InlineImageEditor = ({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      {/* Área de conteúdo principal */}
       <div className="lg:col-span-3 bg-white border rounded-lg p-6 max-h-screen overflow-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold">Preview do Capítulo</h2>
@@ -231,7 +193,6 @@ const InlineImageEditor = ({
         {renderContentWithImages()}
       </div>
 
-      {/* Painel lateral de controles */}
       <div className="lg:col-span-1">
         <Card className="sticky top-4">
           <CardHeader>
@@ -243,7 +204,6 @@ const InlineImageEditor = ({
           <CardContent className="space-y-6">
             {selectedImage ? (
               <>
-                {/* Preview da imagem selecionada */}
                 <div className="space-y-2">
                   <Label>Imagem Selecionada</Label>
                   <div className="border rounded-lg overflow-hidden">
@@ -258,7 +218,6 @@ const InlineImageEditor = ({
                   </p>
                 </div>
 
-                {/* Layout */}
                 <div className="space-y-2">
                   <Label>Layout</Label>
                   <Select 
@@ -279,7 +238,6 @@ const InlineImageEditor = ({
                   </Select>
                 </div>
 
-                {/* Text Wrap */}
                 <div className="space-y-2">
                   <Label className="flex items-center space-x-1">
                     <Type className="h-4 w-4" />
@@ -301,7 +259,6 @@ const InlineImageEditor = ({
                   </Select>
                 </div>
 
-                {/* Tamanho */}
                 <div className="space-y-2">
                   <Label>Tamanho ({Math.round((selectedImage.scale || 1) * 100)}%)</Label>
                   <Slider
@@ -314,7 +271,6 @@ const InlineImageEditor = ({
                   />
                 </div>
 
-                {/* Z-Index */}
                 <div className="space-y-2">
                   <Label>Camada (Z-Index)</Label>
                   <Slider
@@ -327,7 +283,6 @@ const InlineImageEditor = ({
                   />
                 </div>
 
-                {/* Posição manual para absolute */}
                 {selectedImage.layout === 'absolute' && (
                   <div className="space-y-2">
                     <Label>Posição Manual</Label>
@@ -354,7 +309,6 @@ const InlineImageEditor = ({
                   </div>
                 )}
 
-                {/* Botões de ação */}
                 <div className="space-y-2">
                   <Button onClick={resetImage} variant="outline" className="w-full">
                     <RotateCcw className="h-4 w-4 mr-2" />
@@ -370,7 +324,6 @@ const InlineImageEditor = ({
                   </Button>
                 </div>
 
-                {/* Status de alterações */}
                 <div className="text-xs text-center p-2 rounded">
                   <div className="text-green-600 bg-green-50 p-2 rounded mb-2">
                     ✓ Mudanças aplicadas em tempo real
@@ -395,7 +348,6 @@ const InlineImageEditor = ({
               </div>
             )}
 
-            {/* Dicas */}
             <div className="text-xs text-gray-500 space-y-1 border-t pt-4">
               <div className="font-semibold">💡 Como usar:</div>
               <div>• Clique em "Editar Imagens"</div>
@@ -410,9 +362,7 @@ const InlineImageEditor = ({
   );
 };
 
-// Componente Principal - ChapterForm COMPLETO
 export const ChapterForm = () => {
-  // Estados originais mantidos
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [orderIndex, setOrderIndex] = useState<number>(1);
@@ -422,7 +372,6 @@ export const ChapterForm = () => {
   const [showAIPanel, setShowAIPanel] = useState(false);
   const [book, setBook] = useState<any>(null);
 
-  // Novos estados para funcionalidade de imagens
   const [activeTab, setActiveTab] = useState('edit');
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
@@ -434,9 +383,7 @@ export const ChapterForm = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // useEffect principal - mantido do código original
   useEffect(() => {
-    // Check if bookId is valid
     if (!bookId || bookId === 'undefined') {
       toast({
         title: "Erro",
@@ -458,7 +405,6 @@ export const ChapterForm = () => {
     fetchBook();
   }, [chapterId, bookId, navigate, toast]);
 
-  // Função original mantida
   const fetchBook = async () => {
     if (!bookId) return;
     
@@ -476,7 +422,6 @@ export const ChapterForm = () => {
     }
   };
 
-  // Função original mantida
   const fetchChapter = async (id: string) => {
     try {
       const { data, error } = await supabase
@@ -504,7 +449,6 @@ export const ChapterForm = () => {
     }
   };
 
-  // NOVA FUNÇÃO: Buscar imagens do capítulo
   const fetchChapterImages = async (chapterId: string) => {
     setImageLoading(true);
     try {
@@ -528,7 +472,6 @@ export const ChapterForm = () => {
     }
   };
 
-  // Função original mantida
   const fetchNextOrderIndex = async () => {
     try {
       const { data, error } = await supabase
@@ -547,7 +490,6 @@ export const ChapterForm = () => {
     }
   };
 
-  // Função original mantida
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !bookId) return;
@@ -600,7 +542,6 @@ export const ChapterForm = () => {
     }
   };
 
-  // Função original mantida
   const handleTextSelection = () => {
     const textarea = document.querySelector('textarea[id="content"]') as HTMLTextAreaElement;
     if (textarea) {
@@ -614,7 +555,6 @@ export const ChapterForm = () => {
     }
   };
 
-  // Função original mantida
   const handleTextReplace = (newText: string) => {
     if (selectedText) {
       const newContent = content.replace(selectedText, newText);
@@ -623,14 +563,11 @@ export const ChapterForm = () => {
     }
   };
 
-  // NOVA FUNÇÃO: Atualizar imagens com feedback visual INSTANTÂNEO
   const handleUpdateImage = async (imageId: string, updates: Partial<Image>) => {
-    // 1. PRIMEIRO: Atualizar estado local para feedback visual IMEDIATO
     setImages(prev => prev.map(img => 
       img.id === imageId ? { ...img, ...updates } : img
     ));
 
-    // 2. SEGUNDO: Salvar no banco de dados em background
     try {
       const { error } = await supabase
         .from('images')
@@ -642,7 +579,6 @@ export const ChapterForm = () => {
 
       if (error) throw error;
 
-      // Toast de sucesso (menos intrusivo)
       setTimeout(() => {
         toast({
           title: "✓ Salvo",
@@ -653,7 +589,6 @@ export const ChapterForm = () => {
     } catch (error) {
       console.error('Error updating image:', error);
       
-      // 3. EM CASO DE ERRO: Reverter mudança local
       setImages(prev => {
         const originalImage = prev.find(img => img.id === imageId);
         if (originalImage) {
@@ -713,7 +648,6 @@ export const ChapterForm = () => {
         </div>
       </div>
 
-      {/* Nova estrutura com Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="edit" className="flex items-center gap-2">
@@ -726,7 +660,6 @@ export const ChapterForm = () => {
           </TabsTrigger>
         </TabsList>
 
-        {/* Aba 1: Editor original MANTIDO */}
         <TabsContent value="edit" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
@@ -801,7 +734,6 @@ export const ChapterForm = () => {
               </Card>
             </div>
 
-            {/* AIPanel original MANTIDO */}
             {showAIPanel && chapterId && chapterId !== 'new' && (
               <div className="lg:col-span-1">
                 <AIPanel 
@@ -833,7 +765,6 @@ export const ChapterForm = () => {
           </div>
         </TabsContent>
 
-        {/* Aba 2: Nova funcionalidade de preview com imagens */}
         <TabsContent value="preview" className="space-y-6">
           {imageLoading ? (
             <div className="flex items-center justify-center py-12">
