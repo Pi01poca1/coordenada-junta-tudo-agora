@@ -1,6 +1,6 @@
 # Audit Snapshot
 
-_Gerado em 2025-07-27T17:27:03.488Z_
+_Gerado em 2025-07-27T17:29:57.026Z_
 
 
 ## Árvore de Pastas
@@ -10,6 +10,8 @@ _Gerado em 2025-07-27T17:27:03.488Z_
 - .gitignore
 - AUDIT_SNAPSHOT.md
 - bun.lockb
+- CHECKPOINTS/
+  - CHECKPOINTS\CP-202507271427.md
 - components.json
 - eslint.config.js
 - index.html
