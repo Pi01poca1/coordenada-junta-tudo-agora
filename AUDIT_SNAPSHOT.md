@@ -1,17 +1,20 @@
 # Audit Snapshot
 
-_Gerado em 2025-07-27T00:47:56.608Z_
+_Gerado em 2025-07-27T17:27:03.488Z_
 
 
 ## Árvore de Pastas
 
 ```
+- .env.local
 - .gitignore
+- AUDIT_SNAPSHOT.md
 - bun.lockb
 - components.json
 - eslint.config.js
 - index.html
 - package-lock.json
+- package.backup.json
 - package.json
 - postcss.config.js
 - public/
@@ -20,6 +23,7 @@ _Gerado em 2025-07-27T00:47:56.608Z_
   - public\robots.txt
 - README.md
 - scripts/
+  - scripts\checkpoint.mjs
   - scripts\gen-audit.mjs
 - src/
   - src\App.css
@@ -48,6 +52,7 @@ _Gerado em 2025-07-27T00:47:56.608Z_
       - src\components\Images\ImageGallery.tsx
       - src\components\Images\ImagePositioner.tsx
       - src\components\Images\ImageRenderer.tsx
+      - src\components\Images\ImageRendererInline.tsx
       - src\components\Images\ImageUpload.tsx
     - src\components\Layout/
       - src\components\Layout\Navigation.tsx
@@ -109,6 +114,7 @@ _Gerado em 2025-07-27T00:47:56.608Z_
     - src\hooks\use-toast.ts
     - src\hooks\useAI.ts
     - src\hooks\useExport.ts
+    - src\hooks\useImages.ts
   - src\index.css
   - src\integrations/
     - src\integrations\supabase/
@@ -130,6 +136,8 @@ _Gerado em 2025-07-27T00:47:56.608Z_
     - src\pages\NotFound.tsx
     - src\pages\Profile.tsx
     - src\pages\Statistics.tsx
+  - src\services/
+    - src\services\images.ts
   - src\types/
     - src\types\supabase.ts
   - src\vite-env.d.ts
@@ -175,7 +183,9 @@ _Gerado em 2025-07-27T00:47:56.608Z_
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "gen:audit": "node scripts/gen-audit.mjs",
+    "checkpoint": "node scripts/checkpoint.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -248,11 +258,6 @@ _Gerado em 2025-07-27T00:47:56.608Z_
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1"
-  }
-}
-{
-  "scripts": {
-    "gen:audit": "node scripts/gen-audit.mjs"
   }
 }
 
@@ -496,6 +501,9 @@ export default {
 - src\components\Images\ImageGallery.tsx
 - src\components\Images\ImagePositioner.tsx
 - src\components\Images\ImageRenderer.tsx
+- src\components\Images\ImageRendererInline.tsx
 - src\components\Images\ImageUpload.tsx
+- src\hooks\useImages.ts
 - src\pages\ChapterDetail.tsx
 - src\pages\EditChapter.tsx
+- src\services\images.ts
