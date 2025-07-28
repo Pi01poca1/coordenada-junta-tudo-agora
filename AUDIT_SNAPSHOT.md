@@ -1,6 +1,6 @@
 # Audit Snapshot
 
-_Gerado em 2025-07-27T17:29:57.026Z_
+_Gerado em 2025-07-28T00:38:27.308Z_
 
 
 ## Árvore de Pastas
@@ -12,6 +12,7 @@ _Gerado em 2025-07-27T17:29:57.026Z_
 - bun.lockb
 - CHECKPOINTS/
   - CHECKPOINTS\CP-202507271427.md
+  - CHECKPOINTS\CP-202507271429.md
 - components.json
 - eslint.config.js
 - index.html
@@ -42,6 +43,7 @@ _Gerado em 2025-07-27T17:29:57.026Z_
     - src\components\Chapters/
       - src\components\Chapters\ChapterForm.tsx
       - src\components\Chapters\ChapterList.tsx
+      - src\components\Chapters\ChapterPreviewWithImages.tsx
     - src\components\Debug/
       - src\components\Debug\StorageDebug.tsx
     - src\components\Export/
@@ -499,6 +501,7 @@ export default {
 
 - src\components\Chapters\ChapterForm.tsx
 - src\components\Chapters\ChapterList.tsx
+- src\components\Chapters\ChapterPreviewWithImages.tsx
 - src\components\Images\ImageEditor.tsx
 - src\components\Images\ImageGallery.tsx
 - src\components\Images\ImagePositioner.tsx
