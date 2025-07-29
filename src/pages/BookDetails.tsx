@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Navigation } from '@/components/Layout/Navigation';
-import { ChapterList } from '@/components/Chapters/ChapterList';
+import { DraggableChapterList } from '@/components/Chapters/DraggableChapterList';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -215,7 +215,7 @@ const BookDetails = () => {
           </div>
 
           <div className="lg:col-span-3">
-            <ChapterList bookId={book.id} />
+            <DraggableChapterList bookId={book.id} />
           </div>
         </div>
       </main>
