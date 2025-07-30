@@ -259,9 +259,11 @@ export const InlineImageEditor = ({
           >
             {/* Conteúdo do capítulo */}
             <div className="prose max-w-none">
-              {chapterContent.split('\n').map((paragraph, index) => (
-                <p key={index} className="mb-4">{paragraph}</p>
-              ))}
+              {chapterContent ? chapterContent.split('\n').map((paragraph, index) => (
+                <p key={index} className="mb-4">{paragraph || '\u00A0'}</p>
+              )) : (
+                <p className="text-muted-foreground">Escreva o conteúdo do capítulo na aba "Editar Texto" para visualizar o layout com imagens.</p>
+              )}
             </div>
 
             {/* Imagens */}

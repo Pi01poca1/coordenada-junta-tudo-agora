@@ -15,6 +15,7 @@ import { ExportTest } from '@/components/Export/ExportTest';
 import { ImageUpload } from '@/components/Images/ImageUpload';
 import { ImageGallery } from '@/components/Images/ImageGallery';
 import { BookCoverUpload } from '@/components/Images/BookCoverUpload';
+import { CoverPreview } from '@/components/Images/CoverPreview';
 import StorageDebug from '@/components/Debug/StorageDebug';
 
 interface Book {
@@ -171,8 +172,16 @@ const BookDetails = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Capa do Livro */}
-                <div>
+                <div className="space-y-4">
                   <h4 className="font-medium mb-2 text-sm">🖼️ Capa do Livro</h4>
+                  
+                  {/* Preview da capa atual */}
+                  <CoverPreview 
+                    bookId={book.id} 
+                    onCoverRemoved={() => setRefreshGallery(prev => prev + 1)} 
+                  />
+                  
+                  {/* Upload/Seleção de nova capa */}
                   <BookCoverUpload 
                     bookId={book.id} 
                     onCoverUploaded={() => setRefreshGallery(prev => prev + 1)} 

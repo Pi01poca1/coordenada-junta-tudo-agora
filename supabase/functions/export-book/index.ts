@@ -80,7 +80,7 @@ serve(async (req) => {
       .from('book_covers')
       .select(`
         *,
-        images (
+        image:images (
           url,
           filename,
           storage_path,
@@ -244,8 +244,8 @@ async function addCoverPage(doc: any, book: any, coverImage: any, isABNT: boolea
   const pageWidth = doc.internal.pageSize.width;
   const pageHeight = doc.internal.pageSize.height;
   
-  // Corrigir acesso à URL da imagem - coverImage vem com join da tabela images
-  const imageUrl = coverImage?.images?.url;
+    // Corrigir acesso à URL da imagem - coverImage vem com join da tabela images
+    const imageUrl = coverImage?.image?.url;
   
   if (imageUrl) {
     try {
@@ -470,7 +470,7 @@ async function addCoverPageSafe(doc: any, book: any, coverImage: any, isABNT: bo
     const pageHeight = doc.internal.pageSize.height;
     
     // Corrigir acesso à URL da imagem - coverImage vem com join da tabela images
-    const imageUrl = coverImage?.images?.url;
+    const imageUrl = coverImage?.image?.url;
     
     if (imageUrl) {
       console.log('🖼️ Carregando imagem de capa:', imageUrl);
