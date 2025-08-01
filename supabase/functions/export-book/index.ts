@@ -80,14 +80,18 @@ serve(async (req) => {
       .from('book_covers')
       .select(`
         *,
-        image:images (
+        image:images!inner (
+          id,
           url,
           filename,
           storage_path,
-          mime_type
+          mime_type,
+          file_size,
+          alt_text
         )
       `)
       .eq('book_id', bookId)
+      .eq('user_id', user.id)
       .single()
 
     if (coverError && coverError.code !== 'PGRST116') {
@@ -465,6 +469,12 @@ async function blobToBase64(blob: Blob): Promise<string> {
 
 async function addCoverPageSafe(doc: any, book: any, coverImage: any, isABNT: boolean) {
   console.log('🖼️ Processando capa de forma segura...');
+  console.log('🖼️ Dados da capa recebidos:', { 
+    hasImage: !!coverImage?.image,
+    imageUrl: coverImage?.image?.url,
+    filename: coverImage?.image?.filename 
+  });
+  
   try {
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
@@ -472,16 +482,19 @@ async function addCoverPageSafe(doc: any, book: any, coverImage: any, isABNT: bo
     // Corrigir acesso à URL da imagem - coverImage vem com join da tabela images
     const imageUrl = coverImage?.image?.url;
     
-    if (imageUrl) {
+    if (imageUrl && imageUrl.trim()) {
       console.log('🖼️ Carregando imagem de capa:', imageUrl);
       // Tentar carregar e adicionar a imagem de capa com timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
       
       try {
         const response = await fetch(imageUrl, { 
           signal: controller.signal,
-          headers: { 'User-Agent': 'Mozilla/5.0' }
+          headers: { 
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept': 'image/*,*/*;q=0.8'
+          }
         });
         clearTimeout(timeoutId);
         
@@ -490,13 +503,28 @@ async function addCoverPageSafe(doc: any, book: any, coverImage: any, isABNT: bo
         }
         
         const imageBlob = await response.blob();
-        console.log('🖼️ Blob carregado:', imageBlob.size, 'bytes');
+        console.log('🖼️ Blob carregado:', { 
+          size: imageBlob.size, 
+          type: imageBlob.type 
+        });
+        
+        if (imageBlob.size === 0) {
+          throw new Error('Imagem vazia recebida');
+        }
         
         const base64 = await blobToBase64Safe(imageBlob);
         console.log('🖼️ Base64 convertido:', base64.length, 'chars');
         
-        // Adicionar imagem ocupando toda a página
-        doc.addImage(base64, 'JPEG', 0, 0, pageWidth, pageHeight);
+        if (!base64 || base64.length < 100) {
+          throw new Error('Base64 inválido ou muito pequeno');
+        }
+        
+        // Detectar formato da imagem
+        const imageFormat = detectImageFormat(imageBlob.type);
+        console.log('🖼️ Formato detectado:', imageFormat);
+        
+        // Adicionar imagem ocupando toda a página com melhor qualidade
+        doc.addImage(`data:${imageBlob.type};base64,${base64}`, imageFormat, 0, 0, pageWidth, pageHeight);
         console.log('✅ Imagem de capa adicionada com sucesso');
         return;
       } catch (fetchError) {
@@ -681,6 +709,38 @@ async function blobToBase64Safe(blob: Blob): Promise<string> {
       reject(error);
     }
   });
+}
+
+// Função auxiliar para detectar formato de imagem
+function detectImageFormat(mimeType: string): string {
+  if (mimeType.includes('png')) return 'PNG';
+  if (mimeType.includes('jpeg') || mimeType.includes('jpg')) return 'JPEG';
+  if (mimeType.includes('gif')) return 'GIF';
+  if (mimeType.includes('webp')) return 'WEBP';
+  return 'JPEG'; // fallback
+}
+
+// Versão melhorada da conversão base64
+async function blobToBase64Safe(blob: Blob): Promise<string> {
+  console.log('🔄 Convertendo blob para base64...');
+  
+  try {
+    const arrayBuffer = await blob.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+    
+    // Converter usando btoa nativo do Deno
+    let binary = '';
+    for (let i = 0; i < uint8Array.length; i++) {
+      binary += String.fromCharCode(uint8Array[i]);
+    }
+    
+    const base64 = btoa(binary);
+    console.log('✅ Conversão base64 concluída:', base64.length, 'chars');
+    return base64;
+  } catch (error) {
+    console.error('❌ Erro na conversão base64:', error);
+    throw new Error(`Falha na conversão base64: ${error.message}`);
+  }
 }
 
 async function generateDOCX(book: any, chapters: any[], coverImage: any, bookImages: any[], options: any): Promise<{fileBuffer: Uint8Array, mimeType: string, filename: string}> {

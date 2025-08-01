@@ -17,6 +17,7 @@ interface BookCoverUploadProps {
 export const BookCoverUpload = ({ bookId, onCoverUploaded }: BookCoverUploadProps) => {
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -25,6 +26,12 @@ export const BookCoverUpload = ({ bookId, onCoverUploaded }: BookCoverUploadProp
     const file = event.target.files?.[0];
     if (file) {
       setSelectedFile(file);
+      // Criar preview da imagem
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPreviewUrl(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -141,6 +148,7 @@ export const BookCoverUpload = ({ bookId, onCoverUploaded }: BookCoverUploadProp
 
       // Limpar formulário
       setSelectedFile(null);
+      setPreviewUrl(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -207,13 +215,65 @@ export const BookCoverUpload = ({ bookId, onCoverUploaded }: BookCoverUploadProp
         {/* Seletor da galeria */}
         <CoverSelector bookId={bookId} onCoverSelected={onCoverUploaded} />
 
-        {/* Preview do arquivo selecionado */}
-        {selectedFile && (
-          <div className="space-y-2">
-            <h4 className="font-medium">Arquivo selecionado:</h4>
-            <div className="text-sm text-muted-foreground">
-              <p>{selectedFile.name}</p>
-              <p>{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</p>
+        {/* Preview profissional do arquivo selecionado */}
+        {selectedFile && previewUrl && (
+          <div className="space-y-4">
+            <h4 className="font-medium flex items-center gap-2">
+              <Upload className="h-4 w-4" />
+              Preview da Capa
+            </h4>
+            
+            <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-6 rounded-lg">
+              <div className="flex flex-col md:flex-row gap-6">
+                {/* Preview da imagem */}
+                <div className="flex-shrink-0">
+                  <div className="aspect-[2/3] w-32 mx-auto md:mx-0 bg-white rounded-lg shadow-lg overflow-hidden border-2 border-slate-200">
+                    <img 
+                      src={previewUrl} 
+                      alt="Preview da capa"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+                
+                {/* Informações da imagem */}
+                <div className="flex-1 space-y-3">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium text-slate-600 dark:text-slate-400">Nome:</span>
+                      <p className="text-slate-900 dark:text-slate-100 truncate">{selectedFile.name}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium text-slate-600 dark:text-slate-400">Tamanho:</span>
+                      <p className="text-slate-900 dark:text-slate-100">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</p>
+                    </div>
+                    <div>
+                      <span className="font-medium text-slate-600 dark:text-slate-400">Tipo:</span>
+                      <p className="text-slate-900 dark:text-slate-100">{selectedFile.type}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium text-slate-600 dark:text-slate-400">Formato:</span>
+                      <p className="text-slate-900 dark:text-slate-100">Capa de livro</p>
+                    </div>
+                  </div>
+                  
+                  {/* Indicadores de qualidade */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${selectedFile.size > 5 * 1024 * 1024 ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                      <span className="text-xs text-slate-600 dark:text-slate-400">
+                        Qualidade: {selectedFile.size > 5 * 1024 * 1024 ? 'Alta' : 'Média'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      <span className="text-xs text-slate-600 dark:text-slate-400">
+                        Compatível com exportação PDF/EPUB
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
