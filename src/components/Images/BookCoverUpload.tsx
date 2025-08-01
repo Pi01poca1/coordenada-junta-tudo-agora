@@ -133,13 +133,17 @@ export const BookCoverUpload = ({ bookId, onCoverUploaded }: BookCoverUploadProp
       }
 
       // Criar entrada na tabela book_covers
-      await supabase
+      console.log('💾 Criando entrada na tabela book_covers...');
+      const { data: coverData, error: coverError } = await supabase
         .from('book_covers')
         .upsert({
           book_id: bookId,
           image_id: imageData.id,
           user_id: user.id
-        });
+        })
+        .select();
+
+      console.log('💾 Resultado do banco - book_covers:', { coverData, coverError });
 
       toast({
         title: "Capa carregada!",

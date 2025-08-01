@@ -32,14 +32,20 @@ export const CoverPreview = ({ bookId, onCoverRemoved }: CoverPreviewProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log('🔍 CoverPreview: useEffect triggered', { bookId, user: !!user });
     fetchCover();
   }, [bookId, user]);
 
   const fetchCover = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('🔍 CoverPreview: No user, skipping fetch');
+      return;
+    }
 
     try {
       setLoading(true);
+      console.log('🔍 CoverPreview: Fetching cover for book', bookId);
+      
       const { data, error } = await supabase
         .from('book_covers')
         .select(`
@@ -57,17 +63,21 @@ export const CoverPreview = ({ bookId, onCoverRemoved }: CoverPreviewProps) => {
         .eq('user_id', user.id)
         .single();
 
+      console.log('🔍 CoverPreview: Query result', { data, error });
+
       if (error && error.code !== 'PGRST116') {
         throw error;
       }
 
       if (data) {
+        console.log('🔍 CoverPreview: Cover found', data);
         setCover(data as any);
       } else {
+        console.log('🔍 CoverPreview: No cover found');
         setCover(null);
       }
     } catch (error) {
-      console.error('Erro ao buscar capa:', error);
+      console.error('🔍 CoverPreview: Erro ao buscar capa:', error);
     } finally {
       setLoading(false);
     }
