@@ -61,7 +61,8 @@ export const CoverPreview = ({ bookId, onCoverRemoved }: CoverPreviewProps) => {
         `)
         .eq('book_id', bookId)
         .eq('user_id', user.id)
-        .single();
+        .order('created_at', { ascending: false })
+        .limit(1);
 
       console.log('🔍 CoverPreview: Query result', { data, error });
 
@@ -69,9 +70,9 @@ export const CoverPreview = ({ bookId, onCoverRemoved }: CoverPreviewProps) => {
         throw error;
       }
 
-      if (data) {
-        console.log('🔍 CoverPreview: Cover found', data);
-        setCover(data as any);
+      if (data && data.length > 0) {
+        console.log('🔍 CoverPreview: Cover found', data[0]);
+        setCover(data[0] as any);
       } else {
         console.log('🔍 CoverPreview: No cover found');
         setCover(null);

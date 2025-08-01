@@ -92,12 +92,16 @@ serve(async (req) => {
       `)
       .eq('book_id', bookId)
       .eq('user_id', user.id)
-      .single()
+      .order('created_at', { ascending: false })
+      .limit(1)
 
     if (coverError && coverError.code !== 'PGRST116') {
       console.warn('Aviso ao buscar capa:', coverError)
     }
-    console.log('🖼️ Cover image found:', !!coverImage);
+    console.log('🖼️ Cover image found:', !!coverImage, coverImage?.length || 0);
+    
+    // Pegar a primeira capa se existir
+    const coverImageData = coverImage && coverImage.length > 0 ? coverImage[0] : null;
 
     // Buscar todas as imagens do livro para inclusão nos capítulos
     const { data: bookImages, error: imagesError } = await supabase
@@ -116,11 +120,11 @@ serve(async (req) => {
 
     switch (format) {
       case 'pdf':
-        ({ fileBuffer, mimeType, filename } = await generatePDF(book, chapters || [], coverImage, bookImages || [], options))
+        ({ fileBuffer, mimeType, filename } = await generatePDF(book, chapters || [], coverImageData, bookImages || [], options))
         break
       
       case 'docx':
-        ({ fileBuffer, mimeType, filename } = await generateDOCX(book, chapters || [], coverImage, bookImages || [], options))
+        ({ fileBuffer, mimeType, filename } = await generateDOCX(book, chapters || [], coverImageData, bookImages || [], options))
         break
       
       case 'epub':

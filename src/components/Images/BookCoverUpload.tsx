@@ -132,11 +132,19 @@ export const BookCoverUpload = ({ bookId, onCoverUploaded }: BookCoverUploadProp
         return;
       }
 
-      // Criar entrada na tabela book_covers
+      // Remover capas antigas primeiro
+      console.log('🗑️ Removendo capas antigas...');
+      await supabase
+        .from('book_covers')
+        .delete()
+        .eq('book_id', bookId)
+        .eq('user_id', user.id);
+
+      // Criar nova entrada na tabela book_covers
       console.log('💾 Criando entrada na tabela book_covers...');
       const { data: coverData, error: coverError } = await supabase
         .from('book_covers')
-        .upsert({
+        .insert({
           book_id: bookId,
           image_id: imageData.id,
           user_id: user.id
