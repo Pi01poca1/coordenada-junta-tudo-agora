@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -52,8 +53,8 @@ export const BookList = () => {
     } catch (error) {
       console.error('Error fetching books:', error);
       toast({
-        title: "Error",
-        description: "Failed to load books",
+        title: "Erro",
+        description: "Falha ao carregar livros",
         variant: "destructive",
       });
     } finally {
@@ -72,14 +73,14 @@ export const BookList = () => {
 
       setBooks(books.filter(book => book.id !== id));
       toast({
-        title: "Success",
-        description: "Book deleted successfully",
+        title: "Sucesso",
+        description: "Livro excluído com sucesso",
       });
     } catch (error) {
       console.error('Error deleting book:', error);
       toast({
-        title: "Error",
-        description: "Failed to delete book",
+        title: "Erro",
+        description: "Falha ao excluir livro",
         variant: "destructive",
       });
     }
@@ -89,7 +90,7 @@ export const BookList = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-64">
-        <div className="text-muted-foreground">Loading books...</div>
+        <div className="text-muted-foreground">Carregando livros...</div>
       </div>
     );
   }
@@ -98,20 +99,20 @@ export const BookList = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">My Books</h1>
-          <p className="text-muted-foreground">Manage your writing projects</p>
+          <h1 className="text-3xl font-bold">Meus Livros</h1>
+          <p className="text-muted-foreground">Gerencie seus projetos de escrita</p>
         </div>
         <div className="flex space-x-3">
           <Link to="/statistics">
             <Button variant="outline">
               <BarChart3 className="h-4 w-4 mr-2" />
-              Statistics
+              Estatísticas
             </Button>
           </Link>
           <Link to="/books/new">
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              New Book
+              Novo Livro
             </Button>
           </Link>
         </div>
@@ -120,14 +121,14 @@ export const BookList = () => {
       {books.length === 0 ? (
         <div className="text-center py-12">
           <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">No books yet</h2>
+          <h2 className="text-xl font-semibold mb-2">Nenhum livro ainda</h2>
           <p className="text-muted-foreground mb-4">
-            Start your writing journey by creating your first book
+            Comece sua jornada de escrita criando seu primeiro livro
           </p>
           <Link to="/books/new">
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Create Your First Book
+              Criar Seu Primeiro Livro
             </Button>
           </Link>
         </div>
@@ -146,18 +147,18 @@ export const BookList = () => {
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Book</AlertDialogTitle>
+            <AlertDialogTitle>Excluir Livro</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this book? This action cannot be undone and will also delete all chapters.
+              Tem certeza de que deseja excluir este livro? Esta ação não pode ser desfeita e também excluirá todos os capítulos.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteId && handleDelete(deleteId)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete Book
+              Excluir Livro
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

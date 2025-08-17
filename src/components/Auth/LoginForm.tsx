@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -28,7 +29,7 @@ export const LoginForm = () => {
 
       if (error) {
         toast({
-          title: "Error",
+          title: "Erro",
           description: error.message,
           variant: "destructive",
         });
@@ -37,16 +38,16 @@ export const LoginForm = () => {
           navigate('/dashboard');
         } else {
           toast({
-            title: "Success",
-            description: "Account created successfully! Please check your email for verification.",
+            title: "Sucesso",
+            description: "Conta criada com sucesso! Verifique seu email para confirmação.",
           });
           setIsLogin(true);
         }
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "An unexpected error occurred",
+        title: "Erro",
+        description: "Ocorreu um erro inesperado",
         variant: "destructive",
       });
     } finally {
@@ -58,11 +59,11 @@ export const LoginForm = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>{isLogin ? 'Sign In' : 'Create Account'}</CardTitle>
+          <CardTitle>{isLogin ? 'Entrar' : 'Criar Conta'}</CardTitle>
           <CardDescription>
             {isLogin 
-              ? 'Enter your credentials to access your books' 
-              : 'Create a new account to start writing'}
+              ? 'Digite suas credenciais para acessar seus livros' 
+              : 'Crie uma nova conta para começar a escrever'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -75,23 +76,23 @@ export const LoginForm = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="Enter your email"
+                placeholder="Digite seu email"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Senha</Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                placeholder="Enter your password"
+                placeholder="Digite sua senha"
                 minLength={6}
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (isLogin ? 'Signing in...' : 'Creating account...') : (isLogin ? 'Sign In' : 'Create Account')}
+              {loading ? (isLogin ? 'Entrando...' : 'Criando conta...') : (isLogin ? 'Entrar' : 'Criar Conta')}
             </Button>
           </form>
           <div className="mt-4 text-center">
@@ -100,7 +101,7 @@ export const LoginForm = () => {
               onClick={() => setIsLogin(!isLogin)}
               className="text-sm"
             >
-              {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+              {isLogin ? "Não tem uma conta? Cadastre-se" : "Já tem uma conta? Entre"}
             </Button>
           </div>
         </CardContent>

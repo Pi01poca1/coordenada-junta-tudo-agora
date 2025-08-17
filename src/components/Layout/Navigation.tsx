@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -22,7 +23,7 @@ export const Navigation = () => {
           <div className="flex items-center">
             <Link to="/dashboard" className="flex items-center space-x-2">
               <BookOpen className="h-6 w-6 text-primary" />
-              <span className="font-bold text-lg">BookWriter</span>
+              <span className="font-bold text-lg">EscritorLivros</span>
             </Link>
           </div>
           <div className="flex items-center space-x-4">
@@ -30,17 +31,17 @@ export const Navigation = () => {
               Estatísticas
             </Link>
             <Link to="/docs/overview" className="text-sm text-muted-foreground hover:text-primary">
-              Docs
+              Documentação
             </Link>
             <Link to="/profile" className="text-sm text-muted-foreground hover:text-primary">
-              Profile
+              Perfil
             </Link>
             <span className="text-sm text-muted-foreground">
               {user.email}
             </span>
             <Button variant="outline" size="sm" onClick={handleSignOut}>
               <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
+              Sair
             </Button>
           </div>
         </div>

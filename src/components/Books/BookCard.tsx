@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Edit, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface Book {
   id: string;
@@ -26,6 +28,12 @@ export const BookCard: React.FC<BookCardProps> = ({ book, onDelete }) => {
     archived: 'bg-red-100 text-red-800',
   };
 
+  const statusLabels = {
+    draft: 'Rascunho',
+    published: 'Publicado',
+    archived: 'Arquivado',
+  };
+
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader>
@@ -33,11 +41,11 @@ export const BookCard: React.FC<BookCardProps> = ({ book, onDelete }) => {
           <div className="flex-1">
             <CardTitle className="line-clamp-1">{book.title}</CardTitle>
             <CardDescription className="mt-1">
-              Created {formatDistanceToNow(new Date(book.created_at), { addSuffix: true })}
+              Criado {formatDistanceToNow(new Date(book.created_at), { addSuffix: true, locale: ptBR })}
             </CardDescription>
           </div>
           <Badge className={statusColors[book.status as keyof typeof statusColors] || statusColors.draft}>
-            {book.status}
+            {statusLabels[book.status as keyof typeof statusLabels] || statusLabels.draft}
           </Badge>
         </div>
       </CardHeader>
@@ -46,13 +54,13 @@ export const BookCard: React.FC<BookCardProps> = ({ book, onDelete }) => {
           <Link to={`/books/${book.id}`}>
             <Button size="sm">
               <BookOpen className="h-4 w-4 mr-2" />
-              View Book
+              Ver Livro
             </Button>
           </Link>
           <Link to={`/books/${book.id}/edit`}>
             <Button variant="outline" size="sm">
               <Edit className="h-4 w-4 mr-2" />
-              Edit
+              Editar
             </Button>
           </Link>
           <Button 

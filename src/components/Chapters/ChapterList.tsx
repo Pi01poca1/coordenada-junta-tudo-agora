@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Edit, Trash2, FileText, Eye, TestTube, AlertTriangle, CheckCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface Chapter {
   id: string;
@@ -46,29 +48,29 @@ export const ChapterList = ({ bookId: propBookId }: ChapterListProps) => {
   };
 
   useEffect(() => {
-    addDebugLog('ChapterList component mounted');
-    addDebugLog(`propBookId: ${propBookId}, paramBookId: ${paramBookId}, final bookId: ${bookId}, user: ${user?.id}`);
+    addDebugLog('Componente ChapterList montado');
+    addDebugLog(`propBookId: ${propBookId}, paramBookId: ${paramBookId}, bookId final: ${bookId}, usuário: ${user?.id}`);
     
     if (bookId && user) {
       fetchChapters();
     } else {
-      addDebugLog('Missing bookId or user, skipping fetch');
+      addDebugLog('bookId ou usuário ausente, pulando busca');
       setLoading(false);
     }
   }, [bookId, user, propBookId, paramBookId]);
 
   const fetchChapters = async () => {
-    addDebugLog('Starting fetchChapters');
+    addDebugLog('Iniciando fetchChapters');
     
     if (!user || !bookId) {
-      addDebugLog('fetchChapters aborted: missing user or bookId');
+      addDebugLog('fetchChapters abortado: usuário ou bookId ausente');
       setLoading(false);
       return;
     }
 
     try {
       setError(null);
-      addDebugLog('Executing Supabase query...');
+      addDebugLog('Executando consulta Supabase...');
 
       const { data, error } = await supabase
         .from('chapters')
@@ -76,18 +78,18 @@ export const ChapterList = ({ bookId: propBookId }: ChapterListProps) => {
         .eq('book_id', bookId)
         .order('order_index', { ascending: true });
 
-      addDebugLog(`Query completed. Data: ${data?.length || 0} chapters, Error: ${error?.message || 'none'}`);
+      addDebugLog(`Consulta concluída. Dados: ${data?.length || 0} capítulos, Erro: ${error?.message || 'nenhum'}`);
 
       if (error) {
-        addDebugLog(`Supabase error: ${error.message}`);
-        throw new Error(`Database error: ${error.message}`);
+        addDebugLog(`Erro Supabase: ${error.message}`);
+        throw new Error(`Erro no banco de dados: ${error.message}`);
       }
 
       setChapters(data || []);
-      addDebugLog(`Chapters set in state: ${data?.length || 0}`);
+      addDebugLog(`Capítulos definidos no estado: ${data?.length || 0}`);
       
     } catch (error: any) {
-      addDebugLog(`fetchChapters error: ${error.message}`);
+      addDebugLog(`Erro fetchChapters: ${error.message}`);
       setError(error.message);
       
       toast({
@@ -97,18 +99,18 @@ export const ChapterList = ({ bookId: propBookId }: ChapterListProps) => {
       });
     } finally {
       setLoading(false);
-      addDebugLog('fetchChapters completed, loading set to false');
+      addDebugLog('fetchChapters concluído, loading definido como false');
     }
   };
 
   const createTestChapter = async () => {
-    addDebugLog('🧪 createTestChapter function called!');
+    addDebugLog('🧪 função createTestChapter chamada!');
     
     if (!user || !bookId) {
-      addDebugLog('❌ Cannot create: missing user or bookId');
+      addDebugLog('❌ Não é possível criar: usuário ou bookId ausente');
       toast({
         title: "❌ Erro",
-        description: "User or Book ID missing",
+        description: "ID do usuário ou livro ausente",
         variant: "destructive",
       });
       return;
@@ -116,16 +118,16 @@ export const ChapterList = ({ bookId: propBookId }: ChapterListProps) => {
 
     try {
       setIsCreating(true);
-      addDebugLog('Starting chapter creation...');
+      addDebugLog('Iniciando criação do capítulo...');
 
       const testChapter = {
         book_id: bookId,
-        title: `Test Chapter ${Date.now()}`,
-        content: 'This is a test chapter created for debugging purposes.',
+        title: `Capítulo Teste ${Date.now()}`,
+        content: 'Este é um capítulo de teste criado para fins de depuração.',
         order_index: chapters.length + 1,
       };
 
-      addDebugLog(`Test chapter data: ${JSON.stringify(testChapter)}`);
+      addDebugLog(`Dados do capítulo teste: ${JSON.stringify(testChapter)}`);
 
       const { data, error } = await supabase
         .from('chapters')
@@ -133,14 +135,14 @@ export const ChapterList = ({ bookId: propBookId }: ChapterListProps) => {
         .select()
         .single();
 
-      addDebugLog(`Insert result - Data: ${!!data}, Error: ${error?.message || 'none'}`);
+      addDebugLog(`Resultado da inserção - Dados: ${!!data}, Erro: ${error?.message || 'nenhum'}`);
 
       if (error) {
-        addDebugLog(`❌ Insert error: ${JSON.stringify(error)}`);
+        addDebugLog(`❌ Erro na inserção: ${JSON.stringify(error)}`);
         throw error;
       }
 
-      addDebugLog('✅ Chapter created successfully!');
+      addDebugLog('✅ Capítulo criado com sucesso!');
       setChapters([...chapters, data]);
       
       toast({
@@ -148,10 +150,10 @@ export const ChapterList = ({ bookId: propBookId }: ChapterListProps) => {
         description: "Capítulo de teste criado com sucesso!",
       });
 
-      addDebugLog('Toast shown, function completed');
+      addDebugLog('Toast exibido, função concluída');
     } catch (error: any) {
-      addDebugLog(`❌ createTestChapter error: ${error.message}`);
-      console.error('💥 Full error object:', error);
+      addDebugLog(`❌ erro createTestChapter: ${error.message}`);
+      console.error('💥 Objeto de erro completo:', error);
       
       toast({
         title: "❌ Erro",
@@ -160,30 +162,30 @@ export const ChapterList = ({ bookId: propBookId }: ChapterListProps) => {
       });
     } finally {
       setIsCreating(false);
-      addDebugLog('createTestChapter finally block executed');
+      addDebugLog('bloco finally do createTestChapter executado');
     }
   };
 
   const testButtonClick = () => {
-    addDebugLog('🔘 Test button clicked!');
-    alert('Button click detected! Check console for detailed logs.');
+    addDebugLog('🔘 Botão de teste clicado!');
+    alert('Clique no botão detectado! Verifique o console para logs detalhados.');
     createTestChapter();
   };
 
   const clearLogs = () => {
     setDebugLogs([]);
-    addDebugLog('Debug logs cleared');
+    addDebugLog('Logs de depuração limpos');
   };
 
   if (loading) {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-center min-h-32">
-          <div className="text-muted-foreground">🔄 Loading chapters...</div>
+          <div className="text-muted-foreground">🔄 Carregando capítulos...</div>
         </div>
         <Card className="bg-yellow-50 border-yellow-200">
           <CardHeader>
-            <CardTitle className="text-sm text-yellow-800">🔄 Loading State</CardTitle>
+            <CardTitle className="text-sm text-yellow-800">🔄 Estado Carregando</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-xs space-y-1">
@@ -203,16 +205,16 @@ export const ChapterList = ({ bookId: propBookId }: ChapterListProps) => {
       <Card className="bg-purple-50 border-purple-200">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm text-purple-800">🔍 Debug Logs</CardTitle>
+            <CardTitle className="text-sm text-purple-800">🔍 Logs de Depuração</CardTitle>
             <Button onClick={clearLogs} variant="outline" size="sm">
-              Clear Logs
+              Limpar Logs
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           <div className="text-xs space-y-1 max-h-32 overflow-y-auto">
             {debugLogs.length === 0 ? (
-              <div>No logs yet...</div>
+              <div>Nenhum log ainda...</div>
             ) : (
               debugLogs.map((log, index) => (
                 <div key={index} className="font-mono text-purple-700">{log}</div>
@@ -225,15 +227,15 @@ export const ChapterList = ({ bookId: propBookId }: ChapterListProps) => {
       {/* Status Cards */}
       <Card className="bg-blue-50 border-blue-200">
         <CardHeader>
-          <CardTitle className="text-sm text-blue-800">📊 Current Status</CardTitle>
+          <CardTitle className="text-sm text-blue-800">📊 Status Atual</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-xs space-y-1 text-blue-700">
-            <div><strong>Book ID:</strong> {bookId || 'MISSING'}</div>
-            <div><strong>User ID:</strong> {user?.id || 'MISSING'}</div>
-            <div><strong>Chapters Count:</strong> {chapters.length}</div>
-            <div><strong>Is Creating:</strong> {isCreating ? 'YES' : 'NO'}</div>
-            <div><strong>Error:</strong> {error || 'None'}</div>
+            <div><strong>ID do Livro:</strong> {bookId || 'AUSENTE'}</div>
+            <div><strong>ID do Usuário:</strong> {user?.id || 'AUSENTE'}</div>
+            <div><strong>Contagem de Capítulos:</strong> {chapters.length}</div>
+            <div><strong>Está Criando:</strong> {isCreating ? 'SIM' : 'NÃO'}</div>
+            <div><strong>Erro:</strong> {error || 'Nenhum'}</div>
           </div>
         </CardContent>
       </Card>
@@ -242,16 +244,16 @@ export const ChapterList = ({ bookId: propBookId }: ChapterListProps) => {
       {error && (
         <Card className="border-red-200 bg-red-50">
           <CardHeader>
-            <CardTitle className="text-red-800">❌ Error Loading Chapters</CardTitle>
+            <CardTitle className="text-red-800">❌ Erro ao Carregar Capítulos</CardTitle>
             <CardDescription className="text-red-600">{error}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex gap-2">
               <Button onClick={fetchChapters} variant="outline">
-                🔄 Try Again
+                🔄 Tentar Novamente
               </Button>
               <Button onClick={testButtonClick} variant="outline" disabled={isCreating}>
-                🧪 Test Create {isCreating && '(Creating...)'}
+                🧪 Teste Criar {isCreating && '(Criando...)'}
               </Button>
             </div>
           </CardContent>
@@ -261,8 +263,8 @@ export const ChapterList = ({ bookId: propBookId }: ChapterListProps) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">📚 Chapters</h2>
-          <p className="text-muted-foreground">Organize your book content</p>
+          <h2 className="text-2xl font-bold">📚 Capítulos</h2>
+          <p className="text-muted-foreground">Organize o conteúdo do seu livro</p>
         </div>
         <div className="flex gap-2">
           <Link to={`/books/${bookId}/chapters/new`}>
@@ -279,7 +281,7 @@ export const ChapterList = ({ bookId: propBookId }: ChapterListProps) => {
             className="bg-yellow-100 hover:bg-yellow-200"
           >
             <TestTube className="h-4 w-4 mr-2" />
-            {isCreating ? '⏳ Creating...' : 'Test Create'}
+            {isCreating ? '⏳ Criando...' : 'Teste Criar'}
           </Button>
         </div>
       </div>
@@ -290,15 +292,15 @@ export const ChapterList = ({ bookId: propBookId }: ChapterListProps) => {
           <CardContent className="pt-6">
             <div className="text-center py-8">
               <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">📝 No chapters found</h3>
+              <h3 className="text-lg font-semibold mb-2">📝 Nenhum capítulo encontrado</h3>
               <p className="text-muted-foreground mb-4">
-                No chapters found for this book. Try creating one!
+                Nenhum capítulo encontrado para este livro. Tente criar um!
               </p>
               <div className="flex gap-2 justify-center">
                 <Link to={`/books/${bookId}/chapters/new`}>
                   <Button>
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Chapter
+                    Adicionar Capítulo
                   </Button>
                 </Link>
                 <Button 
@@ -308,7 +310,7 @@ export const ChapterList = ({ bookId: propBookId }: ChapterListProps) => {
                   className="bg-green-100 hover:bg-green-200"
                 >
                   <TestTube className="h-4 w-4 mr-2" />
-                  {isCreating ? '⏳ Creating...' : 'Create Test Chapter'}
+                  {isCreating ? '⏳ Criando...' : 'Criar Capítulo Teste'}
                 </Button>
               </div>
             </div>
@@ -323,15 +325,15 @@ export const ChapterList = ({ bookId: propBookId }: ChapterListProps) => {
                   <div className="flex-1">
                     <div className="flex items-center space-x-2">
                       <Badge variant="outline" className="text-xs">
-                        Chapter {chapter.order_index || index + 1}
+                        Capítulo {chapter.order_index || index + 1}
                       </Badge>
                       <CardTitle className="text-lg">{chapter.title}</CardTitle>
                     </div>
                     <CardDescription className="mt-1">
-                      Last updated {formatDistanceToNow(new Date(chapter.updated_at), { addSuffix: true })}
+                      Última atualização {formatDistanceToNow(new Date(chapter.updated_at), { addSuffix: true, locale: ptBR })}
                       {chapter.content && (
                         <span className="ml-2">
-                          • {Math.ceil(chapter.content.length / 250)} min read
+                          • {Math.ceil(chapter.content.length / 250)} min de leitura
                         </span>
                       )}
                     </CardDescription>
@@ -340,13 +342,13 @@ export const ChapterList = ({ bookId: propBookId }: ChapterListProps) => {
                     <Link to={`/books/${bookId}/chapters/${chapter.id}`}>
                       <Button variant="outline" size="sm">
                         <Eye className="h-4 w-4 mr-2" />
-                        View
+                        Ver
                       </Button>
                     </Link>
                     <Link to={`/books/${bookId}/chapters/${chapter.id}/edit`}>
                       <Button variant="outline" size="sm">
                         <Edit className="h-4 w-4 mr-2" />
-                        Edit
+                        Editar
                       </Button>
                     </Link>
                   </div>

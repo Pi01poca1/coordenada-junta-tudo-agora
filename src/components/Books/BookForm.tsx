@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -49,8 +50,8 @@ export const BookForm = () => {
     } catch (error) {
       console.error('Error fetching book:', error);
       toast({
-        title: "Error",
-        description: "Failed to load book",
+        title: "Erro",
+        description: "Falha ao carregar livro",
         variant: "destructive",
       });
       navigate('/dashboard');
@@ -91,16 +92,16 @@ export const BookForm = () => {
       }
 
       toast({
-        title: "Success",
-        description: `Book ${isEdit ? 'updated' : 'created'} successfully`,
+        title: "Sucesso",
+        description: `Livro ${isEdit ? 'atualizado' : 'criado'} com sucesso`,
       });
 
       navigate('/dashboard');
     } catch (error) {
       console.error('Error saving book:', error);
       toast({
-        title: "Error",
-        description: `Failed to ${isEdit ? 'update' : 'create'} book`,
+        title: "Erro",
+        description: `Falha ao ${isEdit ? 'atualizar' : 'criar'} livro`,
         variant: "destructive",
       });
     } finally {
@@ -117,40 +118,40 @@ export const BookForm = () => {
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Dashboard
+          Voltar ao Painel
         </Button>
         <h1 className="text-3xl font-bold">
-          {isEdit ? 'Edit Book' : 'Create New Book'}
+          {isEdit ? 'Editar Livro' : 'Criar Novo Livro'}
         </h1>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>{isEdit ? 'Edit Book Details' : 'Book Information'}</CardTitle>
+          <CardTitle>{isEdit ? 'Editar Detalhes do Livro' : 'Informações do Livro'}</CardTitle>
           <CardDescription>
-            {isEdit ? 'Update your book details' : 'Enter the details for your new book'}
+            {isEdit ? 'Atualize os detalhes do seu livro' : 'Digite os detalhes do seu novo livro'}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
+              <Label htmlFor="title">Título *</Label>
               <Input
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
-                placeholder="Enter book title"
+                placeholder="Digite o título do livro"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Descrição</Label>
               <Textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Enter book description (optional)"
+                placeholder="Digite a descrição do livro (opcional)"
                 rows={4}
               />
             </div>
@@ -159,26 +160,26 @@ export const BookForm = () => {
               <Label htmlFor="status">Status</Label>
               <Select value={status} onValueChange={setStatus}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
+                  <SelectValue placeholder="Selecionar status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="published">Published</SelectItem>
-                  <SelectItem value="archived">Archived</SelectItem>
+                  <SelectItem value="draft">Rascunho</SelectItem>
+                  <SelectItem value="published">Publicado</SelectItem>
+                  <SelectItem value="archived">Arquivado</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="flex space-x-2">
               <Button type="submit" disabled={loading}>
-                {loading ? 'Saving...' : (isEdit ? 'Update Book' : 'Create Book')}
+                {loading ? 'Salvando...' : (isEdit ? 'Atualizar Livro' : 'Criar Livro')}
               </Button>
               <Button 
                 type="button" 
                 variant="outline" 
                 onClick={() => navigate('/dashboard')}
               >
-                Cancel
+                Cancelar
               </Button>
             </div>
           </form>
