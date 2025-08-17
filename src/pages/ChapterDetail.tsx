@@ -72,8 +72,8 @@ const ChapterDetail = () => {
     } catch (error) {
       console.error('Error fetching chapter or book:', error);
       toast({
-        title: "Error",
-        description: "Failed to load chapter or unauthorized access",
+        title: "Erro",
+        description: "Falha ao carregar capítulo ou acesso não autorizado",
         variant: "destructive",
       });
       navigate('/dashboard');
@@ -88,7 +88,7 @@ const ChapterDetail = () => {
         <Navigation />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-center min-h-64">
-            <div className="text-muted-foreground">Loading chapter...</div>
+            <div className="text-muted-foreground">Carregando capítulo...</div>
           </div>
         </main>
       </div>
@@ -101,9 +101,9 @@ const ChapterDetail = () => {
         <Navigation />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-12">
-            <h1 className="text-2xl font-bold mb-4">Chapter not found</h1>
+            <h1 className="text-2xl font-bold mb-4">Capítulo não encontrado</h1>
             <Link to="/dashboard">
-              <Button>Back to Dashboard</Button>
+              <Button>Voltar ao Dashboard</Button>
             </Link>
           </div>
         </main>
@@ -122,7 +122,7 @@ const ChapterDetail = () => {
             className="mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to {book.title}
+            Voltar a {book.title}
           </Button>
         </div>
 
@@ -134,7 +134,7 @@ const ChapterDetail = () => {
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
                       <Badge variant="outline">
-                        Chapter {chapter.order_index || 1}
+                      Capítulo {chapter.order_index || 1}
                       </Badge>
                     </div>
                     <CardTitle className="text-2xl mb-2">{chapter.title}</CardTitle>
@@ -152,7 +152,7 @@ const ChapterDetail = () => {
                   <Link to={`/books/${bookId}/chapters/${chapterId}/edit`}>
                     <Button variant="outline">
                       <Edit className="h-4 w-4 mr-2" />
-                      Edit Chapter
+                      Editar Capítulo
                     </Button>
                   </Link>
                 </div>
@@ -176,7 +176,7 @@ const ChapterDetail = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Images</CardTitle>
+                <CardTitle>Imagens</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <ImageUpload chapterId={chapterId} onImageUploaded={() => window.location.reload()} />
@@ -188,21 +188,21 @@ const ChapterDetail = () => {
           <div className="lg:col-span-1">
             <Card>
               <CardHeader>
-                <CardTitle>Chapter Info</CardTitle>
+                <CardTitle>Informações do Capítulo</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <div className="text-sm font-medium text-muted-foreground">Book</div>
+                  <div className="text-sm font-medium text-muted-foreground">Livro</div>
                   <div className="text-sm">{book.title}</div>
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-muted-foreground">Order</div>
-                  <div className="text-sm">Chapter {chapter.order_index || 1}</div>
+                  <div className="text-sm font-medium text-muted-foreground">Ordem</div>
+                  <div className="text-sm">Capítulo {chapter.order_index || 1}</div>
                 </div>
                 {chapter.content && (
                   <div>
-                    <div className="text-sm font-medium text-muted-foreground">Estimated reading time</div>
-                    <div className="text-sm">{Math.ceil(chapter.content.length / 250)} minutes</div>
+                    <div className="text-sm font-medium text-muted-foreground">Tempo estimado de leitura</div>
+                    <div className="text-sm">{Math.ceil(chapter.content.length / 250)} minutos</div>
                   </div>
                 )}
               </CardContent>

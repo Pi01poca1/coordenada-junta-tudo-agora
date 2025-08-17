@@ -118,8 +118,8 @@ export const ChapterForm = () => {
     } catch (error) {
       console.error('Error fetching chapter:', error);
       toast({
-        title: "Error",
-        description: "Failed to load chapter",
+        title: "Erro",
+        description: "Falha ao carregar capítulo",
         variant: "destructive",
       });
       navigate(`/books/${bookId}`);
@@ -202,16 +202,16 @@ export const ChapterForm = () => {
       }
 
       toast({
-        title: "Success",
-        description: `Chapter ${isEdit ? 'updated' : 'created'} successfully`,
+        title: "Sucesso",
+        description: `Capítulo ${isEdit ? 'atualizado' : 'criado'} com sucesso`,
       });
 
       navigate(`/books/${bookId}`);
     } catch (error) {
       console.error('Error saving chapter:', error);
       toast({
-        title: "Error",
-        description: `Failed to ${isEdit ? 'update' : 'create'} chapter`,
+        title: "Erro",
+        description: `Falha ao ${isEdit ? 'atualizar' : 'criar'} capítulo`,
         variant: "destructive",
       });
     } finally {
@@ -293,10 +293,10 @@ export const ChapterForm = () => {
               className="mb-4"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Book
+              Voltar ao Livro
             </Button>
             <h1 className="text-3xl font-bold">
-              {isEdit ? 'Edit Chapter' : 'New Chapter'}
+              {isEdit ? 'Editar Capítulo' : 'Novo Capítulo'}
             </h1>
           </div>
           <div className="flex gap-2">
@@ -306,7 +306,7 @@ export const ChapterForm = () => {
               className="flex items-center gap-2"
             >
               <Sparkles className="h-4 w-4" />
-              AI Assistant
+              Assistente IA
             </Button>
             {activeTab === 'preview' && (
               <Button
@@ -318,7 +318,7 @@ export const ChapterForm = () => {
                 className="flex items-center gap-2"
               >
                 <Edit3 className="h-4 w-4" />
-                {editMode ? 'Sair da Edição' : 'Editar Imagens'}
+                {editMode ? 'Sair da Edição' : 'Modo Edição'}
               </Button>
             )}
           </div>
@@ -329,7 +329,7 @@ export const ChapterForm = () => {
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="edit" className="flex items-center gap-2">
             <Edit3 className="h-4 w-4" />
-            Editar Texto
+            Editar
           </TabsTrigger>
           <TabsTrigger value="preview" className="flex items-center gap-2">
             <Eye className="h-4 w-4" />
@@ -342,26 +342,26 @@ export const ChapterForm = () => {
             <div className="lg:col-span-2">
               <Card>
                 <CardHeader>
-                  <CardTitle>{isEdit ? 'Edit Chapter' : 'Chapter Details'}</CardTitle>
+                  <CardTitle>{isEdit ? 'Editar Capítulo' : 'Detalhes do Capítulo'}</CardTitle>
                   <CardDescription>
-                    {isEdit ? 'Update your chapter content' : 'Write your new chapter'}
+                    {isEdit ? 'Atualize o conteúdo do seu capítulo' : 'Escreva seu novo capítulo'}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="md:col-span-2 space-y-2">
-                        <Label htmlFor="title">Chapter Title *</Label>
+                        <Label htmlFor="title">Título do Capítulo *</Label>
                         <Input
                           id="title"
                           value={title}
                           onChange={(e) => setTitle(e.target.value)}
                           required
-                          placeholder="Enter chapter title"
+                          placeholder="Digite o título do capítulo"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="order">Chapter Order</Label>
+                        <Label htmlFor="order">Ordem do Capítulo</Label>
                         <Input
                           id="order"
                           type="number"
@@ -375,10 +375,10 @@ export const ChapterForm = () => {
 
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="content">Content</Label>
+                        <Label htmlFor="content">Conteúdo</Label>
                         {showAIPanel && (
                           <div className="text-xs text-muted-foreground">
-                            Select text and use AI Assistant →
+                            Selecione texto e use o Assistente IA →
                           </div>
                         )}
                       </div>
@@ -387,7 +387,7 @@ export const ChapterForm = () => {
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
                         onMouseUp={handleTextSelection}
-                        placeholder="Start writing your chapter..."
+                        placeholder="Comece a escrever seu capítulo..."
                         rows={20}
                         className="min-h-[400px] font-serif text-base leading-relaxed"
                       />
@@ -396,14 +396,14 @@ export const ChapterForm = () => {
                     <div className="flex space-x-2">
                       <Button type="submit" disabled={loading}>
                         <Save className="h-4 w-4 mr-2" />
-                        {loading ? 'Saving...' : (isEdit ? 'Update Chapter' : 'Create Chapter')}
+                        {loading ? 'Salvando...' : (isEdit ? 'Atualizar Capítulo' : 'Criar Capítulo')}
                       </Button>
                       <Button 
                         type="button" 
                         variant="outline" 
                         onClick={() => navigate(`/books/${bookId}`)}
                       >
-                        Cancel
+                        Cancelar
                       </Button>
                     </div>
                   </form>
@@ -428,12 +428,12 @@ export const ChapterForm = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Sparkles className="h-5 w-5" />
-                      AI Assistant
+                      Assistente IA
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground">
-                      Save the chapter first to use AI features.
+                      Salve o capítulo primeiro para usar recursos de IA.
                     </p>
                   </CardContent>
                 </Card>

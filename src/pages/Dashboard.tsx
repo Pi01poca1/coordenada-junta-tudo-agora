@@ -105,8 +105,8 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Error fetching stats:', error);
       toast({
-        title: "Error",
-        description: "Failed to load dashboard statistics",
+        title: "Erro",
+        description: "Falha ao carregar estatísticas do dashboard",
         variant: "destructive",
       });
     } finally {
@@ -122,13 +122,13 @@ const Dashboard = () => {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
             <p className="text-muted-foreground">
-              Manage your books and track your writing progress
+              Gerencie seus livros e acompanhe seu progresso de escrita
             </p>
           </div>
           <Link to="/create-book">
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              New Book
+              Novo Livro
             </Button>
           </Link>
         </div>
@@ -137,33 +137,33 @@ const Dashboard = () => {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Books</CardTitle>
+              <CardTitle className="text-sm font-medium">Total de Livros</CardTitle>
               <BookOpen className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{loading ? '...' : stats.totalBooks}</div>
               <p className="text-xs text-muted-foreground">
-                +{stats.booksThisMonth} this month
+                +{stats.booksThisMonth} este mês
               </p>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Chapters</CardTitle>
+              <CardTitle className="text-sm font-medium">Total de Capítulos</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{loading ? '...' : stats.totalChapters}</div>
               <p className="text-xs text-muted-foreground">
-                +{stats.chaptersThisMonth} this month
+                +{stats.chaptersThisMonth} este mês
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Words</CardTitle>
+              <CardTitle className="text-sm font-medium">Total de Palavras</CardTitle>
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -171,20 +171,20 @@ const Dashboard = () => {
                 {loading ? '...' : stats.totalWords.toLocaleString()}
               </div>
               <p className="text-xs text-muted-foreground">
-                Across all chapters
+                Em todos os capítulos
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Recent Activity</CardTitle>
+              <CardTitle className="text-sm font-medium">Atividade Recente</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{loading ? '...' : stats.recentActivity}</div>
               <p className="text-xs text-muted-foreground">
-                Chapters updated (7 days)
+                Capítulos atualizados (7 dias)
               </p>
             </CardContent>
           </Card>

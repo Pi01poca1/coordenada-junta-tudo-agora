@@ -56,8 +56,8 @@ const Profile = () => {
     } catch (error) {
       console.error('Error loading profile:', error);
       toast({
-        title: "Error",
-        description: "Failed to load profile data",
+        title: "Erro",
+        description: "Falha ao carregar dados do perfil",
         variant: "destructive"
       });
     }
@@ -81,14 +81,14 @@ const Profile = () => {
       if (error) throw error;
 
       toast({
-        title: "Saved!",
-        description: "Profile updated successfully"
+        title: "Salvo!",
+        description: "Perfil atualizado com sucesso"
       });
     } catch (error) {
       console.error('Error saving profile:', error);
       toast({
-        title: "Error",
-        description: "Failed to save profile",
+        title: "Erro",
+        description: "Falha ao salvar perfil",
         variant: "destructive"
       });
     } finally {
@@ -139,27 +139,27 @@ const Profile = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="first_name">First Name</Label>
+                <Label htmlFor="first_name">Nome</Label>
                 <Input
                   id="first_name"
                   value={profile.first_name || ''}
                   onChange={(e) => setProfile(prev => ({ ...prev, first_name: e.target.value }))}
-                  placeholder="Enter your first name"
+                  placeholder="Digite seu nome"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="last_name">Last Name</Label>
+                <Label htmlFor="last_name">Sobrenome</Label>
                 <Input
                   id="last_name"
                   value={profile.last_name || ''}
                   onChange={(e) => setProfile(prev => ({ ...prev, last_name: e.target.value }))}
-                  placeholder="Enter your last name"
+                  placeholder="Digite seu sobrenome"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="avatar_url">Avatar URL</Label>
+              <Label htmlFor="avatar_url">URL do Avatar</Label>
               <Input
                 id="avatar_url"
                 value={profile.avatar_url || ''}
@@ -174,13 +174,13 @@ const Profile = () => {
                 id="bio"
                 value={profile.bio || ''}
                 onChange={(e) => setProfile(prev => ({ ...prev, bio: e.target.value }))}
-                placeholder="Tell us about yourself..."
+                placeholder="Conte-nos sobre você..."
                 rows={4}
               />
             </div>
 
             <Button onClick={saveProfile} disabled={loading} className="w-full">
-              {loading ? 'Saving...' : 'Save'}
+              {loading ? 'Salvando...' : 'Salvar'}
             </Button>
           </CardContent>
         </Card>

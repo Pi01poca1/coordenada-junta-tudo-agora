@@ -68,8 +68,8 @@ const BookDetails = () => {
     } catch (error) {
       console.error('Error fetching book:', error);
       toast({
-        title: "Error",
-        description: "Failed to load book or book not found",
+        title: "Erro",
+        description: "Falha ao carregar livro ou livro não encontrado",
         variant: "destructive",
       });
       navigate('/dashboard');
@@ -84,7 +84,7 @@ const BookDetails = () => {
         <Navigation />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-center min-h-64">
-            <div className="text-muted-foreground">Loading book...</div>
+            <div className="text-muted-foreground">Carregando livro...</div>
           </div>
         </main>
       </div>
@@ -97,9 +97,9 @@ const BookDetails = () => {
         <Navigation />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-12">
-            <h1 className="text-2xl font-bold mb-4">Book not found</h1>
+            <h1 className="text-2xl font-bold mb-4">Livro não encontrado</h1>
             <Link to="/dashboard">
-              <Button>Back to Dashboard</Button>
+              <Button>Voltar ao Dashboard</Button>
             </Link>
           </div>
         </main>
@@ -124,7 +124,7 @@ const BookDetails = () => {
             className="mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
+            Voltar ao Dashboard
           </Button>
         </div>
 
