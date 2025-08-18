@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Navigation } from '@/components/Layout/Navigation';
 import { BookList } from '@/components/Books/BookList';
+import { SupabaseTest } from '@/components/Debug/SupabaseTest';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -131,6 +132,11 @@ const Dashboard = () => {
               Novo Livro
             </Button>
           </Link>
+        </div>
+
+        {/* Supabase Connection Test */}
+        <div className="mb-6">
+          <SupabaseTest />
         </div>
 
         {/* Statistics Cards */}
