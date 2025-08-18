@@ -9,6 +9,8 @@ export const SupabaseTest: React.FC = () => {
   const [details, setDetails] = useState<any>(null);
 
   useEffect(() => {
+    console.log('SupabaseTest component loaded!');
+    
     const testConnection = async () => {
       try {
         console.log('Testando conexão com Supabase...');

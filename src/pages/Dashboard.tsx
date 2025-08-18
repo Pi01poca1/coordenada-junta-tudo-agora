@@ -21,6 +21,8 @@ interface DashboardStats {
 }
 
 const Dashboard = () => {
+  console.log('Dashboard component loaded!');
+  
   const [stats, setStats] = useState<DashboardStats>({
     totalBooks: 0,
     totalChapters: 0,
@@ -32,6 +34,8 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
   const { toast } = useToast()
+
+  console.log('Dashboard - user:', user);
 
   useEffect(() => {
     if (user) {
