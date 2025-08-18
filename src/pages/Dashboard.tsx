@@ -47,21 +47,37 @@ const Dashboard = () => {
     if (!user) return
 
     try {
+      console.log('Iniciando fetchStats para usuário:', user.id)
+      
       const startOfMonth = new Date()
       startOfMonth.setDate(1)
       startOfMonth.setHours(0, 0, 0, 0)
 
       // Total books
-      const { count: totalBooks } = await supabase
+      console.log('Buscando total de livros...')
+      const { count: totalBooks, error: booksError } = await supabase
         .from('books')
         .select('*', { count: 'exact', head: true })
         .eq('owner_id', user.id)
+      
+      if (booksError) {
+        console.error('Erro ao buscar livros:', booksError)
+        throw booksError
+      }
+      console.log('Total de livros:', totalBooks)
 
       // Total chapters
-      const { count: totalChapters } = await supabase
+      console.log('Buscando total de capítulos...')
+      const { count: totalChapters, error: chaptersError } = await supabase
         .from('chapters')
         .select('chapters.*, books!inner(owner_id)', { count: 'exact', head: true })
         .eq('books.owner_id', user.id)
+      
+      if (chaptersError) {
+        console.error('Erro ao buscar capítulos:', chaptersError)
+        throw chaptersError
+      }
+      console.log('Total de capítulos:', totalChapters)
 
       // Books this month
       const { count: booksThisMonth } = await supabase
@@ -99,6 +115,15 @@ const Dashboard = () => {
         .eq('books.owner_id', user.id)
         .gte('chapters.updated_at', sevenDaysAgo.toISOString())
 
+      console.log('Stats finais:', {
+        totalBooks: totalBooks || 0,
+        totalChapters: totalChapters || 0,
+        totalWords,
+        recentActivity: recentActivity || 0,
+        booksThisMonth: booksThisMonth || 0,
+        chaptersThisMonth: chaptersThisMonth || 0,
+      })
+
       setStats({
         totalBooks: totalBooks || 0,
         totalChapters: totalChapters || 0,
@@ -130,11 +155,6 @@ const Dashboard = () => {
               Gerencie seus livros e acompanhe seu progresso de escrita
             </p>
           </div>
-        </div>
-
-        {/* Supabase Connection Test */}
-        <div className="mb-6">
-          <SupabaseTest />
         </div>
 
         {/* Statistics Cards */}
