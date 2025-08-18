@@ -1,29 +1,15 @@
-<<<<<<< HEAD
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Navigation } from '@/components/Layout/Navigation';
-import { BookList } from '@/components/Books/BookList';
-import { SupabaseTest } from '@/components/Debug/SupabaseTest';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { Plus, BookOpen, FileText, BarChart3, Clock, TrendingUp } from 'lucide-react';
-=======
-﻿import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Navigation } from '@/components/Layout/Navigation'
 import { BookList } from '@/components/Books/BookList'
+import { SupabaseTest } from '@/components/Debug/SupabaseTest'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
 import { Plus, BookOpen, FileText, BarChart3, Clock, TrendingUp } from 'lucide-react'
->>>>>>> a8e8a7e (feat: ajustes no fluxo de login, admin dashboard e policies supabase)
 
 interface DashboardStats {
   totalBooks: number
