@@ -1,46 +1,52 @@
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
-import { useToast } from '@/hooks/use-toast';
-import { Move, Maximize2, Type, X } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Slider } from '@/components/ui/slider'
+import { useToast } from '@/hooks/use-toast'
+import { Move, Maximize2, Type, X } from 'lucide-react'
+import { supabase } from '@/integrations/supabase/client'
 
 interface Image {
-  id: string;
-  filename: string;
-  url: string;
-  position_x: number | null;
-  position_y: number | null;
-  scale: number | null;
-  text_wrap: string | null;
-  layout: string | null;
-  z_index: number | null;
-  width: number | null;
-  height: number | null;
+  id: string
+  filename: string
+  url: string
+  position_x: number | null
+  position_y: number | null
+  scale: number | null
+  text_wrap: string | null
+  layout: string | null
+  z_index: number | null
+  width: number | null
+  height: number | null
 }
 
 interface ImageEditorProps {
-  image: Image;
-  onClose: () => void;
-  onUpdate: () => void;
+  image: Image
+  onClose: () => void
+  onUpdate: () => void
 }
 
 export const ImageEditor = ({ image, onClose, onUpdate }: ImageEditorProps) => {
-  const [positionX, setPositionX] = useState(image.position_x || 0);
-  const [positionY, setPositionY] = useState(image.position_y || 0);
-  const [scale, setScale] = useState((image.scale || 1) * 100);
-  const [textWrap, setTextWrap] = useState(image.text_wrap || 'none');
-  const [layout, setLayout] = useState(image.layout || 'inline');
-  const [zIndex, setZIndex] = useState(image.z_index || 0);
-  const [saving, setSaving] = useState(false);
-  const { toast } = useToast();
+  const [positionX, setPositionX] = useState(image.position_x || 0)
+  const [positionY, setPositionY] = useState(image.position_y || 0)
+  const [scale, setScale] = useState((image.scale || 1) * 100)
+  const [textWrap, setTextWrap] = useState(image.text_wrap || 'none')
+  const [layout, setLayout] = useState(image.layout || 'inline')
+  const [zIndex, setZIndex] = useState(image.z_index || 0)
+  const [saving, setSaving] = useState(false)
+  const { toast } = useToast()
 
   const handleSave = async () => {
-    setSaving(true);
+    setSaving(true)
     try {
       const { error } = await supabase
         .from('images')
@@ -50,30 +56,30 @@ export const ImageEditor = ({ image, onClose, onUpdate }: ImageEditorProps) => {
           scale: scale / 100,
           text_wrap: textWrap,
           layout: layout,
-          z_index: zIndex
+          z_index: zIndex,
         })
-        .eq('id', image.id);
+        .eq('id', image.id)
 
-      if (error) throw error;
+      if (error) throw error
 
       toast({
-        title: "Configurações salvas!",
-        description: "Propriedades da imagem atualizadas com sucesso"
-      });
-      
-      onUpdate();
-      onClose();
+        title: 'Configurações salvas!',
+        description: 'Propriedades da imagem atualizadas com sucesso',
+      })
+
+      onUpdate()
+      onClose()
     } catch (error) {
-      console.error('Erro ao salvar:', error);
+      console.error('Erro ao salvar:', error)
       toast({
-        title: "Erro",
-        description: "Falha ao salvar configurações da imagem",
-        variant: "destructive"
-      });
+        title: 'Erro',
+        description: 'Falha ao salvar configurações da imagem',
+        variant: 'destructive',
+      })
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
-  };
+  }
 
   return (
     <Card className="w-full max-w-md">
@@ -90,14 +96,14 @@ export const ImageEditor = ({ image, onClose, onUpdate }: ImageEditorProps) => {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Preview da imagem */}
-        <div className="relative border rounded-lg overflow-hidden">
+        <div className="relative overflow-hidden rounded-lg border">
           <img
             src={image.url}
             alt={image.filename}
-            className="w-full h-32 object-cover"
+            className="h-32 w-full object-cover"
             style={{
               transform: `scale(${scale / 100})`,
-              transformOrigin: 'center'
+              transformOrigin: 'center',
             }}
           />
         </div>
@@ -202,5 +208,5 @@ export const ImageEditor = ({ image, onClose, onUpdate }: ImageEditorProps) => {
         </div>
       </CardContent>
     </Card>
-  );
-};
+  )
+}

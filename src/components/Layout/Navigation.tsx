@@ -1,51 +1,61 @@
+﻿import React from "react"
+import { Link, useNavigate } from "react-router-dom"
+import { useAuth } from "@/contexts/AuthContext"
 
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
-import { BookOpen, LogOut } from 'lucide-react';
+export function Navigation() {
+  const { user, signOut } = useAuth()
+  const navigate = useNavigate()
 
-export const Navigation = () => {
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/login');
-  };
-
-  if (!user) return null;
+  // Lista de admins (separados por vírgula) vinda do .env.local
+  const adminEmails =
+    (import.meta.env.VITE_ADMIN_EMAILS as string | undefined)?.split(",").map(e => e.trim()) ?? []
+  const isAdmin = !!(user?.email && adminEmails.includes(user.email))
 
   return (
-    <nav className="border-b bg-card">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <Link to="/dashboard" className="flex items-center space-x-2">
-              <BookOpen className="h-6 w-6 text-primary" />
-              <span className="font-bold text-lg">EscritorLivros</span>
-            </Link>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Link to="/statistics" className="text-sm text-muted-foreground hover:text-primary">
-              Estatísticas
-            </Link>
-            <Link to="/docs/overview" className="text-sm text-muted-foreground hover:text-primary">
-              Documentação
-            </Link>
-            <Link to="/profile" className="text-sm text-muted-foreground hover:text-primary">
-              Perfil
-            </Link>
-            <span className="text-sm text-muted-foreground">
-              {user.email}
-            </span>
-            <Button variant="outline" size="sm" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sair
-            </Button>
-          </div>
-        </div>
+    <nav className="flex items-center justify-between px-6 py-4 border-b bg-white">
+      <Link to="/dashboard" className="flex items-center space-x-2">
+        <span className="text-xl font-bold tracking-tight text-gray-800">
+          Estúdio do Autor
+        </span>
+      </Link>
+
+      <div className="flex items-center gap-6">
+        {isAdmin && (
+          <Link to="/admin" className="font-semibold text-red-600 hover:underline">
+            Admin
+          </Link>
+        )}
+        <Link to="/statistics" className="text-gray-700 hover:underline">
+          Estatísticas
+        </Link>
+        <Link to="/docs/overview" className="text-gray-700 hover:underline">
+          Documentação
+        </Link>
+        <Link to="/profile" className="text-gray-700 hover:underline">
+          Perfil
+        </Link>
+
+        {user?.email && (
+          <span className="hidden sm:inline text-sm text-gray-500">
+            {user.email}
+          </span>
+        )}
+
+        <button
+          onClick={async () => {
+            try {
+              await signOut?.()
+            } finally {
+              navigate("/login", { replace: true })
+            }
+          }}
+          className="px-3 py-1 rounded-md border text-gray-700 hover:bg-gray-50"
+        >
+          Sair
+        </button>
       </div>
     </nav>
-  );
-};
+  )
+}
+
+export default Navigation

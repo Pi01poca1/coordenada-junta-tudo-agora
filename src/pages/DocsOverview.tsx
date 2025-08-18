@@ -1,16 +1,16 @@
-import { Navigation } from '@/components/Layout/Navigation';
+import { Navigation } from '@/components/Layout/Navigation'
 
 const DocsOverview = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="mx-auto max-w-4xl px-4 py-8">
         <div className="prose prose-slate dark:prose-invert max-w-none">
           <h1>SIPLI Enterprise v4.0 – Visão Geral</h1>
-          
+
           <h2>O que é o SIPLI</h2>
           <p>Editor literário profissional multi‑usuário com IA integrada.</p>
-          
+
           <h3>Recursos principais</h3>
           <ul>
             <li>Criação e edição de livros e capítulos</li>
@@ -21,7 +21,7 @@ const DocsOverview = () => {
             <li>Interface moderna e responsiva</li>
             <li>Sincronização local e nuvem</li>
           </ul>
-          
+
           <h2>Arquitetura Técnica (alto nível)</h2>
           <table className="min-w-full border-collapse border border-border">
             <thead>
@@ -33,7 +33,9 @@ const DocsOverview = () => {
             <tbody>
               <tr>
                 <td className="border border-border px-4 py-2">Front‑end</td>
-                <td className="border border-border px-4 py-2">React 18, TypeScript, Vite, TailwindCSS, React Router</td>
+                <td className="border border-border px-4 py-2">
+                  React 18, TypeScript, Vite, TailwindCSS, React Router
+                </td>
               </tr>
               <tr>
                 <td className="border border-border px-4 py-2">Back‑end</td>
@@ -45,7 +47,9 @@ const DocsOverview = () => {
               </tr>
               <tr>
                 <td className="border border-border px-4 py-2">IA</td>
-                <td className="border border-border px-4 py-2">Anthropic Claude, OpenAI GPT, Ollama (local)</td>
+                <td className="border border-border px-4 py-2">
+                  Anthropic Claude, OpenAI GPT, Ollama (local)
+                </td>
               </tr>
               <tr>
                 <td className="border border-border px-4 py-2">Storage</td>
@@ -61,11 +65,13 @@ const DocsOverview = () => {
               </tr>
             </tbody>
           </table>
-          
-          <p><em>diagrama simples se possível (texto ou ASCII)</em></p>
-          
+
+          <p>
+            <em>diagrama simples se possível (texto ou ASCII)</em>
+          </p>
+
           <h2>Estrutura de Pastas (resumida)</h2>
-          <pre className="bg-muted p-4 rounded-md overflow-x-auto">
+          <pre className="overflow-x-auto rounded-md bg-muted p-4">
             <code>{`sipli-enterprise/
 ├── backend/
 │ ├── app/
@@ -80,7 +86,7 @@ const DocsOverview = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default DocsOverview;
+export default DocsOverview

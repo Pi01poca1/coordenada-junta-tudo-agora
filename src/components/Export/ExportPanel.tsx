@@ -1,18 +1,24 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Download, FileText, Book, Code, Globe, Database } from 'lucide-react';
-import { useExport, type ExportFormat } from '@/hooks/useExport';
+import React, { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Separator } from '@/components/ui/separator'
+import { Download, FileText, Book, Code, Globe, Database } from 'lucide-react'
+import { useExport, type ExportFormat } from '@/hooks/useExport'
 
 interface ExportPanelProps {
-  bookId: string;
-  bookTitle: string;
-  totalChapters: number;
+  bookId: string
+  bookTitle: string
+  totalChapters: number
 }
 
 const formatIcons = {
@@ -20,43 +26,43 @@ const formatIcons = {
   epub: Book,
   docx: FileText,
   html: Globe,
-  json: Database
-};
+  json: Database,
+}
 
 const formatDescriptions = {
   pdf: 'Documento portátil ideal para impressão',
   epub: 'Formato de e-book compatível com leitores',
   docx: 'Documento Word para edição',
   html: 'Página web para visualização online',
-  json: 'Dados estruturados para desenvolvimento'
-};
+  json: 'Dados estruturados para desenvolvimento',
+}
 
 export const ExportPanel = ({ bookId, bookTitle, totalChapters }: ExportPanelProps) => {
-  const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('pdf');
-  const [includeImages, setIncludeImages] = useState(true);
-  const [template, setTemplate] = useState('default');
-  const [chapterStart, setChapterStart] = useState(1);
-  const [chapterEnd, setChapterEnd] = useState(totalChapters);
-  const [useRange, setUseRange] = useState(false);
+  const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('pdf')
+  const [includeImages, setIncludeImages] = useState(true)
+  const [template, setTemplate] = useState('default')
+  const [chapterStart, setChapterStart] = useState(1)
+  const [chapterEnd, setChapterEnd] = useState(totalChapters)
+  const [useRange, setUseRange] = useState(false)
 
-  const { exportBook, isExporting } = useExport();
+  const { exportBook, isExporting } = useExport()
 
   const handleExport = async () => {
     const options = {
       template,
       includeImages,
-      ...(useRange && { 
-        chapterRange: { 
-          start: chapterStart, 
-          end: chapterEnd 
-        } 
-      })
-    };
+      ...(useRange && {
+        chapterRange: {
+          start: chapterStart,
+          end: chapterEnd,
+        },
+      }),
+    }
 
-    await exportBook(bookId, selectedFormat, options);
-  };
+    await exportBook(bookId, selectedFormat, options)
+  }
 
-  const Icon = formatIcons[selectedFormat];
+  const Icon = formatIcons[selectedFormat]
 
   return (
     <Card>
@@ -70,13 +76,16 @@ export const ExportPanel = ({ bookId, bookTitle, totalChapters }: ExportPanelPro
         {/* Format Selection */}
         <div className="space-y-3">
           <Label>Formato de Exportação</Label>
-          <Select value={selectedFormat} onValueChange={(value: ExportFormat) => setSelectedFormat(value)}>
+          <Select
+            value={selectedFormat}
+            onValueChange={(value: ExportFormat) => setSelectedFormat(value)}
+          >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {Object.entries(formatDescriptions).map(([format, description]) => {
-                const FormatIcon = formatIcons[format as ExportFormat];
+                const FormatIcon = formatIcons[format as ExportFormat]
                 return (
                   <SelectItem key={format} value={format}>
                     <div className="flex items-center gap-2">
@@ -87,12 +96,12 @@ export const ExportPanel = ({ bookId, bookTitle, totalChapters }: ExportPanelPro
                       </div>
                     </div>
                   </SelectItem>
-                );
+                )
               })}
             </SelectContent>
           </Select>
-          
-          <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+
+          <div className="flex items-center gap-2 rounded-lg bg-muted p-3">
             <Icon className="h-4 w-4" />
             <span className="text-sm">{formatDescriptions[selectedFormat]}</span>
           </div>
@@ -121,15 +130,15 @@ export const ExportPanel = ({ bookId, bookTitle, totalChapters }: ExportPanelPro
         {/* Options */}
         <div className="space-y-3">
           <Label>Opções</Label>
-          
+
           <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="includeImages" 
+            <Checkbox
+              id="includeImages"
               checked={includeImages}
               onCheckedChange={(checked) => setIncludeImages(checked as boolean)}
             />
-            <label 
-              htmlFor="includeImages" 
+            <label
+              htmlFor="includeImages"
               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
               Incluir imagens
@@ -137,13 +146,13 @@ export const ExportPanel = ({ bookId, bookTitle, totalChapters }: ExportPanelPro
           </div>
 
           <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="useRange" 
+            <Checkbox
+              id="useRange"
               checked={useRange}
               onCheckedChange={(checked) => setUseRange(checked as boolean)}
             />
-            <label 
-              htmlFor="useRange" 
+            <label
+              htmlFor="useRange"
               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
               Exportar apenas alguns capítulos
@@ -153,7 +162,9 @@ export const ExportPanel = ({ bookId, bookTitle, totalChapters }: ExportPanelPro
           {useRange && (
             <div className="ml-6 grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="start" className="text-xs">Capítulo inicial</Label>
+                <Label htmlFor="start" className="text-xs">
+                  Capítulo inicial
+                </Label>
                 <Input
                   id="start"
                   type="number"
@@ -165,7 +176,9 @@ export const ExportPanel = ({ bookId, bookTitle, totalChapters }: ExportPanelPro
                 />
               </div>
               <div>
-                <Label htmlFor="end" className="text-xs">Capítulo final</Label>
+                <Label htmlFor="end" className="text-xs">
+                  Capítulo final
+                </Label>
                 <Input
                   id="end"
                   type="number"
@@ -183,27 +196,26 @@ export const ExportPanel = ({ bookId, bookTitle, totalChapters }: ExportPanelPro
         <Separator />
 
         {/* Export Info */}
-        <div className="text-sm text-muted-foreground space-y-1">
-          <div>📖 <strong>{bookTitle}</strong></div>
-          <div>📄 {useRange ? `Capítulos ${chapterStart}-${chapterEnd}` : `${totalChapters} capítulos`}</div>
+        <div className="space-y-1 text-sm text-muted-foreground">
+          <div>
+            📖 <strong>{bookTitle}</strong>
+          </div>
+          <div>
+            📄 {useRange ? `Capítulos ${chapterStart}-${chapterEnd}` : `${totalChapters} capítulos`}
+          </div>
           <div>📁 Formato: {selectedFormat.toUpperCase()}</div>
         </div>
 
         {/* Export Button */}
-        <Button 
-          onClick={handleExport} 
-          disabled={isExporting}
-          className="w-full"
-          size="lg"
-        >
+        <Button onClick={handleExport} disabled={isExporting} className="w-full" size="lg">
           {isExporting ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
               Exportando...
             </>
           ) : (
             <>
-              <Download className="h-4 w-4 mr-2" />
+              <Download className="mr-2 h-4 w-4" />
               Exportar {selectedFormat.toUpperCase()}
             </>
           )}
@@ -211,37 +223,37 @@ export const ExportPanel = ({ bookId, bookTitle, totalChapters }: ExportPanelPro
 
         {/* Quick Export Buttons */}
         <div className="grid grid-cols-2 gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => {
-              setSelectedFormat('pdf');
-              setTemplate('default');
-              setIncludeImages(true);
-              setUseRange(false);
-              setTimeout(handleExport, 100);
+              setSelectedFormat('pdf')
+              setTemplate('default')
+              setIncludeImages(true)
+              setUseRange(false)
+              setTimeout(handleExport, 100)
             }}
             disabled={isExporting}
           >
-            <FileText className="h-3 w-3 mr-1" />
+            <FileText className="mr-1 h-3 w-3" />
             PDF Rápido
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => {
-              setSelectedFormat('json');
-              setIncludeImages(false);
-              setUseRange(false);
-              setTimeout(handleExport, 100);
+              setSelectedFormat('json')
+              setIncludeImages(false)
+              setUseRange(false)
+              setTimeout(handleExport, 100)
             }}
             disabled={isExporting}
           >
-            <Database className="h-3 w-3 mr-1" />
+            <Database className="mr-1 h-3 w-3" />
             Backup JSON
           </Button>
         </div>
       </CardContent>
     </Card>
-  );
-};
+  )
+}

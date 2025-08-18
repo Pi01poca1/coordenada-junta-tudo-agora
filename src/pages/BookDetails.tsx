@@ -1,49 +1,49 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Navigation } from '@/components/Layout/Navigation';
-import { DraggableChapterList } from '@/components/Chapters/DraggableChapterList';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Edit, Calendar, Clock } from 'lucide-react';
-import { formatDistanceToNow, format } from 'date-fns';
-import { ExportPanel } from '@/components/Export/ExportPanel';
-import { ExportTest } from '@/components/Export/ExportTest';
-import { ImageUpload } from '@/components/Images/ImageUpload';
-import { ImageGallery } from '@/components/Images/ImageGallery';
-import { BookCoverUpload } from '@/components/Images/BookCoverUpload';
-import { CoverPreview } from '@/components/Images/CoverPreview';
-import StorageDebug from '@/components/Debug/StorageDebug';
+import React, { useEffect, useState } from 'react'
+import { useParams, useNavigate, Link } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Navigation } from '@/components/Layout/Navigation'
+import { DraggableChapterList } from '@/components/Chapters/DraggableChapterList'
+import { supabase } from '@/integrations/supabase/client'
+import { useAuth } from '@/contexts/AuthContext'
+import { useToast } from '@/hooks/use-toast'
+import { ArrowLeft, Edit, Calendar, Clock } from 'lucide-react'
+import { formatDistanceToNow, format } from 'date-fns'
+import { ExportPanel } from '@/components/Export/ExportPanel'
+import { ExportTest } from '@/components/Export/ExportTest'
+import { ImageUpload } from '@/components/Images/ImageUpload'
+import { ImageGallery } from '@/components/Images/ImageGallery'
+import { BookCoverUpload } from '@/components/Images/BookCoverUpload'
+import { CoverPreview } from '@/components/Images/CoverPreview'
+import StorageDebug from '@/components/Debug/StorageDebug'
 
 interface Book {
-  id: string;
-  title: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
+  id: string
+  title: string
+  status: string
+  created_at: string
+  updated_at: string
 }
 
 const BookDetails = () => {
-  const [book, setBook] = useState<Book | null>(null);
-  const [chapterCount, setChapterCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [refreshGallery, setRefreshGallery] = useState(0);
-  const { id } = useParams();
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const { toast } = useToast();
+  const [book, setBook] = useState<Book | null>(null)
+  const [chapterCount, setChapterCount] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [refreshGallery, setRefreshGallery] = useState(0)
+  const { id } = useParams()
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const { toast } = useToast()
 
   useEffect(() => {
     if (id) {
-      fetchBook(id);
+      fetchBook(id)
     }
-  }, [id, user]);
+  }, [id, user])
 
   const fetchBook = async (bookId: string) => {
-    if (!user) return;
+    if (!user) return
 
     try {
       const { data, error } = await supabase
@@ -51,103 +51,103 @@ const BookDetails = () => {
         .select('*')
         .eq('id', bookId)
         .eq('owner_id', user.id)
-        .single();
+        .single()
 
-      if (error) throw error;
-      setBook(data);
+      if (error) throw error
+      setBook(data)
 
       // Fetch chapter count
       const { count, error: countError } = await supabase
         .from('chapters')
         .select('*', { count: 'exact', head: true })
-        .eq('book_id', bookId);
+        .eq('book_id', bookId)
 
       if (!countError) {
-        setChapterCount(count || 0);
+        setChapterCount(count || 0)
       }
     } catch (error) {
-      console.error('Error fetching book:', error);
+      console.error('Error fetching book:', error)
       toast({
-        title: "Erro",
-        description: "Falha ao carregar livro ou livro não encontrado",
-        variant: "destructive",
-      });
-      navigate('/dashboard');
+        title: 'Erro',
+        description: 'Falha ao carregar livro ou livro não encontrado',
+        variant: 'destructive',
+      })
+      navigate('/dashboard')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-center min-h-64">
+        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="flex min-h-64 items-center justify-center">
             <div className="text-muted-foreground">Carregando livro...</div>
           </div>
         </main>
       </div>
-    );
+    )
   }
 
   if (!book) {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center py-12">
-            <h1 className="text-2xl font-bold mb-4">Livro não encontrado</h1>
+        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="py-12 text-center">
+            <h1 className="mb-4 text-2xl font-bold">Livro não encontrado</h1>
             <Link to="/dashboard">
               <Button>Voltar ao Dashboard</Button>
             </Link>
           </div>
         </main>
       </div>
-    );
+    )
   }
 
   const statusColors = {
     draft: 'bg-gray-100 text-gray-800',
     published: 'bg-green-100 text-green-800',
     archived: 'bg-red-100 text-red-800',
-  };
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate('/dashboard')}
-            className="mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
+          <Button variant="ghost" onClick={() => navigate('/dashboard')} className="mb-4">
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar ao Dashboard
           </Button>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-4">
-          <div className="lg:col-span-1 space-y-6">
+          <div className="space-y-6 lg:col-span-1">
             {/* Book Info Card */}
             <Card>
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <CardTitle className="text-xl mb-2">{book.title}</CardTitle>
+                    <CardTitle className="mb-2 text-xl">{book.title}</CardTitle>
                     <div className="space-y-1 text-sm text-muted-foreground">
                       <div className="flex items-center">
-                        <Calendar className="h-3 w-3 mr-1" />
+                        <Calendar className="mr-1 h-3 w-3" />
                         {format(new Date(book.created_at), 'MMM d, yyyy')}
                       </div>
                       <div className="flex items-center">
-                        <Clock className="h-3 w-3 mr-1" />
+                        <Clock className="mr-1 h-3 w-3" />
                         {formatDistanceToNow(new Date(book.updated_at), { addSuffix: true })}
                       </div>
                     </div>
                   </div>
-                  <Badge className={statusColors[book.status as keyof typeof statusColors] || statusColors.draft}>
+                  <Badge
+                    className={
+                      statusColors[book.status as keyof typeof statusColors] || statusColors.draft
+                    }
+                  >
                     {book.status}
                   </Badge>
                 </div>
@@ -155,7 +155,7 @@ const BookDetails = () => {
               <CardContent className="space-y-3">
                 <Link to={`/books/${book.id}/edit`}>
                   <Button className="w-full" variant="outline" size="sm">
-                    <Edit className="h-4 w-4 mr-2" />
+                    <Edit className="mr-2 h-4 w-4" />
                     Editar Livro
                   </Button>
                 </Link>
@@ -166,40 +166,38 @@ const BookDetails = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">📸 Imagens</CardTitle>
-                <CardDescription>
-                  Gerencie a capa e imagens do seu livro
-                </CardDescription>
+                <CardDescription>Gerencie a capa e imagens do seu livro</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Capa do Livro */}
                 <div className="space-y-4">
-                  <h4 className="font-medium mb-2 text-sm">🖼️ Capa do Livro</h4>
-                  
+                  <h4 className="mb-2 text-sm font-medium">🖼️ Capa do Livro</h4>
+
                   {/* Preview da capa atual */}
-                  <CoverPreview 
-                    bookId={book.id} 
-                    onCoverRemoved={() => setRefreshGallery(prev => prev + 1)} 
+                  <CoverPreview
+                    bookId={book.id}
+                    onCoverRemoved={() => setRefreshGallery((prev) => prev + 1)}
                   />
-                  
+
                   {/* Upload/Seleção de nova capa */}
-                  <BookCoverUpload 
-                    bookId={book.id} 
-                    onCoverUploaded={() => setRefreshGallery(prev => prev + 1)} 
+                  <BookCoverUpload
+                    bookId={book.id}
+                    onCoverUploaded={() => setRefreshGallery((prev) => prev + 1)}
                   />
                 </div>
-                
+
                 {/* Outras Imagens */}
                 <div>
-                  <h4 className="font-medium mb-2 text-sm">📷 Outras Imagens</h4>
-                  <ImageUpload 
-                    bookId={book.id} 
-                    onImageUploaded={() => setRefreshGallery(prev => prev + 1)} 
+                  <h4 className="mb-2 text-sm font-medium">📷 Outras Imagens</h4>
+                  <ImageUpload
+                    bookId={book.id}
+                    onImageUploaded={() => setRefreshGallery((prev) => prev + 1)}
                   />
                 </div>
-                
+
                 {/* Galeria */}
                 <div>
-                  <h4 className="font-medium mb-2 text-sm">🖼️ Galeria</h4>
+                  <h4 className="mb-2 text-sm font-medium">🖼️ Galeria</h4>
                   <ImageGallery bookId={book.id} key={refreshGallery} />
                 </div>
               </CardContent>
@@ -209,16 +207,10 @@ const BookDetails = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">📄 Exportar Livro</CardTitle>
-                <CardDescription>
-                  Baixe seu livro em diferentes formatos
-                </CardDescription>
+                <CardDescription>Baixe seu livro em diferentes formatos</CardDescription>
               </CardHeader>
               <CardContent>
-                <ExportPanel 
-                  bookId={book.id} 
-                  bookTitle={book.title}
-                  totalChapters={chapterCount}
-                />
+                <ExportPanel bookId={book.id} bookTitle={book.title} totalChapters={chapterCount} />
               </CardContent>
             </Card>
           </div>
@@ -229,7 +221,7 @@ const BookDetails = () => {
         </div>
       </main>
     </div>
-  );
-};
+  )
+}
 
-export default BookDetails;
+export default BookDetails

@@ -1,12 +1,11 @@
-
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { BookCard } from './BookCard';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { Plus, BookOpen, BarChart3 } from 'lucide-react';
+import React, { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
+import { BookCard } from './BookCard'
+import { supabase } from '@/integrations/supabase/client'
+import { useAuth } from '@/contexts/AuthContext'
+import { useToast } from '@/hooks/use-toast'
+import { Plus, BookOpen, BarChart3 } from 'lucide-react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,82 +16,79 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+} from '@/components/ui/alert-dialog'
 
 interface Book {
-  id: string;
-  title: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
+  id: string
+  title: string
+  status: string
+  created_at: string
+  updated_at: string
 }
 
 export const BookList = () => {
-  const [books, setBooks] = useState<Book[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const [books, setBooks] = useState<Book[]>([])
+  const [loading, setLoading] = useState(true)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const { user } = useAuth()
+  const { toast } = useToast()
 
   useEffect(() => {
-    fetchBooks();
-  }, [user]);
+    fetchBooks()
+  }, [user])
 
   const fetchBooks = async () => {
-    if (!user) return;
+    if (!user) return
 
     try {
       const { data, error } = await supabase
         .from('books')
         .select('*')
         .eq('owner_id', user.id)
-        .order('updated_at', { ascending: false });
+        .order('updated_at', { ascending: false })
 
-      if (error) throw error;
-      setBooks(data || []);
+      if (error) throw error
+      setBooks(data || [])
     } catch (error) {
-      console.error('Error fetching books:', error);
+      console.error('Error fetching books:', error)
       toast({
-        title: "Erro",
-        description: "Falha ao carregar livros",
-        variant: "destructive",
-      });
+        title: 'Erro',
+        description: 'Falha ao carregar livros',
+        variant: 'destructive',
+      })
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleDelete = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('books')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from('books').delete().eq('id', id)
 
-      if (error) throw error;
+      if (error) throw error
 
-      setBooks(books.filter(book => book.id !== id));
+      setBooks(books.filter((book) => book.id !== id))
       toast({
-        title: "Sucesso",
-        description: "Livro excluído com sucesso",
-      });
+        title: 'Sucesso',
+        description: 'Livro excluído com sucesso',
+      })
     } catch (error) {
-      console.error('Error deleting book:', error);
+      console.error('Error deleting book:', error)
       toast({
-        title: "Erro",
-        description: "Falha ao excluir livro",
-        variant: "destructive",
-      });
+        title: 'Erro',
+        description: 'Falha ao excluir livro',
+        variant: 'destructive',
+      })
     }
-    setDeleteId(null);
-  };
+    setDeleteId(null)
+  }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-64">
+      <div className="flex min-h-64 items-center justify-center">
         <div className="text-muted-foreground">Carregando livros...</div>
       </div>
-    );
+    )
   }
 
   return (
@@ -105,13 +101,13 @@ export const BookList = () => {
         <div className="flex space-x-3">
           <Link to="/statistics">
             <Button variant="outline">
-              <BarChart3 className="h-4 w-4 mr-2" />
+              <BarChart3 className="mr-2 h-4 w-4" />
               Estatísticas
             </Button>
           </Link>
           <Link to="/books/new">
             <Button>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="mr-2 h-4 w-4" />
               Novo Livro
             </Button>
           </Link>
@@ -119,15 +115,15 @@ export const BookList = () => {
       </div>
 
       {books.length === 0 ? (
-        <div className="text-center py-12">
-          <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Nenhum livro ainda</h2>
-          <p className="text-muted-foreground mb-4">
+        <div className="py-12 text-center">
+          <BookOpen className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+          <h2 className="mb-2 text-xl font-semibold">Nenhum livro ainda</h2>
+          <p className="mb-4 text-muted-foreground">
             Comece sua jornada de escrita criando seu primeiro livro
           </p>
           <Link to="/books/new">
             <Button>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="mr-2 h-4 w-4" />
               Criar Seu Primeiro Livro
             </Button>
           </Link>
@@ -135,11 +131,7 @@ export const BookList = () => {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {books.map((book) => (
-            <BookCard
-              key={book.id}
-              book={book}
-              onDelete={setDeleteId}
-            />
+            <BookCard key={book.id} book={book} onDelete={setDeleteId} />
           ))}
         </div>
       )}
@@ -149,7 +141,8 @@ export const BookList = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir Livro</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza de que deseja excluir este livro? Esta ação não pode ser desfeita e também excluirá todos os capítulos.
+              Tem certeza de que deseja excluir este livro? Esta ação não pode ser desfeita e também
+              excluirá todos os capítulos.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -164,5 +157,5 @@ export const BookList = () => {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  );
-};
+  )
+}

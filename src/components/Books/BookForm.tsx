@@ -1,35 +1,40 @@
-
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { supabase } from '@/integrations/supabase/client'
+import { useAuth } from '@/contexts/AuthContext'
+import { useToast } from '@/hooks/use-toast'
+import { ArrowLeft } from 'lucide-react'
 
 export const BookForm = () => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [status, setStatus] = useState('draft');
-  const [loading, setLoading] = useState(false);
-  const [isEdit, setIsEdit] = useState(false);
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [status, setStatus] = useState('draft')
+  const [loading, setLoading] = useState(false)
+  const [isEdit, setIsEdit] = useState(false)
 
-  const { id } = useParams();
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const { toast } = useToast();
+  const { id } = useParams()
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const { toast } = useToast()
 
   useEffect(() => {
     if (id && id !== 'new') {
-      setIsEdit(true);
-      fetchBook(id);
+      setIsEdit(true)
+      fetchBook(id)
     }
-  }, [id]);
+  }, [id])
 
   const fetchBook = async (bookId: string) => {
     try {
@@ -38,31 +43,31 @@ export const BookForm = () => {
         .select('*')
         .eq('id', bookId)
         .eq('owner_id', user?.id)
-        .single();
+        .single()
 
-      if (error) throw error;
+      if (error) throw error
 
       if (data) {
-        setTitle(data.title);
-        setDescription(data.description || '');
-        setStatus(data.status);
+        setTitle(data.title)
+        setDescription(data.description || '')
+        setStatus(data.status)
       }
     } catch (error) {
-      console.error('Error fetching book:', error);
+      console.error('Error fetching book:', error)
       toast({
-        title: "Erro",
-        description: "Falha ao carregar livro",
-        variant: "destructive",
-      });
-      navigate('/dashboard');
+        title: 'Erro',
+        description: 'Falha ao carregar livro',
+        variant: 'destructive',
+      })
+      navigate('/dashboard')
     }
-  };
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
+    e.preventDefault()
+    if (!user) return
 
-    setLoading(true);
+    setLoading(true)
 
     try {
       if (isEdit && id) {
@@ -75,54 +80,46 @@ export const BookForm = () => {
             updated_at: new Date().toISOString(),
           })
           .eq('id', id)
-          .eq('owner_id', user.id);
+          .eq('owner_id', user.id)
 
-        if (error) throw error;
+        if (error) throw error
       } else {
-        const { error } = await supabase
-          .from('books')
-          .insert({
-            title,
-            description,
-            status,
-            owner_id: user.id,
-          });
+        const { error } = await supabase.from('books').insert({
+          title,
+          description,
+          status,
+          owner_id: user.id,
+        })
 
-        if (error) throw error;
+        if (error) throw error
       }
 
       toast({
-        title: "Sucesso",
+        title: 'Sucesso',
         description: `Livro ${isEdit ? 'atualizado' : 'criado'} com sucesso`,
-      });
+      })
 
-      navigate('/dashboard');
+      navigate('/dashboard')
     } catch (error) {
-      console.error('Error saving book:', error);
+      console.error('Error saving book:', error)
       toast({
-        title: "Erro",
+        title: 'Erro',
         description: `Falha ao ${isEdit ? 'atualizar' : 'criar'} livro`,
-        variant: "destructive",
-      });
+        variant: 'destructive',
+      })
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="mx-auto max-w-2xl">
       <div className="mb-6">
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate('/dashboard')}
-          className="mb-4"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
+        <Button variant="ghost" onClick={() => navigate('/dashboard')} className="mb-4">
+          <ArrowLeft className="mr-2 h-4 w-4" />
           Voltar ao Painel
         </Button>
-        <h1 className="text-3xl font-bold">
-          {isEdit ? 'Editar Livro' : 'Criar Novo Livro'}
-        </h1>
+        <h1 className="text-3xl font-bold">{isEdit ? 'Editar Livro' : 'Criar Novo Livro'}</h1>
       </div>
 
       <Card>
@@ -172,13 +169,9 @@ export const BookForm = () => {
 
             <div className="flex space-x-2">
               <Button type="submit" disabled={loading}>
-                {loading ? 'Salvando...' : (isEdit ? 'Atualizar Livro' : 'Criar Livro')}
+                {loading ? 'Salvando...' : isEdit ? 'Atualizar Livro' : 'Criar Livro'}
               </Button>
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => navigate('/dashboard')}
-              >
+              <Button type="button" variant="outline" onClick={() => navigate('/dashboard')}>
                 Cancelar
               </Button>
             </div>
@@ -186,5 +179,5 @@ export const BookForm = () => {
         </CardContent>
       </Card>
     </div>
-  );
-};
+  )
+}

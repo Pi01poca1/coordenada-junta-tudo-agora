@@ -1,103 +1,113 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
-import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { AIPanel } from '@/components/AI/AIPanel';
-import { InlineImageEditor } from '@/components/Images/InlineImageEditor';
-import { 
-  ArrowLeft, Sparkles, Eye, Edit3, Settings, FileImage, 
-  Type, RotateCcw, X, Save
-} from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Slider } from '@/components/ui/slider'
+import { Badge } from '@/components/ui/badge'
+import { supabase } from '@/integrations/supabase/client'
+import { useAuth } from '@/contexts/AuthContext'
+import { useToast } from '@/hooks/use-toast'
+import { AIPanel } from '@/components/AI/AIPanel'
+import { InlineImageEditor } from '@/components/Images/InlineImageEditor'
+import {
+  ArrowLeft,
+  Sparkles,
+  Eye,
+  Edit3,
+  Settings,
+  FileImage,
+  Type,
+  RotateCcw,
+  X,
+  Save,
+} from 'lucide-react'
 
 interface Image {
-  id: string;
-  url: string;
-  filename: string;
-  position_x: number | null;
-  position_y: number | null;
-  scale: number | null;
-  text_wrap: string | null;
-  layout: string | null;
-  z_index: number | null;
-  alt_text?: string | null;
-  chapter_id: string;
-  book_id: string;
-  user_id: string;
-  created_at: string;
-  updated_at: string;
+  id: string
+  url: string
+  filename: string
+  position_x: number | null
+  position_y: number | null
+  scale: number | null
+  text_wrap: string | null
+  layout: string | null
+  z_index: number | null
+  alt_text?: string | null
+  chapter_id: string
+  book_id: string
+  user_id: string
+  created_at: string
+  updated_at: string
 }
 
 // Removido o InlineImageEditor local, usando o importado
 
 export const ChapterForm = () => {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [orderIndex, setOrderIndex] = useState<number>(1);
-  const [loading, setLoading] = useState(false);
-  const [isEdit, setIsEdit] = useState(false);
-  const [selectedText, setSelectedText] = useState('');
-  const [showAIPanel, setShowAIPanel] = useState(false);
-  const [book, setBook] = useState<any>(null);
+  const [title, setTitle] = useState('')
+  const [content, setContent] = useState('')
+  const [orderIndex, setOrderIndex] = useState<number>(1)
+  const [loading, setLoading] = useState(false)
+  const [isEdit, setIsEdit] = useState(false)
+  const [selectedText, setSelectedText] = useState('')
+  const [showAIPanel, setShowAIPanel] = useState(false)
+  const [book, setBook] = useState<any>(null)
 
-  const [activeTab, setActiveTab] = useState('edit');
-  const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
-  const [editMode, setEditMode] = useState(false);
-  const [images, setImages] = useState<Image[]>([]);
-  const [imageLoading, setImageLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('edit')
+  const [selectedImageId, setSelectedImageId] = useState<string | null>(null)
+  const [editMode, setEditMode] = useState(false)
+  const [images, setImages] = useState<Image[]>([])
+  const [imageLoading, setImageLoading] = useState(false)
 
-  const { bookId, chapterId } = useParams();
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const { toast } = useToast();
+  const { bookId, chapterId } = useParams()
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const { toast } = useToast()
 
   useEffect(() => {
     if (!bookId || bookId === 'undefined') {
       toast({
-        title: "Erro",
-        description: "ID do livro inválido. Redirecionando...",
-        variant: "destructive",
-      });
-      navigate('/dashboard');
-      return;
+        title: 'Erro',
+        description: 'ID do livro inválido. Redirecionando...',
+        variant: 'destructive',
+      })
+      navigate('/dashboard')
+      return
     }
 
     if (chapterId && chapterId !== 'new') {
-      setIsEdit(true);
-      fetchChapter(chapterId);
-      fetchChapterImages(chapterId);
+      setIsEdit(true)
+      fetchChapter(chapterId)
+      fetchChapterImages(chapterId)
     } else {
-      fetchNextOrderIndex();
+      fetchNextOrderIndex()
     }
-    
-    fetchBook();
-  }, [chapterId, bookId, navigate, toast]);
+
+    fetchBook()
+  }, [chapterId, bookId, navigate, toast])
 
   const fetchBook = async () => {
-    if (!bookId) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('books')
-        .select('*')
-        .eq('id', bookId)
-        .single();
+    if (!bookId) return
 
-      if (error) throw error;
-      setBook(data);
+    try {
+      const { data, error } = await supabase.from('books').select('*').eq('id', bookId).single()
+
+      if (error) throw error
+      setBook(data)
     } catch (error) {
-      console.error('Error fetching book:', error);
+      console.error('Error fetching book:', error)
     }
-  };
+  }
 
   const fetchChapter = async (id: string) => {
     try {
@@ -106,48 +116,48 @@ export const ChapterForm = () => {
         .select('*')
         .eq('id', id)
         .eq('book_id', bookId)
-        .single();
+        .single()
 
-      if (error) throw error;
+      if (error) throw error
 
       if (data) {
-        setTitle(data.title);
-        setContent(data.content || '');
-        setOrderIndex(data.order_index || 1);
+        setTitle(data.title)
+        setContent(data.content || '')
+        setOrderIndex(data.order_index || 1)
       }
     } catch (error) {
-      console.error('Error fetching chapter:', error);
+      console.error('Error fetching chapter:', error)
       toast({
-        title: "Erro",
-        description: "Falha ao carregar capítulo",
-        variant: "destructive",
-      });
-      navigate(`/books/${bookId}`);
+        title: 'Erro',
+        description: 'Falha ao carregar capítulo',
+        variant: 'destructive',
+      })
+      navigate(`/books/${bookId}`)
     }
-  };
+  }
 
   const fetchChapterImages = async (chapterId: string) => {
-    setImageLoading(true);
+    setImageLoading(true)
     try {
       const { data, error } = await supabase
         .from('images')
         .select('*')
         .eq('chapter_id', chapterId)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true })
 
-      if (error) throw error;
-      setImages(data || []);
+      if (error) throw error
+      setImages(data || [])
     } catch (error) {
-      console.error('Error fetching chapter images:', error);
+      console.error('Error fetching chapter images:', error)
       toast({
-        title: "Erro",
-        description: "Falha ao carregar imagens do capítulo",
-        variant: "destructive"
-      });
+        title: 'Erro',
+        description: 'Falha ao carregar imagens do capítulo',
+        variant: 'destructive',
+      })
     } finally {
-      setImageLoading(false);
+      setImageLoading(false)
     }
-  };
+  }
 
   const fetchNextOrderIndex = async () => {
     try {
@@ -156,22 +166,22 @@ export const ChapterForm = () => {
         .select('order_index')
         .eq('book_id', bookId)
         .order('order_index', { ascending: false })
-        .limit(1);
+        .limit(1)
 
-      if (error) throw error;
+      if (error) throw error
 
-      const lastOrder = data?.[0]?.order_index || 0;
-      setOrderIndex(lastOrder + 1);
+      const lastOrder = data?.[0]?.order_index || 0
+      setOrderIndex(lastOrder + 1)
     } catch (error) {
-      console.error('Error fetching order index:', error);
+      console.error('Error fetching order index:', error)
     }
-  };
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user || !bookId) return;
+    e.preventDefault()
+    if (!user || !bookId) return
 
-    setLoading(true);
+    setLoading(true)
 
     try {
       if (isEdit && chapterId) {
@@ -184,120 +194,109 @@ export const ChapterForm = () => {
             updated_at: new Date().toISOString(),
           })
           .eq('id', chapterId)
-          .eq('book_id', bookId);
+          .eq('book_id', bookId)
 
-        if (error) throw error;
+        if (error) throw error
       } else {
-        const { error } = await supabase
-          .from('chapters')
-          .insert({
-            title,
-            content,
-            order_index: orderIndex,
-            book_id: bookId,
-            author_id: user.id,
-          });
+        const { error } = await supabase.from('chapters').insert({
+          title,
+          content,
+          order_index: orderIndex,
+          book_id: bookId,
+          author_id: user.id,
+        })
 
-        if (error) throw error;
+        if (error) throw error
       }
 
       toast({
-        title: "Sucesso",
+        title: 'Sucesso',
         description: `Capítulo ${isEdit ? 'atualizado' : 'criado'} com sucesso`,
-      });
+      })
 
-      navigate(`/books/${bookId}`);
+      navigate(`/books/${bookId}`)
     } catch (error) {
-      console.error('Error saving chapter:', error);
+      console.error('Error saving chapter:', error)
       toast({
-        title: "Erro",
+        title: 'Erro',
         description: `Falha ao ${isEdit ? 'atualizar' : 'criar'} capítulo`,
-        variant: "destructive",
-      });
+        variant: 'destructive',
+      })
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleTextSelection = () => {
-    const textarea = document.querySelector('textarea[id="content"]') as HTMLTextAreaElement;
+    const textarea = document.querySelector('textarea[id="content"]') as HTMLTextAreaElement
     if (textarea) {
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selected = content.substring(start, end);
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      const selected = content.substring(start, end)
       if (selected.trim()) {
-        setSelectedText(selected);
-        setShowAIPanel(true);
+        setSelectedText(selected)
+        setShowAIPanel(true)
       }
     }
-  };
+  }
 
   const handleTextReplace = (newText: string) => {
     if (selectedText) {
-      const newContent = content.replace(selectedText, newText);
-      setContent(newContent);
-      setSelectedText('');
+      const newContent = content.replace(selectedText, newText)
+      setContent(newContent)
+      setSelectedText('')
     }
-  };
+  }
 
   const handleUpdateImage = async (imageId: string, updates: Partial<Image>) => {
-    setImages(prev => prev.map(img => 
-      img.id === imageId ? { ...img, ...updates } : img
-    ));
+    setImages((prev) => prev.map((img) => (img.id === imageId ? { ...img, ...updates } : img)))
 
     try {
       const { error } = await supabase
         .from('images')
         .update({
           ...updates,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
-        .eq('id', imageId);
+        .eq('id', imageId)
 
-      if (error) throw error;
+      if (error) throw error
 
       setTimeout(() => {
         toast({
-          title: "✓ Salvo",
-          description: "Alteração salva automaticamente"
-        });
-      }, 500);
-
+          title: '✓ Salvo',
+          description: 'Alteração salva automaticamente',
+        })
+      }, 500)
     } catch (error) {
-      console.error('Error updating image:', error);
-      
-      setImages(prev => {
-        const originalImage = prev.find(img => img.id === imageId);
+      console.error('Error updating image:', error)
+
+      setImages((prev) => {
+        const originalImage = prev.find((img) => img.id === imageId)
         if (originalImage) {
-          return prev.map(img => img.id === imageId ? originalImage : img);
+          return prev.map((img) => (img.id === imageId ? originalImage : img))
         }
-        return prev;
-      });
-      
+        return prev
+      })
+
       toast({
-        title: "Erro",
-        description: "Falha ao salvar. Tente novamente.",
-        variant: "destructive"
-      });
+        title: 'Erro',
+        description: 'Falha ao salvar. Tente novamente.',
+        variant: 'destructive',
+      })
     }
-  };
+  }
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="mx-auto max-w-7xl">
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate(`/books/${bookId}`)}
-              className="mb-4"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
+            <Button variant="ghost" onClick={() => navigate(`/books/${bookId}`)} className="mb-4">
+              <ArrowLeft className="mr-2 h-4 w-4" />
               Voltar ao Livro
             </Button>
-            <h1 className="text-3xl font-bold">
-              {isEdit ? 'Editar Capítulo' : 'Novo Capítulo'}
-            </h1>
+            <h1 className="text-3xl font-bold">{isEdit ? 'Editar Capítulo' : 'Novo Capítulo'}</h1>
           </div>
           <div className="flex gap-2">
             <Button
@@ -310,10 +309,10 @@ export const ChapterForm = () => {
             </Button>
             {activeTab === 'preview' && (
               <Button
-                variant={editMode ? "default" : "outline"}
+                variant={editMode ? 'default' : 'outline'}
                 onClick={() => {
-                  setEditMode(!editMode);
-                  if (!editMode) setSelectedImageId(null);
+                  setEditMode(!editMode)
+                  if (!editMode) setSelectedImageId(null)
                 }}
                 className="flex items-center gap-2"
               >
@@ -338,7 +337,7 @@ export const ChapterForm = () => {
         </TabsList>
 
         <TabsContent value="edit" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2">
               <Card>
                 <CardHeader>
@@ -349,8 +348,8 @@ export const ChapterForm = () => {
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="md:col-span-2 space-y-2">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                      <div className="space-y-2 md:col-span-2">
                         <Label htmlFor="title">Título do Capítulo *</Label>
                         <Input
                           id="title"
@@ -395,12 +394,12 @@ export const ChapterForm = () => {
 
                     <div className="flex space-x-2">
                       <Button type="submit" disabled={loading}>
-                        <Save className="h-4 w-4 mr-2" />
-                        {loading ? 'Salvando...' : (isEdit ? 'Atualizar Capítulo' : 'Criar Capítulo')}
+                        <Save className="mr-2 h-4 w-4" />
+                        {loading ? 'Salvando...' : isEdit ? 'Atualizar Capítulo' : 'Criar Capítulo'}
                       </Button>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
+                      <Button
+                        type="button"
+                        variant="outline"
                         onClick={() => navigate(`/books/${bookId}`)}
                       >
                         Cancelar
@@ -413,7 +412,7 @@ export const ChapterForm = () => {
 
             {showAIPanel && chapterId && chapterId !== 'new' && (
               <div className="lg:col-span-1">
-                <AIPanel 
+                <AIPanel
                   chapterId={chapterId}
                   selectedText={selectedText}
                   onTextReplace={handleTextReplace}
@@ -421,7 +420,7 @@ export const ChapterForm = () => {
                 />
               </div>
             )}
-            
+
             {showAIPanel && (!chapterId || chapterId === 'new') && (
               <div className="lg:col-span-1">
                 <Card>
@@ -445,7 +444,7 @@ export const ChapterForm = () => {
         <TabsContent value="preview" className="space-y-6">
           {imageLoading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
               <span className="ml-2">Carregando imagens...</span>
             </div>
           ) : (
@@ -461,5 +460,5 @@ export const ChapterForm = () => {
         </TabsContent>
       </Tabs>
     </div>
-  );
-};
+  )
+}

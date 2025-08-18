@@ -1,13 +1,14 @@
-
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Bem-vindo ao Seu EscritorLivros</h1>
-        <p className="text-xl text-muted-foreground">Comece a construir seu projeto incrível aqui!</p>
+        <h1 className="mb-4 text-4xl font-bold">Bem-vindo ao Seu EscritorLivros</h1>
+        <p className="text-xl text-muted-foreground">
+          Comece a construir seu projeto incrível aqui!
+        </p>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Index;
+export default Index

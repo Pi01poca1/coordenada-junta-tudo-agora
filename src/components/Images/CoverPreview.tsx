@@ -1,54 +1,55 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { BookOpen, X, ExternalLink, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { useAuth } from '@/contexts/AuthContext'
+import { useToast } from '@/hooks/use-toast'
+import { supabase } from '@/integrations/supabase/client'
+import { BookOpen, X, ExternalLink, Trash2 } from 'lucide-react'
 
 interface CoverData {
-  id: string;
-  image_id: string;
+  id: string
+  image_id: string
   image: {
-    id: string;
-    filename: string;
-    url: string;
-    alt_text: string | null;
-    file_size: number | null;
-  };
+    id: string
+    filename: string
+    url: string
+    alt_text: string | null
+    file_size: number | null
+  }
 }
 
 interface CoverPreviewProps {
-  bookId: string;
-  onCoverRemoved?: () => void;
+  bookId: string
+  onCoverRemoved?: () => void
 }
 
 export const CoverPreview = ({ bookId, onCoverRemoved }: CoverPreviewProps) => {
-  const [cover, setCover] = useState<CoverData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [removing, setRemoving] = useState(false);
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const [cover, setCover] = useState<CoverData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [removing, setRemoving] = useState(false)
+  const { user } = useAuth()
+  const { toast } = useToast()
 
   useEffect(() => {
-    console.log('🔍 CoverPreview: useEffect triggered', { bookId, user: !!user });
-    fetchCover();
-  }, [bookId, user]);
+    console.log('🔍 CoverPreview: useEffect triggered', { bookId, user: !!user })
+    fetchCover()
+  }, [bookId, user])
 
   const fetchCover = async () => {
     if (!user) {
-      console.log('🔍 CoverPreview: No user, skipping fetch');
-      return;
+      console.log('🔍 CoverPreview: No user, skipping fetch')
+      return
     }
 
     try {
-      setLoading(true);
-      console.log('🔍 CoverPreview: Fetching cover for book', bookId);
-      
+      setLoading(true)
+      console.log('🔍 CoverPreview: Fetching cover for book', bookId)
+
       const { data, error } = await supabase
         .from('book_covers')
-        .select(`
+        .select(
+          `
           id,
           image_id,
           image:images!inner(
@@ -58,71 +59,72 @@ export const CoverPreview = ({ bookId, onCoverRemoved }: CoverPreviewProps) => {
             alt_text,
             file_size
           )
-        `)
+        `
+        )
         .eq('book_id', bookId)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(1);
+        .limit(1)
 
-      console.log('🔍 CoverPreview: Query result', { data, error });
+      console.log('🔍 CoverPreview: Query result', { data, error })
 
       if (error && error.code !== 'PGRST116') {
-        throw error;
+        throw error
       }
 
       if (data && data.length > 0) {
-        console.log('🔍 CoverPreview: Cover found', data[0]);
-        setCover(data[0] as any);
+        console.log('🔍 CoverPreview: Cover found', data[0])
+        setCover(data[0] as any)
       } else {
-        console.log('🔍 CoverPreview: No cover found');
-        setCover(null);
+        console.log('🔍 CoverPreview: No cover found')
+        setCover(null)
       }
     } catch (error) {
-      console.error('🔍 CoverPreview: Erro ao buscar capa:', error);
+      console.error('🔍 CoverPreview: Erro ao buscar capa:', error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const removeCover = async () => {
-    if (!cover || !user) return;
+    if (!cover || !user) return
 
-    setRemoving(true);
+    setRemoving(true)
     try {
       const { error } = await supabase
         .from('book_covers')
         .delete()
         .eq('book_id', bookId)
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
 
-      if (error) throw error;
+      if (error) throw error
 
-      setCover(null);
+      setCover(null)
       toast({
-        title: "Capa removida",
-        description: "A capa foi removida com sucesso"
-      });
+        title: 'Capa removida',
+        description: 'A capa foi removida com sucesso',
+      })
 
       if (onCoverRemoved) {
-        onCoverRemoved();
+        onCoverRemoved()
       }
     } catch (error) {
-      console.error('Erro ao remover capa:', error);
+      console.error('Erro ao remover capa:', error)
       toast({
-        title: "Erro",
-        description: "Falha ao remover capa",
-        variant: "destructive"
-      });
+        title: 'Erro',
+        description: 'Falha ao remover capa',
+        variant: 'destructive',
+      })
     } finally {
-      setRemoving(false);
+      setRemoving(false)
     }
-  };
+  }
 
   const formatFileSize = (bytes: number | null) => {
-    if (!bytes) return 'N/A';
-    const mb = bytes / (1024 * 1024);
-    return `${mb.toFixed(1)} MB`;
-  };
+    if (!bytes) return 'N/A'
+    const mb = bytes / (1024 * 1024)
+    return `${mb.toFixed(1)} MB`
+  }
 
   if (loading) {
     return (
@@ -134,12 +136,12 @@ export const CoverPreview = ({ bookId, onCoverRemoved }: CoverPreviewProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-4">
+          <div className="py-4 text-center">
             <div className="animate-pulse">Carregando capa...</div>
           </div>
         </CardContent>
       </Card>
-    );
+    )
   }
 
   if (!cover) {
@@ -152,16 +154,16 @@ export const CoverPreview = ({ bookId, onCoverRemoved }: CoverPreviewProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8">
-            <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+          <div className="py-8 text-center">
+            <BookOpen className="mx-auto mb-2 h-12 w-12 text-muted-foreground" />
             <p className="text-muted-foreground">Nenhuma capa definida</p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="mt-1 text-xs text-muted-foreground">
               Use as opções acima para definir uma capa
             </p>
           </div>
         </CardContent>
       </Card>
-    );
+    )
   }
 
   return (
@@ -177,17 +179,17 @@ export const CoverPreview = ({ bookId, onCoverRemoved }: CoverPreviewProps) => {
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Preview da capa */}
-        <div className="relative group">
-          <div className="aspect-[2/3] w-full max-w-[200px] mx-auto">
+        <div className="group relative">
+          <div className="mx-auto aspect-[2/3] w-full max-w-[200px]">
             <img
               src={cover.image.url}
               alt={cover.image.alt_text || cover.image.filename}
-              className="w-full h-full object-cover rounded-lg shadow-lg"
+              className="h-full w-full rounded-lg object-cover shadow-lg"
             />
           </div>
-          
+
           {/* Overlay com botões */}
-          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+          <div className="absolute inset-0 flex items-center justify-center gap-2 rounded-lg bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
             <Button
               size="sm"
               variant="secondary"
@@ -195,12 +197,7 @@ export const CoverPreview = ({ bookId, onCoverRemoved }: CoverPreviewProps) => {
             >
               <ExternalLink className="h-4 w-4" />
             </Button>
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={removeCover}
-              disabled={removing}
-            >
+            <Button size="sm" variant="destructive" onClick={removeCover} disabled={removing}>
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
@@ -214,7 +211,9 @@ export const CoverPreview = ({ bookId, onCoverRemoved }: CoverPreviewProps) => {
           </div>
           <div>
             <span className="font-medium">Tamanho:</span>
-            <span className="ml-2 text-muted-foreground">{formatFileSize(cover.image.file_size)}</span>
+            <span className="ml-2 text-muted-foreground">
+              {formatFileSize(cover.image.file_size)}
+            </span>
           </div>
         </div>
 
@@ -226,10 +225,10 @@ export const CoverPreview = ({ bookId, onCoverRemoved }: CoverPreviewProps) => {
           disabled={removing}
           className="w-full"
         >
-          <X className="h-4 w-4 mr-2" />
+          <X className="mr-2 h-4 w-4" />
           {removing ? 'Removendo...' : 'Remover Capa'}
         </Button>
       </CardContent>
     </Card>
-  );
-};
+  )
+}
