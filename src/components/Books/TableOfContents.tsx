@@ -65,56 +65,89 @@ const SortableTOCItem = ({ item, index, totalItems, onEdit }: SortableTOCItemPro
   return (
     <div key={`${item.type}-${item.id}`}>
       {index > 0 && totalItems[index - 1].type !== item.type && (
-        <Separator className="my-3" />
+        <div className="my-6">
+          <Separator className="mb-4" />
+          <h4 className="text-sm font-semibold text-foreground/80 mb-2">
+            {item.type === 'chapter' ? 'CAPÍTULOS' : 'ELEMENTOS PROFISSIONAIS'}
+          </h4>
+        </div>
       )}
       <div 
         ref={setNodeRef}
         style={style}
-        className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+        className={`group relative bg-card border border-border/50 rounded-xl p-6 transition-all duration-200 ${
           item.enabled === false 
-            ? 'opacity-50 bg-muted/30' 
-            : 'hover:bg-muted/50'
+            ? 'opacity-60 bg-muted/20' 
+            : 'hover:border-primary/20 hover:shadow-md hover:bg-card/80'
         }`}
       >
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div
-            {...attributes}
-            {...listeners}
-            className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-muted"
-          >
-            <GripVertical className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <div className="font-medium truncate">{item.title}</div>
-            <div className="flex items-center gap-2 mt-1">
-              <Badge 
-                variant={item.type === 'chapter' ? 'default' : 'secondary'}
-                className="text-xs"
-              >
-                {item.type === 'chapter' ? 'Capítulo' : 'Elemento'}
-              </Badge>
-              {item.enabled === false && (
-                <Badge variant="outline" className="text-xs">
-                  Desabilitado
+        {/* Drag Handle */}
+        <div
+          {...attributes}
+          {...listeners}
+          className="absolute left-2 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted/80"
+        >
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </div>
+
+        <div className="flex items-start justify-between ml-8">
+          {/* Content Section */}
+          <div className="flex items-start gap-4 flex-1 min-w-0">
+            <div className={`p-2 rounded-lg ${
+              item.type === 'chapter' 
+                ? 'bg-primary/10 text-primary' 
+                : 'bg-secondary/10 text-secondary-foreground'
+            }`}>
+              <Icon className="h-5 w-5" />
+            </div>
+            
+            <div className="flex-1 min-w-0 space-y-2">
+              <div className="flex items-center gap-3">
+                <h3 className="text-lg font-semibold text-foreground leading-tight">
+                  {item.title}
+                </h3>
+                {item.enabled === false && (
+                  <Badge variant="outline" className="text-xs px-2 py-1">
+                    Desabilitado
+                  </Badge>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <Badge 
+                  variant={item.type === 'chapter' ? 'default' : 'secondary'}
+                  className="text-xs font-medium px-3 py-1"
+                >
+                  {item.type === 'chapter' ? 'Capítulo' : 'Elemento Profissional'}
                 </Badge>
-              )}
+                
+                {onEdit && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onEdit(item)}
+                    className="h-7 px-3 text-xs hover:bg-muted/80"
+                  >
+                    <Edit className="h-3 w-3 mr-1" />
+                    Editar
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          {onEdit && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onEdit(item)}
-              className="h-8 w-8 p-0"
-            >
-              <Edit className="h-3 w-3" />
-            </Button>
-          )}
-          <span>Página {item.pageNumber}</span>
-          <ChevronRight className="h-4 w-4" />
+
+          {/* Page Number Section */}
+          <div className="flex items-center gap-2 text-right">
+            <div className="text-right">
+              <div className="text-2xl font-bold text-primary">
+                {item.pageNumber}
+              </div>
+              <div className="text-xs text-muted-foreground font-medium">
+                página
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground ml-2" />
+          </div>
         </div>
       </div>
     </div>
