@@ -9,11 +9,12 @@ import { DraggableChapterList } from '@/components/Chapters/DraggableChapterList
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
-import { ArrowLeft, Edit, Calendar, Clock, ChevronDown, ChevronUp } from 'lucide-react'
+import { ArrowLeft, Edit, Calendar, Clock, ChevronDown, ChevronUp, Settings } from 'lucide-react'
 import { formatDistanceToNow, format } from 'date-fns'
 import { ExportPanel } from '@/components/Export/ExportPanel'
 import { BookElementsManager } from '@/components/Books/BookElementsManager'
 import { TableOfContents } from '@/components/Books/TableOfContents'
+import { AlignmentControls, TextAlignment, getAlignmentClass } from '@/components/ui/alignment-controls'
 
 interface Book {
   id: string
@@ -30,6 +31,8 @@ const BookDetails = () => {
   const [tocOpen, setTocOpen] = useState(true)
   const [elementsOpen, setElementsOpen] = useState(false)
   const [chaptersOpen, setChaptersOpen] = useState(true)
+  const [showAlignmentControls, setShowAlignmentControls] = useState(false)
+  const [titleAlignment, setTitleAlignment] = useState<TextAlignment>('left')
   const { id } = useParams()
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -123,11 +126,27 @@ const BookDetails = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <Button variant="ghost" onClick={() => navigate('/dashboard')} className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar ao Dashboard
           </Button>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAlignmentControls(!showAlignmentControls)}
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Alinhamento de Títulos
+            </Button>
+            {showAlignmentControls && (
+              <AlignmentControls
+                alignment={titleAlignment}
+                onAlignmentChange={setTitleAlignment}
+              />
+            )}
+          </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-4">
@@ -181,8 +200,8 @@ const BookDetails = () => {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-lg">Sumário</CardTitle>
-                      <CardDescription>Visualização profissional do índice do livro</CardDescription>
+                      <CardTitle className={`text-lg ${getAlignmentClass(titleAlignment)}`}>Sumário</CardTitle>
+                      <CardDescription className={getAlignmentClass(titleAlignment)}>Visualização profissional do índice do livro</CardDescription>
                     </div>
                     <CollapsibleTrigger asChild>
                       <Button variant="ghost" size="sm">
@@ -194,7 +213,7 @@ const BookDetails = () => {
                 <CollapsibleContent>
                   <CardContent>
                     <div className="max-h-80 overflow-y-auto rounded-md border bg-muted/20 p-4">
-                      <TableOfContents ref={tocRef} bookId={book.id} />
+                      <TableOfContents ref={tocRef} bookId={book.id} titleAlignment={titleAlignment} />
                     </div>
                   </CardContent>
                 </CollapsibleContent>
@@ -207,8 +226,8 @@ const BookDetails = () => {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-lg">Elementos Profissionais</CardTitle>
-                      <CardDescription>Capa, dedicatória, prefácio e outros elementos do livro</CardDescription>
+                      <CardTitle className={`text-lg ${getAlignmentClass(titleAlignment)}`}>Elementos Profissionais</CardTitle>
+                      <CardDescription className={getAlignmentClass(titleAlignment)}>Capa, dedicatória, prefácio e outros elementos do livro</CardDescription>
                     </div>
                     <CollapsibleTrigger asChild>
                       <Button variant="ghost" size="sm">
@@ -220,7 +239,7 @@ const BookDetails = () => {
                 <CollapsibleContent>
                   <CardContent>
                     <div className="max-h-96 overflow-y-auto rounded-md border bg-muted/20 p-4">
-                      <BookElementsManager bookId={book.id} onElementUpdate={handleElementUpdate} />
+                      <BookElementsManager bookId={book.id} onElementUpdate={handleElementUpdate} titleAlignment={titleAlignment} />
                     </div>
                   </CardContent>
                 </CollapsibleContent>
@@ -233,8 +252,8 @@ const BookDetails = () => {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-lg">Capítulos</CardTitle>
-                      <CardDescription>Gerenciar e organizar os capítulos do livro</CardDescription>
+                      <CardTitle className={`text-lg ${getAlignmentClass(titleAlignment)}`}>Capítulos</CardTitle>
+                      <CardDescription className={getAlignmentClass(titleAlignment)}>Gerenciar e organizar os capítulos do livro</CardDescription>
                     </div>
                     <CollapsibleTrigger asChild>
                       <Button variant="ghost" size="sm">
@@ -246,7 +265,7 @@ const BookDetails = () => {
                 <CollapsibleContent>
                   <CardContent>
                     <div className="max-h-[600px] overflow-y-auto rounded-md border bg-muted/20 p-4">
-                      <DraggableChapterList bookId={book.id} />
+                      <DraggableChapterList bookId={book.id} titleAlignment={titleAlignment} />
                     </div>
                   </CardContent>
                 </CollapsibleContent>

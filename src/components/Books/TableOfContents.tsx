@@ -1,14 +1,40 @@
-import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react'
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { BookOpen, ChevronRight, RefreshCw, FileText, Heart, Users, Quote, Award, GripVertical, Edit } from 'lucide-react'
 import { supabase } from '@/integrations/supabase/client'
+import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core'
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { useSortable } from '@dnd-kit/sortable'
+import { getAlignmentClass, TextAlignment } from '@/components/ui/alignment-controls'
+import { 
+  BookOpen, 
+  FileText, 
+  Heart, 
+  Award, 
+  Users, 
+  Quote, 
+  Edit,
+  GripVertical,
+  RefreshCw,
+  ChevronRight
+} from 'lucide-react'
+import { 
+  DndContext, 
+  closestCenter, 
+  KeyboardSensor, 
+  PointerSensor, 
+  useSensor, 
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core'
+import { 
+  arrayMove, 
+  SortableContext, 
+  sortableKeyboardCoordinates, 
+  verticalListSortingStrategy,
+  useSortable 
+} from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 
 interface Chapter {
@@ -40,9 +66,10 @@ interface SortableTOCItemProps {
   index: number
   totalItems: TOCItem[]
   onEdit?: (item: TOCItem) => void
+  titleAlignment?: TextAlignment
 }
 
-const SortableTOCItem = ({ item, index, totalItems, onEdit }: SortableTOCItemProps) => {
+const SortableTOCItem = ({ item, index, totalItems, onEdit, titleAlignment = 'left' }: SortableTOCItemProps) => {
   const {
     attributes,
     listeners,
@@ -103,7 +130,7 @@ const SortableTOCItem = ({ item, index, totalItems, onEdit }: SortableTOCItemPro
             
             <div className="flex-1 min-w-0 space-y-2">
               <div className="flex items-center gap-3">
-                <h3 className="text-lg font-semibold text-foreground leading-tight">
+                <h3 className={`text-lg font-semibold text-foreground leading-tight ${getAlignmentClass(titleAlignment)}`}>
                   {item.title}
                 </h3>
                 {item.enabled === false && (
@@ -156,6 +183,7 @@ const SortableTOCItem = ({ item, index, totalItems, onEdit }: SortableTOCItemPro
 
 interface TableOfContentsProps {
   bookId: string
+  titleAlignment?: TextAlignment
 }
 
 interface TableOfContentsRef {
@@ -175,7 +203,8 @@ const elementIcons = {
   chapter: FileText,
 }
 
-export const TableOfContents = forwardRef<TableOfContentsRef, TableOfContentsProps>(({ bookId }, ref) => {
+export const TableOfContents = forwardRef<TableOfContentsRef, TableOfContentsProps>(
+  ({ bookId, titleAlignment = 'left' }, ref) => {
   const [tocItems, setTocItems] = useState<TOCItem[]>([])
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
@@ -421,6 +450,7 @@ export const TableOfContents = forwardRef<TableOfContentsRef, TableOfContentsPro
                     index={index}
                     totalItems={tocItems}
                     onEdit={handleEditItem}
+                    titleAlignment={titleAlignment}
                   />
                 ))}
               </div>

@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
+import { getAlignmentClass, TextAlignment } from '@/components/ui/alignment-controls'
 import { Plus, Edit, Trash2, FileText, Eye, GripVertical } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import {
@@ -38,10 +39,12 @@ interface Chapter {
 
 interface SortableChapterProps {
   chapter: Chapter
+  index: number
   bookId: string
+  titleAlignment?: TextAlignment
 }
 
-const SortableChapter = ({ chapter, bookId }: SortableChapterProps) => {
+const SortableChapter = ({ chapter, index, bookId, titleAlignment = 'left' }: SortableChapterProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: chapter.id,
   })
@@ -67,7 +70,7 @@ const SortableChapter = ({ chapter, bookId }: SortableChapterProps) => {
           <GripVertical className="h-4 w-4 text-muted-foreground" />
         </div>
         <div className="flex-1">
-          <CardTitle className="text-lg">{chapter.title}</CardTitle>
+          <CardTitle className={`text-lg ${getAlignmentClass(titleAlignment)}`}>{chapter.title}</CardTitle>
           <CardDescription>
             {chapter.content
               ? `${chapter.content.substring(0, 100)}${chapter.content.length > 100 ? '...' : ''}`
@@ -105,9 +108,10 @@ const SortableChapter = ({ chapter, bookId }: SortableChapterProps) => {
 
 interface DraggableChapterListProps {
   bookId?: string
+  titleAlignment?: TextAlignment
 }
 
-export const DraggableChapterList = ({ bookId: propBookId }: DraggableChapterListProps) => {
+export const DraggableChapterList = ({ bookId: propBookId, titleAlignment = 'left' }: DraggableChapterListProps) => {
   const [chapters, setChapters] = useState<Chapter[]>([])
   const [loading, setLoading] = useState(true)
   const { bookId: paramBookId } = useParams()
@@ -229,8 +233,14 @@ export const DraggableChapterList = ({ bookId: propBookId }: DraggableChapterLis
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={chapters.map((c) => c.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-4">
-            {chapters.map((chapter) => (
-              <SortableChapter key={chapter.id} chapter={chapter} bookId={bookId!} />
+            {chapters.map((chapter, index) => (
+              <SortableChapter
+                key={chapter.id}
+                chapter={chapter}
+                index={index}
+                bookId={bookId!}
+                titleAlignment={titleAlignment}
+              />
             ))}
           </div>
         </SortableContext>

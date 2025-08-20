@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
 import { BookElementEditor } from './BookElementEditor'
+import { getAlignmentClass, TextAlignment } from '@/components/ui/alignment-controls'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useSortable } from '@dnd-kit/sortable'
@@ -30,6 +31,7 @@ interface BookElement {
 interface BookElementsManagerProps {
   bookId: string
   onElementUpdate?: () => void
+  titleAlignment?: TextAlignment
 }
 
 const elementTypes = {
@@ -48,9 +50,10 @@ interface SortableElementProps {
   element: BookElement
   onEdit: (element: BookElement) => void
   onToggle: (id: string, enabled: boolean) => void
+  titleAlignment?: TextAlignment
 }
 
-const SortableElement = ({ element, onEdit, onToggle }: SortableElementProps) => {
+const SortableElement = ({ element, onEdit, onToggle, titleAlignment = 'left' }: SortableElementProps) => {
   const {
     attributes,
     listeners,
@@ -84,8 +87,8 @@ const SortableElement = ({ element, onEdit, onToggle }: SortableElementProps) =>
         </div>
         <ElementIcon className="h-4 w-4" />
         <div className="flex-1">
-          <div className="font-medium">{element.title}</div>
-          <div className="text-xs text-muted-foreground">
+          <div className={`font-medium ${getAlignmentClass(titleAlignment)}`}>{element.title}</div>
+          <div className={`text-xs text-muted-foreground ${getAlignmentClass(titleAlignment)}`}>
             {elementTypes[element.type]?.description}
           </div>
         </div>
@@ -113,7 +116,7 @@ const SortableElement = ({ element, onEdit, onToggle }: SortableElementProps) =>
   )
 }
 
-export const BookElementsManager = ({ bookId, onElementUpdate }: BookElementsManagerProps) => {
+export const BookElementsManager = ({ bookId, onElementUpdate, titleAlignment = 'left' }: BookElementsManagerProps) => {
   const [elements, setElements] = useState<BookElement[]>([])
   const [editingElement, setEditingElement] = useState<BookElement | null>(null)
   const [loading, setLoading] = useState(true)
@@ -320,6 +323,7 @@ export const BookElementsManager = ({ bookId, onElementUpdate }: BookElementsMan
                       element={element}
                       onEdit={handleEditElement}
                       onToggle={toggleElement}
+                      titleAlignment={titleAlignment}
                     />
                   ))}
                 </div>
