@@ -120,6 +120,7 @@ const BookDetails = () => {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-4">
+          {/* Sidebar with Book Info and Export */}
           <div className="space-y-6 lg:col-span-1">
             {/* Book Info Card */}
             <Card>
@@ -157,18 +158,50 @@ const BookDetails = () => {
               </CardContent>
             </Card>
 
-            {/* Book Elements Manager */}
-            <BookElementsManager bookId={book.id} />
-
-            {/* Table of Contents */}
-            <TableOfContents bookId={book.id} />
-
             {/* Export Panel */}
             <ExportPanel bookId={book.id} bookTitle={book.title} totalChapters={chapterCount} />
           </div>
 
-          <div className="lg:col-span-3">
-            <DraggableChapterList bookId={book.id} />
+          {/* Main Content Area */}
+          <div className="space-y-6 lg:col-span-3">
+            {/* Table of Contents - Top Priority */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Sumário</CardTitle>
+                <CardDescription>Visualização profissional do índice do livro</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="max-h-80 overflow-y-auto rounded-md border bg-muted/20 p-4">
+                  <TableOfContents bookId={book.id} />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Professional Elements */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Elementos Profissionais</CardTitle>
+                <CardDescription>Capa, dedicatória, prefácio e outros elementos do livro</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="max-h-96 overflow-y-auto rounded-md border bg-muted/20 p-4">
+                  <BookElementsManager bookId={book.id} />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Chapters - Scrollable with 2 visible */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Capítulos</CardTitle>
+                <CardDescription>Gerenciar e organizar os capítulos do livro</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="max-h-[600px] overflow-y-auto rounded-md border bg-muted/20 p-4">
+                  <DraggableChapterList bookId={book.id} />
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </main>
