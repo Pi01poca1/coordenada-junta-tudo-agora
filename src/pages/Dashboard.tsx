@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Navigation } from '@/components/Layout/Navigation'
 import { BookList } from '@/components/Books/BookList'
-import { SupabaseTest } from '@/components/Debug/SupabaseTest'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
@@ -128,9 +127,6 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="mb-6">
-          <SupabaseTest />
-        </div>
 
         <div className="mb-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>

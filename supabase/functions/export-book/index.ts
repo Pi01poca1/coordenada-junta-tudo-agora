@@ -688,32 +688,7 @@ async function addImageToChapterSafe(doc: any, image: any, yPosition: number, ma
   }
 }
 
-async function blobToBase64Safe(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    try {
-      const reader = new FileReader();
-      const timeout = setTimeout(() => {
-        reader.abort();
-        reject(new Error('Timeout na conversão base64'));
-      }, 8000);
-      
-      reader.onload = () => {
-        clearTimeout(timeout);
-        const result = reader.result as string;
-        resolve(result.split(',')[1]); // Remove data:image/jpeg;base64, prefix
-      };
-      
-      reader.onerror = () => {
-        clearTimeout(timeout);
-        reject(new Error('Erro na leitura do blob'));
-      };
-      
-      reader.readAsDataURL(blob);
-    } catch (error) {
-      reject(error);
-    }
-  });
-}
+// Função removida para evitar duplicação - usando a versão otimizada abaixo
 
 // Função auxiliar para detectar formato de imagem
 function detectImageFormat(mimeType: string): string {

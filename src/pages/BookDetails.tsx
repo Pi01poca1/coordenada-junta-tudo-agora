@@ -11,12 +11,6 @@ import { useToast } from '@/hooks/use-toast'
 import { ArrowLeft, Edit, Calendar, Clock } from 'lucide-react'
 import { formatDistanceToNow, format } from 'date-fns'
 import { ExportPanel } from '@/components/Export/ExportPanel'
-import { ExportTest } from '@/components/Export/ExportTest'
-import { ImageUpload } from '@/components/Images/ImageUpload'
-import { ImageGallery } from '@/components/Images/ImageGallery'
-import { BookCoverUpload } from '@/components/Images/BookCoverUpload'
-import { CoverPreview } from '@/components/Images/CoverPreview'
-import StorageDebug from '@/components/Debug/StorageDebug'
 
 interface Book {
   id: string
@@ -30,7 +24,6 @@ const BookDetails = () => {
   const [book, setBook] = useState<Book | null>(null)
   const [chapterCount, setChapterCount] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [refreshGallery, setRefreshGallery] = useState(0)
   const { id } = useParams()
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -162,46 +155,6 @@ const BookDetails = () => {
               </CardContent>
             </Card>
 
-            {/* Imagens do Livro */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">📸 Imagens</CardTitle>
-                <CardDescription>Gerencie a capa e imagens do seu livro</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Capa do Livro */}
-                <div className="space-y-4">
-                  <h4 className="mb-2 text-sm font-medium">🖼️ Capa do Livro</h4>
-
-                  {/* Preview da capa atual */}
-                  <CoverPreview
-                    bookId={book.id}
-                    onCoverRemoved={() => setRefreshGallery((prev) => prev + 1)}
-                  />
-
-                  {/* Upload/Seleção de nova capa */}
-                  <BookCoverUpload
-                    bookId={book.id}
-                    onCoverUploaded={() => setRefreshGallery((prev) => prev + 1)}
-                  />
-                </div>
-
-                {/* Outras Imagens */}
-                <div>
-                  <h4 className="mb-2 text-sm font-medium">📷 Outras Imagens</h4>
-                  <ImageUpload
-                    bookId={book.id}
-                    onImageUploaded={() => setRefreshGallery((prev) => prev + 1)}
-                  />
-                </div>
-
-                {/* Galeria */}
-                <div>
-                  <h4 className="mb-2 text-sm font-medium">🖼️ Galeria</h4>
-                  <ImageGallery bookId={book.id} key={refreshGallery} />
-                </div>
-              </CardContent>
-            </Card>
 
             {/* Export Panel */}
             <Card>
