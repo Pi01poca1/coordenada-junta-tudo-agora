@@ -5,10 +5,15 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
-import { Plus, BookOpen, FileText, Heart, Award, Users, Quote } from 'lucide-react'
+import { Plus, BookOpen, FileText, Heart, Award, Users, Quote, Edit, GripVertical } from 'lucide-react'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
+import { BookElementEditor } from './BookElementEditor'
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core'
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 interface BookElement {
   id: string
@@ -38,11 +43,88 @@ const elementTypes = {
   bibliography: { icon: BookOpen, label: 'Bibliografia', description: 'Referências bibliográficas' },
 }
 
+interface SortableElementProps {
+  element: BookElement
+  onEdit: (element: BookElement) => void
+  onToggle: (id: string, enabled: boolean) => void
+}
+
+const SortableElement = ({ element, onEdit, onToggle }: SortableElementProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: element.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  const ElementIcon = elementTypes[element.type]?.icon || FileText
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center justify-between p-3 border rounded-lg bg-background"
+    >
+      <div className="flex items-center gap-3">
+        <div
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-muted"
+        >
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </div>
+        <ElementIcon className="h-4 w-4" />
+        <div className="flex-1">
+          <div className="font-medium">{element.title}</div>
+          <div className="text-xs text-muted-foreground">
+            {elementTypes[element.type]?.description}
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onEdit(element)}
+          className="h-8"
+        >
+          <Edit className="h-3 w-3" />
+        </Button>
+        <Badge variant={element.enabled ? "default" : "secondary"}>
+          {element.enabled ? "Ativo" : "Inativo"}
+        </Badge>
+        <Checkbox
+          checked={element.enabled}
+          onCheckedChange={(checked) =>
+            onToggle(element.id, checked as boolean)
+          }
+        />
+      </div>
+    </div>
+  )
+}
+
 export const BookElementsManager = ({ bookId }: BookElementsManagerProps) => {
   const [elements, setElements] = useState<BookElement[]>([])
+  const [editingElement, setEditingElement] = useState<BookElement | null>(null)
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
   const { toast } = useToast()
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
 
   useEffect(() => {
     if (bookId) {
@@ -129,8 +211,70 @@ export const BookElementsManager = ({ bookId }: BookElementsManagerProps) => {
     }
   }
 
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (active.id !== over?.id) {
+      const oldIndex = elements.findIndex((item) => item.id === active.id)
+      const newIndex = elements.findIndex((item) => item.id === over?.id)
+
+      const newElements = arrayMove(elements, oldIndex, newIndex)
+      
+      // Update order_index for each element
+      const updatedElements = newElements.map((element, index) => ({
+        ...element,
+        order_index: index + 1
+      }))
+      
+      setElements(updatedElements)
+
+      // Update order in database
+      try {
+        for (const element of updatedElements) {
+          await supabase
+            .from('book_elements')
+            .update({ order_index: element.order_index })
+            .eq('id', element.id)
+        }
+        
+        toast({
+          title: 'Ordem atualizada',
+          description: 'A ordem dos elementos foi alterada com sucesso',
+        })
+      } catch (error) {
+        console.error('Error updating order:', error)
+        toast({
+          title: 'Erro',
+          description: 'Falha ao atualizar ordem dos elementos',
+          variant: 'destructive',
+        })
+      }
+    }
+  }
+
+  const handleEditElement = (element: BookElement) => {
+    setEditingElement(element)
+  }
+
+  const handleUpdateElement = (updatedElement: BookElement) => {
+    setElements(prev =>
+      prev.map(el => (el.id === updatedElement.id ? updatedElement : el))
+    )
+    setEditingElement(null)
+  }
+
   if (loading) {
     return <div className="text-center text-muted-foreground">Carregando elementos...</div>
+  }
+
+  if (editingElement) {
+    return (
+      <BookElementEditor
+        element={editingElement}
+        onClose={() => setEditingElement(null)}
+        onUpdate={handleUpdateElement}
+      />
+    )
   }
 
   const existingTypes = elements.map(el => el.type)
@@ -151,36 +295,24 @@ export const BookElementsManager = ({ bookId }: BookElementsManagerProps) => {
         {elements.length > 0 && (
           <div className="space-y-3">
             <Label className="text-sm font-medium">Elementos Configurados</Label>
-            {elements.map(element => {
-              const ElementIcon = elementTypes[element.type]?.icon || FileText
-              return (
-                <div
-                  key={element.id}
-                  className="flex items-center justify-between p-3 border rounded-lg"
-                >
-                  <div className="flex items-center gap-3">
-                    <ElementIcon className="h-4 w-4" />
-                    <div>
-                      <div className="font-medium">{element.title}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {elementTypes[element.type]?.description}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={element.enabled ? "default" : "secondary"}>
-                      {element.enabled ? "Ativo" : "Inativo"}
-                    </Badge>
-                    <Checkbox
-                      checked={element.enabled}
-                      onCheckedChange={(checked) =>
-                        toggleElement(element.id, checked as boolean)
-                      }
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext items={elements.map(el => el.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-2">
+                  {elements.map(element => (
+                    <SortableElement
+                      key={element.id}
+                      element={element}
+                      onEdit={handleEditElement}
+                      onToggle={toggleElement}
                     />
-                  </div>
+                  ))}
                 </div>
-              )
-            })}
+              </SortableContext>
+            </DndContext>
           </div>
         )}
 
@@ -198,17 +330,17 @@ export const BookElementsManager = ({ bookId }: BookElementsManagerProps) => {
                       key={type}
                       variant="outline"
                       size="sm"
-                      className="justify-start h-auto p-3"
+                      className="justify-start h-16 p-4"
                       onClick={() => createElement(type)}
                     >
-                      <ElementIcon className="mr-2 h-4 w-4" />
-                      <div className="text-left">
-                        <div className="font-medium">{elementTypes[type].label}</div>
-                        <div className="text-xs text-muted-foreground">
+                      <ElementIcon className="mr-3 h-5 w-5 flex-shrink-0" />
+                      <div className="text-left flex-1">
+                        <div className="font-medium text-sm">{elementTypes[type].label}</div>
+                        <div className="text-xs text-muted-foreground mt-1">
                           {elementTypes[type].description}
                         </div>
                       </div>
-                      <Plus className="ml-auto h-4 w-4" />
+                      <Plus className="ml-3 h-4 w-4 flex-shrink-0" />
                     </Button>
                   )
                 })}
