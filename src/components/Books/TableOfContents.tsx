@@ -56,7 +56,14 @@ export const TableOfContents = ({ bookId }: TableOfContentsProps) => {
 
   useEffect(() => {
     if (bookId) {
-      generateTOC()
+      const loadTOC = async () => {
+        try {
+          await generateTOC()
+        } catch (error) {
+          console.error('Error loading TOC:', error)
+        }
+      }
+      loadTOC()
     }
   }, [bookId])
 
@@ -72,15 +79,22 @@ export const TableOfContents = ({ bookId }: TableOfContentsProps) => {
 
       if (chaptersError) throw chaptersError
 
-      // Fetch book elements
-      const { data: elements, error: elementsError } = await supabase
-        .from('book_elements')
-        .select('id, type, title, order_index, enabled')
-        .eq('book_id', bookId)
-        .order('order_index')
+      // Fetch book elements - handle case where table doesn't exist yet
+      let elements: BookElement[] = []
+      try {
+        const { data: elementsData, error: elementsError } = await supabase
+          .from('book_elements')
+          .select('id, type, title, order_index, enabled')
+          .eq('book_id', bookId)
+          .order('order_index')
 
-      if (elementsError && elementsError.code !== 'PGRST116') {
-        throw elementsError
+        if (elementsError && elementsError.code !== 'PGRST116') {
+          throw elementsError
+        }
+        elements = elementsData || []
+      } catch (error) {
+        // Table might not exist yet, that's ok
+        console.log('Book elements table not available yet')
       }
 
       // Generate table of contents with page calculations
@@ -88,8 +102,8 @@ export const TableOfContents = ({ bookId }: TableOfContentsProps) => {
       let currentPage = 1
 
       // Add enabled elements first (they come before chapters)
-      const enabledElements = (elements || []).filter(el => el.enabled)
-      enabledElements.forEach((element, index) => {
+      const enabledElements = elements.filter(el => el.enabled)
+      for (const element of enabledElements) {
         items.push({
           id: element.id,
           title: element.title,
@@ -100,23 +114,26 @@ export const TableOfContents = ({ bookId }: TableOfContentsProps) => {
         })
         // Each element takes approximately 1-2 pages
         currentPage += 2
-      })
+      }
 
       // Add chapters
-      (chapters || []).forEach((chapter, index) => {
-        const wordCount = chapter.content ? chapter.content.split(' ').length : 0
-        const estimatedPages = Math.max(1, Math.ceil(wordCount / 300)) // ~300 words per page
-        
-        items.push({
-          id: chapter.id,
-          title: chapter.title,
-          type: 'chapter',
-          pageNumber: currentPage,
-          order: chapter.order_index || index + 1,
-        })
-        
-        currentPage += estimatedPages
-      })
+      if (chapters) {
+        for (let i = 0; i < chapters.length; i++) {
+          const chapter = chapters[i]
+          const wordCount = chapter.content ? chapter.content.split(' ').length : 0
+          const estimatedPages = Math.max(1, Math.ceil(wordCount / 300)) // ~300 words per page
+          
+          items.push({
+            id: chapter.id,
+            title: chapter.title,
+            type: 'chapter',
+            pageNumber: currentPage,
+            order: chapter.order_index || i + 1,
+          })
+          
+          currentPage += estimatedPages
+        }
+      }
 
       setTocItems(items)
     } catch (error) {
@@ -187,7 +204,7 @@ export const TableOfContents = ({ bookId }: TableOfContentsProps) => {
             {tocItems.map((item, index) => {
               const Icon = item.type === 'chapter' 
                 ? FileText 
-                : elementIcons[item.id as keyof typeof elementIcons] || FileText
+                : elementIcons[item.type as keyof typeof elementIcons] || FileText
 
               return (
                 <div key={`${item.type}-${item.id}`}>

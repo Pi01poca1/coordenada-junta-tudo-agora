@@ -118,6 +118,42 @@ export type Database = {
           },
         ]
       }
+      book_elements: {
+        Row: {
+          book_id: string
+          content: string | null
+          created_at: string
+          enabled: boolean
+          id: string
+          order_index: number
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          book_id: string
+          content?: string | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          order_index?: number
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          book_id?: string
+          content?: string | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          order_index?: number
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       books: {
         Row: {
           created_at: string | null
