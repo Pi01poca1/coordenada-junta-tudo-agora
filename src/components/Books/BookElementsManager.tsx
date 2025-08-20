@@ -29,6 +29,7 @@ interface BookElement {
 
 interface BookElementsManagerProps {
   bookId: string
+  onElementUpdate?: () => void
 }
 
 const elementTypes = {
@@ -112,7 +113,7 @@ const SortableElement = ({ element, onEdit, onToggle }: SortableElementProps) =>
   )
 }
 
-export const BookElementsManager = ({ bookId }: BookElementsManagerProps) => {
+export const BookElementsManager = ({ bookId, onElementUpdate }: BookElementsManagerProps) => {
   const [elements, setElements] = useState<BookElement[]>([])
   const [editingElement, setEditingElement] = useState<BookElement | null>(null)
   const [loading, setLoading] = useState(true)
@@ -175,6 +176,12 @@ export const BookElementsManager = ({ bookId }: BookElementsManagerProps) => {
       if (error) throw error
 
       setElements(prev => [...prev, data])
+      
+      // Notify parent component to refresh table of contents
+      if (onElementUpdate) {
+        onElementUpdate()
+      }
+      
       toast({
         title: 'Sucesso',
         description: `${elementTypes[type].label} adicionado com sucesso`,
@@ -201,6 +208,11 @@ export const BookElementsManager = ({ bookId }: BookElementsManagerProps) => {
       setElements(prev =>
         prev.map(el => (el.id === id ? { ...el, enabled } : el))
       )
+      
+      // Notify parent component to refresh table of contents
+      if (onElementUpdate) {
+        onElementUpdate()
+      }
     } catch (error) {
       console.error('Error toggling element:', error)
       toast({

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -158,6 +158,10 @@ interface TableOfContentsProps {
   bookId: string
 }
 
+interface TableOfContentsRef {
+  refreshTOC: () => Promise<void>
+}
+
 const elementIcons = {
   cover: BookOpen,
   dedication: Heart,
@@ -171,7 +175,7 @@ const elementIcons = {
   chapter: FileText,
 }
 
-export const TableOfContents = ({ bookId }: TableOfContentsProps) => {
+export const TableOfContents = forwardRef<TableOfContentsRef, TableOfContentsProps>(({ bookId }, ref) => {
   const [tocItems, setTocItems] = useState<TOCItem[]>([])
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
@@ -287,6 +291,10 @@ export const TableOfContents = ({ bookId }: TableOfContentsProps) => {
       description: 'O sumário foi regenerado com as últimas alterações',
     })
   }
+
+  useImperativeHandle(ref, () => ({
+    refreshTOC,
+  }))
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
@@ -431,4 +439,4 @@ export const TableOfContents = ({ bookId }: TableOfContentsProps) => {
       </CardContent>
     </Card>
   )
-}
+})

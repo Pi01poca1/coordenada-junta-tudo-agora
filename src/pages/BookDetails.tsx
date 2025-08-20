@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -30,6 +30,7 @@ const BookDetails = () => {
   const { user } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
+  const tocRef = useRef<{ refreshTOC: () => Promise<void> }>(null)
 
   useEffect(() => {
     if (id) {
@@ -70,6 +71,12 @@ const BookDetails = () => {
       navigate('/dashboard')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleElementUpdate = async () => {
+    if (tocRef.current) {
+      await tocRef.current.refreshTOC()
     }
   }
 
@@ -172,7 +179,7 @@ const BookDetails = () => {
               </CardHeader>
               <CardContent>
                 <div className="max-h-80 overflow-y-auto rounded-md border bg-muted/20 p-4">
-                  <TableOfContents bookId={book.id} />
+                  <TableOfContents ref={tocRef} bookId={book.id} />
                 </div>
               </CardContent>
             </Card>
@@ -185,7 +192,7 @@ const BookDetails = () => {
               </CardHeader>
               <CardContent>
                 <div className="max-h-96 overflow-y-auto rounded-md border bg-muted/20 p-4">
-                  <BookElementsManager bookId={book.id} />
+                  <BookElementsManager bookId={book.id} onElementUpdate={handleElementUpdate} />
                 </div>
               </CardContent>
             </Card>
