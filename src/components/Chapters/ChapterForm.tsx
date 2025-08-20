@@ -1,57 +1,15 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Slider } from '@/components/ui/slider'
-import { Badge } from '@/components/ui/badge'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
-import { AIPanel } from '@/components/AI/AIPanel'
-import { InlineImageEditor } from '@/components/Images/InlineImageEditor'
-import {
-  ArrowLeft,
-  Sparkles,
-  Eye,
-  Edit3,
-  Settings,
-  FileImage,
-  Type,
-  RotateCcw,
-  X,
-  Save,
-} from 'lucide-react'
+import { ArrowLeft, Save } from 'lucide-react'
 
-interface Image {
-  id: string
-  url: string
-  filename: string
-  position_x: number | null
-  position_y: number | null
-  scale: number | null
-  text_wrap: string | null
-  layout: string | null
-  z_index: number | null
-  alt_text?: string | null
-  chapter_id: string
-  book_id: string
-  user_id: string
-  created_at: string
-  updated_at: string
-}
-
-// Removido o InlineImageEditor local, usando o importado
 
 export const ChapterForm = () => {
   const [title, setTitle] = useState('')
@@ -59,15 +17,8 @@ export const ChapterForm = () => {
   const [orderIndex, setOrderIndex] = useState<number>(1)
   const [loading, setLoading] = useState(false)
   const [isEdit, setIsEdit] = useState(false)
-  const [selectedText, setSelectedText] = useState('')
-  const [showAIPanel, setShowAIPanel] = useState(false)
   const [book, setBook] = useState<any>(null)
-
-  const [activeTab, setActiveTab] = useState('edit')
-  const [selectedImageId, setSelectedImageId] = useState<string | null>(null)
-  const [editMode, setEditMode] = useState(false)
-  const [images, setImages] = useState<Image[]>([])
-  const [imageLoading, setImageLoading] = useState(false)
+  const [chapter, setChapter] = useState<any>(null)
 
   const { bookId, chapterId } = useParams()
   const { user } = useAuth()
@@ -88,7 +39,6 @@ export const ChapterForm = () => {
     if (chapterId && chapterId !== 'new') {
       setIsEdit(true)
       fetchChapter(chapterId)
-      fetchChapterImages(chapterId)
     } else {
       fetchNextOrderIndex()
     }
@@ -121,6 +71,7 @@ export const ChapterForm = () => {
       if (error) throw error
 
       if (data) {
+        setChapter(data)
         setTitle(data.title)
         setContent(data.content || '')
         setOrderIndex(data.order_index || 1)
@@ -136,28 +87,6 @@ export const ChapterForm = () => {
     }
   }
 
-  const fetchChapterImages = async (chapterId: string) => {
-    setImageLoading(true)
-    try {
-      const { data, error } = await supabase
-        .from('images')
-        .select('*')
-        .eq('chapter_id', chapterId)
-        .order('created_at', { ascending: true })
-
-      if (error) throw error
-      setImages(data || [])
-    } catch (error) {
-      console.error('Error fetching chapter images:', error)
-      toast({
-        title: 'Erro',
-        description: 'Falha ao carregar imagens do capítulo',
-        variant: 'destructive',
-      })
-    } finally {
-      setImageLoading(false)
-    }
-  }
 
   const fetchNextOrderIndex = async () => {
     try {
@@ -227,238 +156,93 @@ export const ChapterForm = () => {
     }
   }
 
-  const handleTextSelection = () => {
-    const textarea = document.querySelector('textarea[id="content"]') as HTMLTextAreaElement
-    if (textarea) {
-      const start = textarea.selectionStart
-      const end = textarea.selectionEnd
-      const selected = content.substring(start, end)
-      if (selected.trim()) {
-        setSelectedText(selected)
-        setShowAIPanel(true)
-      }
-    }
-  }
-
-  const handleTextReplace = (newText: string) => {
-    if (selectedText) {
-      const newContent = content.replace(selectedText, newText)
-      setContent(newContent)
-      setSelectedText('')
-    }
-  }
-
-  const handleUpdateImage = async (imageId: string, updates: Partial<Image>) => {
-    setImages((prev) => prev.map((img) => (img.id === imageId ? { ...img, ...updates } : img)))
-
-    try {
-      const { error } = await supabase
-        .from('images')
-        .update({
-          ...updates,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', imageId)
-
-      if (error) throw error
-
-      setTimeout(() => {
-        toast({
-          title: '✓ Salvo',
-          description: 'Alteração salva automaticamente',
-        })
-      }, 500)
-    } catch (error) {
-      console.error('Error updating image:', error)
-
-      setImages((prev) => {
-        const originalImage = prev.find((img) => img.id === imageId)
-        if (originalImage) {
-          return prev.map((img) => (img.id === imageId ? originalImage : img))
-        }
-        return prev
-      })
-
-      toast({
-        title: 'Erro',
-        description: 'Falha ao salvar. Tente novamente.',
-        variant: 'destructive',
-      })
-    }
-  }
 
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className="mx-auto max-w-4xl">
       <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <Button variant="ghost" onClick={() => navigate(`/books/${bookId}`)} className="mb-4">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Voltar ao Livro
-            </Button>
-            <h1 className="text-3xl font-bold">{isEdit ? 'Editar Capítulo' : 'Novo Capítulo'}</h1>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setShowAIPanel(!showAIPanel)}
-              className="flex items-center gap-2"
-            >
-              <Sparkles className="h-4 w-4" />
-              Assistente IA
-            </Button>
-            {activeTab === 'preview' && (
-              <Button
-                variant={editMode ? 'default' : 'outline'}
-                onClick={() => {
-                  setEditMode(!editMode)
-                  if (!editMode) setSelectedImageId(null)
-                }}
-                className="flex items-center gap-2"
-              >
-                <Edit3 className="h-4 w-4" />
-                {editMode ? 'Sair da Edição' : 'Modo Edição'}
-              </Button>
-            )}
-          </div>
+        <Button variant="ghost" onClick={() => navigate(`/books/${bookId}`)} className="mb-4">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar ao Livro
+        </Button>
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold">{isEdit ? 'Editar Capítulo' : 'Novo Capítulo'}</h1>
+          {isEdit && chapter && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <span>Editando:</span>
+              <span className="font-medium">{chapter.title}</span>
+              <span>•</span>
+              <span>Capítulo {chapter.order_index}</span>
+            </div>
+          )}
+          {book && (
+            <div className="text-sm text-muted-foreground">
+              Livro: <span className="font-medium">{book.title}</span>
+            </div>
+          )}
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="edit" className="flex items-center gap-2">
-            <Edit3 className="h-4 w-4" />
-            Editar
-          </TabsTrigger>
-          <TabsTrigger value="preview" className="flex items-center gap-2">
-            <Eye className="h-4 w-4" />
-            Preview com Imagens ({images.length})
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="edit" className="space-y-6">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>{isEdit ? 'Editar Capítulo' : 'Detalhes do Capítulo'}</CardTitle>
-                  <CardDescription>
-                    {isEdit ? 'Atualize o conteúdo do seu capítulo' : 'Escreva seu novo capítulo'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                      <div className="space-y-2 md:col-span-2">
-                        <Label htmlFor="title">Título do Capítulo *</Label>
-                        <Input
-                          id="title"
-                          value={title}
-                          onChange={(e) => setTitle(e.target.value)}
-                          required
-                          placeholder="Digite o título do capítulo"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="order">Ordem do Capítulo</Label>
-                        <Input
-                          id="order"
-                          type="number"
-                          min="1"
-                          value={orderIndex}
-                          onChange={(e) => setOrderIndex(parseInt(e.target.value) || 1)}
-                          placeholder="1"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="content">Conteúdo</Label>
-                        {showAIPanel && (
-                          <div className="text-xs text-muted-foreground">
-                            Selecione texto e use o Assistente IA →
-                          </div>
-                        )}
-                      </div>
-                      <Textarea
-                        id="content"
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        onMouseUp={handleTextSelection}
-                        placeholder="Comece a escrever seu capítulo..."
-                        rows={20}
-                        className="min-h-[400px] font-serif text-base leading-relaxed"
-                      />
-                    </div>
-
-                    <div className="flex space-x-2">
-                      <Button type="submit" disabled={loading}>
-                        <Save className="mr-2 h-4 w-4" />
-                        {loading ? 'Salvando...' : isEdit ? 'Atualizar Capítulo' : 'Criar Capítulo'}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => navigate(`/books/${bookId}`)}
-                      >
-                        Cancelar
-                      </Button>
-                    </div>
-                  </form>
-                </CardContent>
-              </Card>
-            </div>
-
-            {showAIPanel && chapterId && chapterId !== 'new' && (
-              <div className="lg:col-span-1">
-                <AIPanel
-                  chapterId={chapterId}
-                  selectedText={selectedText}
-                  onTextReplace={handleTextReplace}
-                  genre={book?.description || 'fantasy'}
+      <Card>
+        <CardHeader>
+          <CardTitle>{isEdit ? 'Editar Capítulo' : 'Detalhes do Capítulo'}</CardTitle>
+          <CardDescription>
+            {isEdit ? 'Atualize o conteúdo do seu capítulo' : 'Escreva seu novo capítulo'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="title">Título do Capítulo *</Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                  placeholder="Digite o título do capítulo"
                 />
               </div>
-            )}
-
-            {showAIPanel && (!chapterId || chapterId === 'new') && (
-              <div className="lg:col-span-1">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Sparkles className="h-5 w-5" />
-                      Assistente IA
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      Salve o capítulo primeiro para usar recursos de IA.
-                    </p>
-                  </CardContent>
-                </Card>
+              <div className="space-y-2">
+                <Label htmlFor="order">Ordem do Capítulo</Label>
+                <Input
+                  id="order"
+                  type="number"
+                  min="1"
+                  value={orderIndex}
+                  onChange={(e) => setOrderIndex(parseInt(e.target.value) || 1)}
+                  placeholder="1"
+                />
               </div>
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="preview" className="space-y-6">
-          {imageLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
-              <span className="ml-2">Carregando imagens...</span>
             </div>
-          ) : (
-            <InlineImageEditor
-              images={images}
-              selectedImageId={selectedImageId}
-              onSelectImage={setSelectedImageId}
-              onUpdate={() => fetchChapterImages(chapterId!)}
-              editMode={editMode}
-              chapterContent={content}
-            />
-          )}
-        </TabsContent>
-      </Tabs>
+
+            <div className="space-y-2">
+              <Label htmlFor="content">Conteúdo</Label>
+              <Textarea
+                id="content"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Comece a escrever seu capítulo..."
+                rows={20}
+                className="min-h-[400px] font-serif text-base leading-relaxed"
+              />
+            </div>
+
+            <div className="flex space-x-2">
+              <Button type="submit" disabled={loading}>
+                <Save className="mr-2 h-4 w-4" />
+                {loading ? 'Salvando...' : isEdit ? 'Atualizar Capítulo' : 'Criar Capítulo'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate(`/books/${bookId}`)}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   )
 }
