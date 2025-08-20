@@ -3,12 +3,13 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Navigation } from '@/components/Layout/Navigation'
 import { DraggableChapterList } from '@/components/Chapters/DraggableChapterList'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
-import { ArrowLeft, Edit, Calendar, Clock } from 'lucide-react'
+import { ArrowLeft, Edit, Calendar, Clock, ChevronDown, ChevronUp } from 'lucide-react'
 import { formatDistanceToNow, format } from 'date-fns'
 import { ExportPanel } from '@/components/Export/ExportPanel'
 import { BookElementsManager } from '@/components/Books/BookElementsManager'
@@ -26,6 +27,9 @@ const BookDetails = () => {
   const [book, setBook] = useState<Book | null>(null)
   const [chapterCount, setChapterCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [tocOpen, setTocOpen] = useState(true)
+  const [elementsOpen, setElementsOpen] = useState(false)
+  const [chaptersOpen, setChaptersOpen] = useState(true)
   const { id } = useParams()
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -172,43 +176,82 @@ const BookDetails = () => {
           {/* Main Content Area */}
           <div className="space-y-6 lg:col-span-3">
             {/* Table of Contents - Top Priority */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Sumário</CardTitle>
-                <CardDescription>Visualização profissional do índice do livro</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="max-h-80 overflow-y-auto rounded-md border bg-muted/20 p-4">
-                  <TableOfContents ref={tocRef} bookId={book.id} />
-                </div>
-              </CardContent>
-            </Card>
+            <Collapsible open={tocOpen} onOpenChange={setTocOpen}>
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg">Sumário</CardTitle>
+                      <CardDescription>Visualização profissional do índice do livro</CardDescription>
+                    </div>
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        {tocOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      </Button>
+                    </CollapsibleTrigger>
+                  </div>
+                </CardHeader>
+                <CollapsibleContent>
+                  <CardContent>
+                    <div className="max-h-80 overflow-y-auto rounded-md border bg-muted/20 p-4">
+                      <TableOfContents ref={tocRef} bookId={book.id} />
+                    </div>
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
 
             {/* Professional Elements */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Elementos Profissionais</CardTitle>
-                <CardDescription>Capa, dedicatória, prefácio e outros elementos do livro</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="max-h-96 overflow-y-auto rounded-md border bg-muted/20 p-4">
-                  <BookElementsManager bookId={book.id} onElementUpdate={handleElementUpdate} />
-                </div>
-              </CardContent>
-            </Card>
+            <Collapsible open={elementsOpen} onOpenChange={setElementsOpen}>
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg">Elementos Profissionais</CardTitle>
+                      <CardDescription>Capa, dedicatória, prefácio e outros elementos do livro</CardDescription>
+                    </div>
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        {elementsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      </Button>
+                    </CollapsibleTrigger>
+                  </div>
+                </CardHeader>
+                <CollapsibleContent>
+                  <CardContent>
+                    <div className="max-h-96 overflow-y-auto rounded-md border bg-muted/20 p-4">
+                      <BookElementsManager bookId={book.id} onElementUpdate={handleElementUpdate} />
+                    </div>
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
 
             {/* Chapters - Scrollable with 2 visible */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Capítulos</CardTitle>
-                <CardDescription>Gerenciar e organizar os capítulos do livro</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="max-h-[600px] overflow-y-auto rounded-md border bg-muted/20 p-4">
-                  <DraggableChapterList bookId={book.id} />
-                </div>
-              </CardContent>
-            </Card>
+            <Collapsible open={chaptersOpen} onOpenChange={setChaptersOpen}>
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg">Capítulos</CardTitle>
+                      <CardDescription>Gerenciar e organizar os capítulos do livro</CardDescription>
+                    </div>
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        {chaptersOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      </Button>
+                    </CollapsibleTrigger>
+                  </div>
+                </CardHeader>
+                <CollapsibleContent>
+                  <CardContent>
+                    <div className="max-h-[600px] overflow-y-auto rounded-md border bg-muted/20 p-4">
+                      <DraggableChapterList bookId={book.id} />
+                    </div>
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
           </div>
         </div>
       </main>
