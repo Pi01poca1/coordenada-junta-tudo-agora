@@ -11,6 +11,8 @@ import { useToast } from '@/hooks/use-toast'
 import { ArrowLeft, Edit, Calendar, Clock } from 'lucide-react'
 import { formatDistanceToNow, format } from 'date-fns'
 import { ExportPanel } from '@/components/Export/ExportPanel'
+import { BookElementsManager } from '@/components/Books/BookElementsManager'
+import { TableOfContents } from '@/components/Books/TableOfContents'
 
 interface Book {
   id: string
@@ -155,17 +157,14 @@ const BookDetails = () => {
               </CardContent>
             </Card>
 
+            {/* Book Elements Manager */}
+            <BookElementsManager bookId={book.id} />
+
+            {/* Table of Contents */}
+            <TableOfContents bookId={book.id} />
 
             {/* Export Panel */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">📄 Exportar Livro</CardTitle>
-                <CardDescription>Baixe seu livro em diferentes formatos</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ExportPanel bookId={book.id} bookTitle={book.title} totalChapters={chapterCount} />
-              </CardContent>
-            </Card>
+            <ExportPanel bookId={book.id} bookTitle={book.title} totalChapters={chapterCount} />
           </div>
 
           <div className="lg:col-span-3">

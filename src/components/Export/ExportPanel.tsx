@@ -39,7 +39,6 @@ const formatDescriptions = {
 
 export const ExportPanel = ({ bookId, bookTitle, totalChapters }: ExportPanelProps) => {
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('pdf')
-  const [includeImages, setIncludeImages] = useState(true)
   const [template, setTemplate] = useState('default')
   const [chapterStart, setChapterStart] = useState(1)
   const [chapterEnd, setChapterEnd] = useState(totalChapters)
@@ -50,7 +49,7 @@ export const ExportPanel = ({ bookId, bookTitle, totalChapters }: ExportPanelPro
   const handleExport = async () => {
     const options = {
       template,
-      includeImages,
+      includeImages: false,
       ...(useRange && {
         chapterRange: {
           start: chapterStart,
@@ -129,21 +128,7 @@ export const ExportPanel = ({ bookId, bookTitle, totalChapters }: ExportPanelPro
 
         {/* Options */}
         <div className="space-y-3">
-          <Label>Opções</Label>
-
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="includeImages"
-              checked={includeImages}
-              onCheckedChange={(checked) => setIncludeImages(checked as boolean)}
-            />
-            <label
-              htmlFor="includeImages"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              Incluir imagens
-            </label>
-          </div>
+          <Label>Opções de Exportação</Label>
 
           <div className="flex items-center space-x-2">
             <Checkbox
@@ -221,37 +206,42 @@ export const ExportPanel = ({ bookId, bookTitle, totalChapters }: ExportPanelPro
           )}
         </Button>
 
+        <Separator />
+
         {/* Quick Export Buttons */}
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setSelectedFormat('pdf')
-              setTemplate('default')
-              setIncludeImages(true)
-              setUseRange(false)
-              setTimeout(handleExport, 100)
-            }}
-            disabled={isExporting}
-          >
-            <FileText className="mr-1 h-3 w-3" />
-            PDF Rápido
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setSelectedFormat('json')
-              setIncludeImages(false)
-              setUseRange(false)
-              setTimeout(handleExport, 100)
-            }}
-            disabled={isExporting}
-          >
-            <Database className="mr-1 h-3 w-3" />
-            Backup JSON
-          </Button>
+        <div className="space-y-2">
+          <Label className="text-xs font-medium text-muted-foreground">Exportação Rápida</Label>
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              variant="outline"
+              size="lg"
+              className="h-14 flex-col gap-1 bg-gradient-to-br from-red-50 to-red-100 border-red-200 hover:from-red-100 hover:to-red-150 hover:border-red-300 text-red-700 hover:text-red-800"
+              onClick={() => {
+                setSelectedFormat('pdf')
+                setTemplate('professional')
+                setUseRange(false)
+                setTimeout(handleExport, 100)
+              }}
+              disabled={isExporting}
+            >
+              <FileText className="h-5 w-5" />
+              <span className="text-xs font-semibold">PDF Profissional</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="h-14 flex-col gap-1 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:from-blue-100 hover:to-blue-150 hover:border-blue-300 text-blue-700 hover:text-blue-800"
+              onClick={() => {
+                setSelectedFormat('json')
+                setUseRange(false)
+                setTimeout(handleExport, 100)
+              }}
+              disabled={isExporting}
+            >
+              <Database className="h-5 w-5" />
+              <span className="text-xs font-semibold">Backup JSON</span>
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
