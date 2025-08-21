@@ -54,8 +54,8 @@ const AppRoutes = () => {
           element={user ? <Navigate to={isAdmin ? '/admin' : '/dashboard'} replace /> : <Login />}
         />
 
-        {/* Raiz → envia para admin ou dashboard */}
-        <Route path="/" element={<Navigate to={isAdmin ? '/admin' : '/dashboard'} replace />} />
+        {/* Raiz → envia para login se não logado, senão para admin ou dashboard */}
+        <Route path="/" element={user ? <Navigate to={isAdmin ? '/admin' : '/dashboard'} replace /> : <Navigate to="/login" replace />} />
 
         {/* Admin (somente para emails da lista). Se não for admin, manda para dashboard */}
         <Route
