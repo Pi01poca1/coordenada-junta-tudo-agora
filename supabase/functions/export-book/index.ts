@@ -198,6 +198,7 @@ async function generatePDF(book: any, chapters: any[], coverImage: any, bookImag
   
   try {
     const isABNT = options?.template === 'abnt';
+    const alignmentSettings = options?.alignmentSettings || { toc: 'left', elements: 'left', chapters: 'left' };
     const doc = new jsPDF();
     
     // PÁGINA 1: CAPA
@@ -207,12 +208,12 @@ async function generatePDF(book: any, chapters: any[], coverImage: any, bookImag
     // PÁGINA 2: CONTRA-CAPA/PREFÁCIO
     console.log('📄 Adicionando prefácio...');
     doc.addPage();
-    addPreface(doc, book, isABNT);
+    addPreface(doc, book, isABNT, alignmentSettings.elements);
     
     // PÁGINA 3: SUMÁRIO
     console.log('📄 Adicionando sumário...');
     doc.addPage();
-    const tocPageNumbers = addTableOfContents(doc, chapters, isABNT);
+    const tocPageNumbers = addTableOfContents(doc, chapters, isABNT, alignmentSettings.toc);
     
     // CAPÍTULOS
     console.log('📄 Adicionando capítulos...');
@@ -227,12 +228,12 @@ async function generatePDF(book: any, chapters: any[], coverImage: any, bookImag
       // Atualizar número da página no sumário
       tocPageNumbers[i] = currentPage;
       
-      await addChapterContentSafe(doc, chapter, bookImages, isABNT);
+      await addChapterContentSafe(doc, chapter, bookImages, isABNT, alignmentSettings.chapters);
     }
     
     // Voltar e atualizar o sumário com os números de página corretos
     console.log('📄 Atualizando sumário...');
-    updateTableOfContentsSafe(doc, chapters, tocPageNumbers, isABNT);
+    updateTableOfContentsSafe(doc, chapters, tocPageNumbers, isABNT, alignmentSettings.toc);
 
     console.log('📄 Gerando buffer do PDF...');
     const pdfBuffer = doc.output('arraybuffer');
@@ -320,14 +321,30 @@ function addTextCover(doc: any, book: any, isABNT: boolean) {
   }
 }
 
-function addPreface(doc: any, book: any, isABNT: boolean) {
+// Função auxiliar para calcular posição X baseada no alinhamento
+function getAlignmentX(doc: any, alignment: string, margin: number): { x: number; align: string } {
+  const pageWidth = doc.internal.pageSize.width;
+  const centerX = pageWidth / 2;
+  
+  switch (alignment) {
+    case 'center':
+      return { x: centerX, align: 'center' };
+    case 'right':
+      return { x: pageWidth - margin, align: 'right' };
+    default: // 'left'
+      return { x: margin, align: 'left' };
+  }
+}
+
+function addPreface(doc: any, book: any, isABNT: boolean, alignment: string = 'left') {
   const margin = isABNT ? 30 : 20;
   let yPosition = margin + 20;
   
-  // Título
+  // Título com alinhamento
   doc.setFontSize(isABNT ? 14 : 18);
   doc.setFont(undefined, 'bold');
-  doc.text(isABNT ? 'PREFÁCIO' : 'Prefácio', margin, yPosition);
+  const titleAlignment = getAlignmentX(doc, alignment, margin);
+  doc.text(isABNT ? 'PREFÁCIO' : 'Prefácio', titleAlignment.x, yPosition, { align: titleAlignment.align });
   yPosition += 20;
   
   // Conteúdo do prefácio
@@ -351,15 +368,16 @@ function addPreface(doc: any, book: any, isABNT: boolean) {
   }
 }
 
-function addTableOfContents(doc: any, chapters: any[], isABNT: boolean): number[] {
+function addTableOfContents(doc: any, chapters: any[], isABNT: boolean, alignment: string = 'left'): number[] {
   const margin = isABNT ? 30 : 20;
   let yPosition = margin + 20;
   const tocPageNumbers: number[] = [];
   
-  // Título
+  // Título com alinhamento
   doc.setFontSize(isABNT ? 14 : 18);
   doc.setFont(undefined, 'bold');
-  doc.text(isABNT ? 'SUMÁRIO' : 'Sumário', margin, yPosition);
+  const titleAlignment = getAlignmentX(doc, alignment, margin);
+  doc.text(isABNT ? 'SUMÁRIO' : 'Sumário', titleAlignment.x, yPosition, { align: titleAlignment.align });
   yPosition += 20;
   
   // Entradas do sumário
@@ -373,7 +391,8 @@ function addTableOfContents(doc: any, chapters: any[], isABNT: boolean): number[
     
     tocPageNumbers.push(0); // Placeholder para o número da página
     
-    doc.text(chapterTitle, margin, yPosition);
+    const entryAlignment = getAlignmentX(doc, alignment, margin);
+    doc.text(chapterTitle, entryAlignment.x, yPosition, { align: entryAlignment.align });
     doc.text(placeholder, 180, yPosition);
     yPosition += 10;
     
@@ -386,7 +405,7 @@ function addTableOfContents(doc: any, chapters: any[], isABNT: boolean): number[
   return tocPageNumbers;
 }
 
-function updateTableOfContents(doc: any, chapters: any[], pageNumbers: number[], isABNT: boolean) {
+function updateTableOfContents(doc: any, chapters: any[], pageNumbers: number[], isABNT: boolean, alignment: string = 'left') {
   // Voltar para a página do sumário (página 3)
   const currentPage = doc.internal.getNumberOfPages();
   doc.setPage(3);
@@ -547,17 +566,18 @@ async function addCoverPageSafe(doc: any, book: any, coverImage: any, isABNT: bo
   }
 }
 
-async function addChapterContentSafe(doc: any, chapter: any, bookImages: any[], isABNT: boolean) {
+async function addChapterContentSafe(doc: any, chapter: any, bookImages: any[], isABNT: boolean, alignment: string = 'left') {
   console.log('📖 Processando capítulo de forma segura:', chapter.title);
   try {
     const margin = isABNT ? 30 : 20;
     let yPosition = margin + 20;
     
-    // Título do capítulo
+    // Título do capítulo com alinhamento
     doc.setFontSize(isABNT ? 14 : 16);
     doc.setFont(undefined, 'bold');
     const chapterTitle = `${chapter.order_index || 'S/N'}. ${chapter.title.toUpperCase()}`;
-    doc.text(chapterTitle, margin, yPosition);
+    const titleAlignment = getAlignmentX(doc, alignment, margin);
+    doc.text(chapterTitle, titleAlignment.x, yPosition, { align: titleAlignment.align });
     yPosition += 20;
     
     // Conteúdo do capítulo
@@ -608,7 +628,7 @@ async function addChapterContentSafe(doc: any, chapter: any, bookImages: any[], 
   }
 }
 
-function updateTableOfContentsSafe(doc: any, chapters: any[], pageNumbers: number[], isABNT: boolean) {
+function updateTableOfContentsSafe(doc: any, chapters: any[], pageNumbers: number[], isABNT: boolean, alignment: string = 'left') {
   console.log('📋 Atualizando sumário de forma segura...');
   try {
     // Voltar para a página do sumário (página 3)
