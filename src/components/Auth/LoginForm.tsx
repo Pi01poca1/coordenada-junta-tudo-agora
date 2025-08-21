@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast"
 import logo from "../../assets/logo.png"
 
 export const LoginForm = () => {
+  const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLogin, setIsLogin] = useState(true)
@@ -26,7 +27,7 @@ export const LoginForm = () => {
         await signIn(email, password)
         navigate("/dashboard")
       } else {
-        await signUp(email, password)
+        await signUp(email, password, name)
         toast({ title: "Conta criada com sucesso!" })
       }
     } catch (err: any) {
@@ -47,6 +48,19 @@ export const LoginForm = () => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {!isLogin && (
+            <div>
+              <Label htmlFor="name">Nome do Autor</Label>
+              <Input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Como você quer ser chamado?"
+                required
+              />
+            </div>
+          )}
           <div>
             <Label htmlFor="email">Email</Label>
             <Input

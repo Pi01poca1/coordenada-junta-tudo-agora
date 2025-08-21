@@ -1,6 +1,7 @@
-﻿import React from "react"
+import React from "react"
 import BooksTable from "@/components/Admin/BooksTable"
 import AdminStats from '@/components/Admin/AdminStats'
+import UsersTable from "@/components/Admin/UsersTable"
 import { Navigation } from "@/components/Layout/Navigation"
 
 export default function Admin() {
@@ -13,13 +14,13 @@ export default function Admin() {
         </h1>
 
         <p className="text-muted-foreground mb-6">
-          Aqui você tem uma visão geral dos livros cadastrados por todos os usuários.
+          Aqui você tem uma visão geral dos usuários e livros cadastrados.
         </p>
 
         <AdminStats />
+        <UsersTable />
         <BooksTable />
       </main>
     </div>
   )
 }
-

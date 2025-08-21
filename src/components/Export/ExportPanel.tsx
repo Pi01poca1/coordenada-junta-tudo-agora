@@ -222,26 +222,26 @@ export const ExportPanel = ({ bookId, bookTitle, totalChapters, alignmentSetting
             <Button
               variant="outline"
               size="lg"
-              className="h-14 flex-col gap-1 bg-gradient-to-br from-red-50 to-red-100 border-red-200 hover:from-red-100 hover:to-red-150 hover:border-red-300 text-red-700 hover:text-red-800"
-              onClick={() => {
+              className="h-14 flex-col gap-1 bg-gradient-to-br from-primary/10 to-primary/20 border-primary/30 hover:from-primary/20 hover:to-primary/30 hover:border-primary/40 text-primary hover:text-primary"
+              onClick={async () => {
                 setSelectedFormat('pdf')
                 setTemplate('professional')
                 setUseRange(false)
-                setTimeout(handleExport, 100)
+                await handleExport()
               }}
               disabled={isExporting}
             >
               <FileText className="h-5 w-5" />
-              <span className="text-xs font-semibold">PDF Profissional</span>
+              <span className="text-xs font-semibold">Documento portátil ideal para impressão</span>
             </Button>
             <Button
               variant="outline"
               size="lg"
-              className="h-14 flex-col gap-1 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:from-blue-100 hover:to-blue-150 hover:border-blue-300 text-blue-700 hover:text-blue-800"
-              onClick={() => {
+              className="h-14 flex-col gap-1 bg-gradient-to-br from-secondary to-secondary/80 border-secondary-foreground/20 hover:from-secondary/80 hover:to-secondary hover:border-secondary-foreground/30 text-secondary-foreground hover:text-secondary-foreground"
+              onClick={async () => {
                 setSelectedFormat('json')
                 setUseRange(false)
-                setTimeout(handleExport, 100)
+                await handleExport()
               }}
               disabled={isExporting}
             >

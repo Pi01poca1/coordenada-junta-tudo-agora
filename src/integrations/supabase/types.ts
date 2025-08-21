@@ -116,6 +116,13 @@ export type Database = {
             referencedRelation: "images"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "book_covers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       book_elements: {
@@ -300,6 +307,13 @@ export type Database = {
             referencedRelation: "chapters"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "images_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       profiles: {
@@ -310,6 +324,7 @@ export type Database = {
           first_name: string | null
           id: string
           last_name: string | null
+          name: string | null
           role: string | null
           updated_at: string | null
         }
@@ -320,6 +335,7 @@ export type Database = {
           first_name?: string | null
           id: string
           last_name?: string | null
+          name?: string | null
           role?: string | null
           updated_at?: string | null
         }
@@ -330,10 +346,19 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          name?: string | null
           role?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "admin_users_view"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       table_of_contents: {
         Row: {
@@ -378,7 +403,20 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      admin_users_view: {
+        Row: {
+          bio: string | null
+          created_at: string | null
+          email: string | null
+          first_name: string | null
+          id: string | null
+          last_name: string | null
+          last_sign_in_at: string | null
+          name: string | null
+          role: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       citext: {
