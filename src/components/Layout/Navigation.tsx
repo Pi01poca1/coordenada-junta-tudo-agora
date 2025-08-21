@@ -2,6 +2,7 @@ import React from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
+import logo from "../../assets/logo-optimized.png"
 
 export function Navigation() {
   const { user, signOut } = useAuth()
@@ -41,9 +42,7 @@ export function Navigation() {
   return (
     <nav className="flex items-center justify-between px-6 py-4 border-b bg-white">
       <Link to="/dashboard" className="flex items-center space-x-2">
-        <span className="text-xl font-bold tracking-tight text-gray-800">
-          Estúdio do Autor
-        </span>
+        <img src={logo} alt="Androvox Logo" className="h-12 w-auto object-contain" />
       </Link>
 
       <div className="flex items-center gap-6">
