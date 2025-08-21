@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/use-toast"
+import { supabase } from "@/integrations/supabase/client"
 import logo from "../../assets/logo.png"
 
 export const LoginForm = () => {
@@ -175,13 +176,33 @@ export const LoginForm = () => {
               >
                 Cadastre-se Agora
               </Button>
-              <Button
-                variant="ghost"
-                onClick={() => setIsRecoverPassword(true)}
-                className="w-full text-sm text-muted-foreground hover:text-primary"
-              >
-                Esqueci minha senha
-              </Button>
+          <Button
+            variant="ghost"
+            onClick={() => setIsRecoverPassword(true)}
+            className="w-full text-sm text-muted-foreground hover:text-primary"
+          >
+            Esqueci minha senha
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={async () => {
+              const { error } = await supabase.auth.resend({
+                type: 'signup',
+                email,
+                options: {
+                  emailRedirectTo: "https://e50f4fda-55f8-4d52-aab2-82f9e3b02574.sandbox.lovable.dev/login"
+                }
+              })
+              if (error) {
+                toast({ title: "Erro", description: error.message, variant: "destructive" })
+              } else {
+                toast({ title: "Email reenviado!", description: "Verifique sua caixa de entrada" })
+              }
+            }}
+            className="w-full text-sm text-muted-foreground hover:text-primary"
+          >
+            Reenviar email de confirmação
+          </Button>
             </div>
           ) : (
             <div className="space-y-2">
