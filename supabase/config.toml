@@ -11,7 +11,7 @@ max_rows = 1000
 enabled = true
 port = 54324
 site_url = "http://localhost:3000"
-additional_redirect_urls = ["https://localhost:3000"]
+additional_redirect_urls = ["https://localhost:3000", "https://id-preview--e50f4fda-55f8-4d52-aab2-82f9e3b02574.lovable.app"]
 jwt_expiry = 3600
 enable_signup = true
 email_double_confirm_changes = true
@@ -19,7 +19,7 @@ email_double_confirm_changes = true
 [auth.email]
 enable_signup = true
 double_confirm_changes = true
-enable_confirmations = false
+enable_confirmations = true
 
 [functions.ai-enrich]
 verify_jwt = false
