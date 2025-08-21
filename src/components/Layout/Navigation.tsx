@@ -2,7 +2,7 @@ import React from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
-import logo from "../../assets/logo-optimized.png"
+import logo from "/lovable-uploads/31e2a8d7-b979-4013-8ea3-90c8ccc92055.png"
 
 export function Navigation() {
   const { user, signOut } = useAuth()
