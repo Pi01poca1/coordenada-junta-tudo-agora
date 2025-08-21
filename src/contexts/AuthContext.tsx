@@ -56,7 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const signUp = async (email: string, password: string, name?: string) => {
-    const redirectUrl = `${window.location.origin}/`
+    const redirectUrl = "https://e50f4fda-55f8-4d52-aab2-82f9e3b02574.sandbox.lovable.dev/login"
 
     const { error } = await supabase.auth.signUp({
       email,
@@ -86,7 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const resetPassword = async (email: string) => {
-    const redirectUrl = `${window.location.origin}/`
+    const redirectUrl = "https://e50f4fda-55f8-4d52-aab2-82f9e3b02574.sandbox.lovable.dev/login"
     
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: redirectUrl
