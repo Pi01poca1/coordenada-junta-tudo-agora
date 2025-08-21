@@ -86,18 +86,22 @@ export const ExportPanel = ({ bookId, bookTitle, totalChapters, alignmentSetting
             value={selectedFormat}
             onValueChange={(value: ExportFormat) => setSelectedFormat(value)}
           >
-            <SelectTrigger>
+            <SelectTrigger className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/30 hover:border-primary/50 focus:border-primary focus:ring-primary/20">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-background border-primary/20">
               {Object.entries(formatDescriptions).map(([format, description]) => {
                 const FormatIcon = formatIcons[format as ExportFormat]
                 return (
-                  <SelectItem key={format} value={format}>
+                  <SelectItem 
+                    key={format} 
+                    value={format}
+                    className="hover:bg-primary/10 focus:bg-primary/10"
+                  >
                     <div className="flex items-center gap-2">
-                      <FormatIcon className="h-4 w-4" />
+                      <FormatIcon className="h-4 w-4 text-primary" />
                       <div>
-                        <div className="font-medium">{format.toUpperCase()}</div>
+                        <div className="font-medium text-foreground">{format.toUpperCase()}</div>
                         <div className="text-xs text-muted-foreground">{description}</div>
                       </div>
                     </div>
@@ -107,9 +111,9 @@ export const ExportPanel = ({ bookId, bookTitle, totalChapters, alignmentSetting
             </SelectContent>
           </Select>
 
-          <div className="flex items-center gap-2 rounded-lg bg-muted p-3">
-            <Icon className="h-4 w-4" />
-            <span className="text-sm">{formatDescriptions[selectedFormat]}</span>
+          <div className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 p-3">
+            <Icon className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-foreground">{formatDescriptions[selectedFormat]}</span>
           </div>
         </div>
 

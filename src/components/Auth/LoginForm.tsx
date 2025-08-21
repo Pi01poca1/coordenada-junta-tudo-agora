@@ -50,15 +50,17 @@ export const LoginForm = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <div>
-              <Label htmlFor="name">Nome do Autor</Label>
+              <Label htmlFor="name" className="text-sm font-medium">Nome Real do Autor</Label>
               <Input
                 id="name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Como você quer ser chamado?"
+                placeholder="Digite seu nome completo"
                 required
+                className="bg-background border-primary/20 focus:border-primary focus:ring-primary/20"
               />
+              <p className="text-xs text-muted-foreground mt-1">Este nome aparecerá no sistema e no painel administrativo</p>
             </div>
           )}
           <div>
