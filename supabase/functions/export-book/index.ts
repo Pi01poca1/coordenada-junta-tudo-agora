@@ -380,7 +380,7 @@ function addTableOfContents(doc: any, chapters: any[], isABNT: boolean, alignmen
   doc.text(isABNT ? 'SUMÁRIO' : 'Sumário', titleAlignment.x, yPosition, { align: titleAlignment.align });
   yPosition += 20;
   
-  // Entradas do sumário
+  // Entradas do sumário (sempre à esquerda)
   doc.setFontSize(12);
   doc.setFont(undefined, 'normal');
   
@@ -391,8 +391,8 @@ function addTableOfContents(doc: any, chapters: any[], isABNT: boolean, alignmen
     
     tocPageNumbers.push(0); // Placeholder para o número da página
     
-    const entryAlignment = getAlignmentX(doc, alignment, margin);
-    doc.text(chapterTitle, entryAlignment.x, yPosition, { align: entryAlignment.align });
+    // Itens sempre à esquerda, independente do alinhamento do título
+    doc.text(chapterTitle, margin, yPosition);
     doc.text(placeholder, 180, yPosition);
     yPosition += 10;
     
