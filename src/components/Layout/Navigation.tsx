@@ -42,7 +42,7 @@ export function Navigation() {
   return (
     <nav className="flex items-center justify-between px-6 py-4 border-b bg-white">
       <Link to="/dashboard" className="flex items-center space-x-2">
-        <img src={logo} alt="Androvox Logo" className="h-12 w-auto object-contain" />
+        <img src={logo} alt="Androvox Logo" className="h-20 w-auto object-contain" />
       </Link>
 
       <div className="flex items-center gap-6">
