@@ -28,13 +28,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Handle auth tokens from URL first (email confirmation, password reset)
+    const handleAuthFromUrl = async () => {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1))
+      const accessToken = hashParams.get('access_token')
+      const refreshToken = hashParams.get('refresh_token')
+      const type = hashParams.get('type')
+      
+      if (accessToken && refreshToken && type === 'signup') {
+        console.log('Processing email confirmation from URL')
+        try {
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          })
+          
+          if (error) {
+            console.error('Error setting session:', error)
+          } else {
+            console.log('Session set successfully:', data)
+            // Clear the hash from URL
+            window.history.replaceState({}, document.title, window.location.pathname + window.location.search)
+          }
+        } catch (error) {
+          console.error('Error processing confirmation:', error)
+        }
+      }
+    }
+    
+    handleAuthFromUrl()
+
     // Set up auth state listener
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth event:', event, session?.user?.email)
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
+      
+      // Handle email confirmation
+      if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
+        console.log('Email confirmed successfully')
+      }
     })
 
     // Check for existing session
