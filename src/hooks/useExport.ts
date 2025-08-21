@@ -8,6 +8,11 @@ interface ExportOptions {
   template?: string
   includeImages?: boolean
   chapterRange?: { start: number; end: number }
+  alignmentSettings?: {
+    toc: 'left' | 'center' | 'right'
+    elements: 'left' | 'center' | 'right'  
+    chapters: 'left' | 'center' | 'right'
+  }
 }
 
 export const useExport = () => {

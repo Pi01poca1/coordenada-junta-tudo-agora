@@ -31,8 +31,9 @@ const BookDetails = () => {
   const [tocOpen, setTocOpen] = useState(true)
   const [elementsOpen, setElementsOpen] = useState(false)
   const [chaptersOpen, setChaptersOpen] = useState(true)
-  const [showAlignmentControls, setShowAlignmentControls] = useState(false)
-  const [titleAlignment, setTitleAlignment] = useState<TextAlignment>('left')
+  const [tocAlignment, setTocAlignment] = useState<TextAlignment>('left')
+  const [elementsAlignment, setElementsAlignment] = useState<TextAlignment>('left')
+  const [chaptersAlignment, setChaptersAlignment] = useState<TextAlignment>('left')
   const { id } = useParams()
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -131,22 +132,6 @@ const BookDetails = () => {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar ao Dashboard
           </Button>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowAlignmentControls(!showAlignmentControls)}
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              Alinhamento de Títulos
-            </Button>
-            {showAlignmentControls && (
-              <AlignmentControls
-                alignment={titleAlignment}
-                onAlignmentChange={setTitleAlignment}
-              />
-            )}
-          </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-4">
@@ -189,7 +174,16 @@ const BookDetails = () => {
             </Card>
 
             {/* Export Panel */}
-            <ExportPanel bookId={book.id} bookTitle={book.title} totalChapters={chapterCount} />
+            <ExportPanel 
+              bookId={book.id} 
+              bookTitle={book.title} 
+              totalChapters={chapterCount}
+              alignmentSettings={{
+                toc: tocAlignment,
+                elements: elementsAlignment,
+                chapters: chaptersAlignment
+              }}
+            />
           </div>
 
           {/* Main Content Area */}
@@ -199,21 +193,28 @@ const BookDetails = () => {
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className={`text-lg ${getAlignmentClass(titleAlignment)}`}>Sumário</CardTitle>
-                      <CardDescription className={getAlignmentClass(titleAlignment)}>Visualização profissional do índice do livro</CardDescription>
+                    <div className="flex-1">
+                      <CardTitle className={`text-lg ${getAlignmentClass(tocAlignment)}`}>Sumário</CardTitle>
+                      <CardDescription className={getAlignmentClass(tocAlignment)}>Visualização profissional do índice do livro</CardDescription>
                     </div>
-                    <CollapsibleTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        {tocOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                      </Button>
-                    </CollapsibleTrigger>
+                    <div className="flex items-center gap-2">
+                      <AlignmentControls
+                        alignment={tocAlignment}
+                        onAlignmentChange={setTocAlignment}
+                        className="border-0 bg-transparent"
+                      />
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          {tocOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        </Button>
+                      </CollapsibleTrigger>
+                    </div>
                   </div>
                 </CardHeader>
                 <CollapsibleContent>
                   <CardContent>
                     <div className="max-h-80 overflow-y-auto rounded-md border bg-muted/20 p-4">
-                      <TableOfContents ref={tocRef} bookId={book.id} titleAlignment={titleAlignment} />
+                      <TableOfContents ref={tocRef} bookId={book.id} titleAlignment={tocAlignment} />
                     </div>
                   </CardContent>
                 </CollapsibleContent>
@@ -225,21 +226,28 @@ const BookDetails = () => {
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className={`text-lg ${getAlignmentClass(titleAlignment)}`}>Elementos Profissionais</CardTitle>
-                      <CardDescription className={getAlignmentClass(titleAlignment)}>Capa, dedicatória, prefácio e outros elementos do livro</CardDescription>
+                    <div className="flex-1">
+                      <CardTitle className={`text-lg ${getAlignmentClass(elementsAlignment)}`}>Elementos Profissionais</CardTitle>
+                      <CardDescription className={getAlignmentClass(elementsAlignment)}>Capa, dedicatória, prefácio e outros elementos do livro</CardDescription>
                     </div>
-                    <CollapsibleTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        {elementsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                      </Button>
-                    </CollapsibleTrigger>
+                    <div className="flex items-center gap-2">
+                      <AlignmentControls
+                        alignment={elementsAlignment}
+                        onAlignmentChange={setElementsAlignment}
+                        className="border-0 bg-transparent"
+                      />
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          {elementsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        </Button>
+                      </CollapsibleTrigger>
+                    </div>
                   </div>
                 </CardHeader>
                 <CollapsibleContent>
                   <CardContent>
                     <div className="max-h-96 overflow-y-auto rounded-md border bg-muted/20 p-4">
-                      <BookElementsManager bookId={book.id} onElementUpdate={handleElementUpdate} titleAlignment={titleAlignment} />
+                      <BookElementsManager bookId={book.id} onElementUpdate={handleElementUpdate} titleAlignment={elementsAlignment} />
                     </div>
                   </CardContent>
                 </CollapsibleContent>
@@ -251,21 +259,28 @@ const BookDetails = () => {
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className={`text-lg ${getAlignmentClass(titleAlignment)}`}>Capítulos</CardTitle>
-                      <CardDescription className={getAlignmentClass(titleAlignment)}>Gerenciar e organizar os capítulos do livro</CardDescription>
+                    <div className="flex-1">
+                      <CardTitle className={`text-lg ${getAlignmentClass(chaptersAlignment)}`}>Capítulos</CardTitle>
+                      <CardDescription className={getAlignmentClass(chaptersAlignment)}>Gerenciar e organizar os capítulos do livro</CardDescription>
                     </div>
-                    <CollapsibleTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        {chaptersOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                      </Button>
-                    </CollapsibleTrigger>
+                    <div className="flex items-center gap-2">
+                      <AlignmentControls
+                        alignment={chaptersAlignment}
+                        onAlignmentChange={setChaptersAlignment}
+                        className="border-0 bg-transparent"
+                      />
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          {chaptersOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        </Button>
+                      </CollapsibleTrigger>
+                    </div>
                   </div>
                 </CardHeader>
                 <CollapsibleContent>
                   <CardContent>
                     <div className="max-h-[600px] overflow-y-auto rounded-md border bg-muted/20 p-4">
-                      <DraggableChapterList bookId={book.id} titleAlignment={titleAlignment} />
+                      <DraggableChapterList bookId={book.id} titleAlignment={chaptersAlignment} />
                     </div>
                   </CardContent>
                 </CollapsibleContent>

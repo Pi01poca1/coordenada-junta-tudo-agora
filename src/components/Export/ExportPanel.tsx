@@ -14,11 +14,17 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Download, FileText, Book, Code, Globe, Database } from 'lucide-react'
 import { useExport, type ExportFormat } from '@/hooks/useExport'
+import { TextAlignment } from '@/components/ui/alignment-controls'
 
 interface ExportPanelProps {
   bookId: string
   bookTitle: string
   totalChapters: number
+  alignmentSettings?: {
+    toc: TextAlignment
+    elements: TextAlignment
+    chapters: TextAlignment
+  }
 }
 
 const formatIcons = {
@@ -37,7 +43,7 @@ const formatDescriptions = {
   json: 'Dados estruturados para desenvolvimento',
 }
 
-export const ExportPanel = ({ bookId, bookTitle, totalChapters }: ExportPanelProps) => {
+export const ExportPanel = ({ bookId, bookTitle, totalChapters, alignmentSettings }: ExportPanelProps) => {
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('pdf')
   const [template, setTemplate] = useState('default')
   const [chapterStart, setChapterStart] = useState(1)
@@ -50,6 +56,7 @@ export const ExportPanel = ({ bookId, bookTitle, totalChapters }: ExportPanelPro
     const options = {
       template,
       includeImages: false,
+      alignmentSettings,
       ...(useRange && {
         chapterRange: {
           start: chapterStart,
