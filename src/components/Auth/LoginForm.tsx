@@ -76,7 +76,6 @@ export const LoginForm = () => {
         <div className="flex flex-col items-center mb-4">
           <img src={logo} alt="Androvox Logo" className="w-40 h-40 mb-1" />
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-foreground mb-0">ANDROVOX</h1>
             <p className="text-sm text-muted-foreground font-semibold tracking-wide">Fábrica de livros</p>
           </div>
         </div>
