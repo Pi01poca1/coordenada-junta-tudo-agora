@@ -30,7 +30,7 @@ serve(async (req) => {
       type: 'signup',
       email,
       options: {
-        emailRedirectTo: "https://e50f4fda-55f8-4d52-aab2-82f9e3b02574.sandbox.lovable.dev/login"
+        emailRedirectTo: `${Deno.env.get("SITE_URL") || "https://e50f4fda-55f8-4d52-aab2-82f9e3b02574.sandbox.lovable.dev"}/login`
       }
     })
 
