@@ -40,27 +40,36 @@ export const LoginForm = () => {
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <div className="flex justify-center mb-4">
-          <img src={logo} alt="Androvox Logo" className="w-28 h-28" />
+        <div className="flex flex-col items-center mb-6">
+          <img src={logo} alt="Androvox Logo" className="w-40 h-40 mb-2" />
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-foreground">ANDROVOX</h1>
+            <p className="text-sm text-muted-foreground mt-1">Fábrica de livros</p>
+          </div>
         </div>
-        <CardTitle>Entrar</CardTitle>
-        <CardDescription>Digite suas credenciais para acessar seus livros</CardDescription>
+        <CardTitle>{isLogin ? "Entrar" : "Cadastrar"}</CardTitle>
+        <CardDescription>
+          {isLogin 
+            ? "Digite suas credenciais para acessar seus livros" 
+            : "Crie sua conta para começar a escrever seus livros"
+          }
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <div>
-              <Label htmlFor="name" className="text-sm font-medium">Nome Real do Autor</Label>
+              <Label htmlFor="name" className="text-sm font-medium">Como quer ser chamado?</Label>
               <Input
                 id="name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Digite seu nome completo"
+                placeholder="Digite seu nome de autor"
                 required
                 className="bg-background border-primary/20 focus:border-primary focus:ring-primary/20"
               />
-              <p className="text-xs text-muted-foreground mt-1">Este nome aparecerá no sistema e no painel administrativo</p>
+              <p className="text-xs text-muted-foreground mt-1">Este nome aparecerá no sistema identificando você como autor</p>
             </div>
           )}
           <div>
