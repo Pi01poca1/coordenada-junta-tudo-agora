@@ -186,17 +186,27 @@ export const LoginForm = () => {
           <Button
             variant="ghost"
             onClick={async () => {
-              const { error } = await supabase.auth.resend({
-                type: 'signup',
-                email,
-                options: {
-                  emailRedirectTo: "https://e50f4fda-55f8-4d52-aab2-82f9e3b02574.sandbox.lovable.dev/login"
+              if (!email.trim()) {
+                toast({ 
+                  title: "Email necessário", 
+                  description: "Digite seu email no campo acima antes de reenviar a confirmação", 
+                  variant: "destructive" 
+                })
+                return
+              }
+              
+              try {
+                const { data, error } = await supabase.functions.invoke('resend-confirmation', {
+                  body: { email: email.trim() }
+                })
+                
+                if (error) {
+                  toast({ title: "Erro", description: error.message, variant: "destructive" })
+                } else {
+                  toast({ title: "Email reenviado!", description: "Verifique sua caixa de entrada" })
                 }
-              })
-              if (error) {
-                toast({ title: "Erro", description: error.message, variant: "destructive" })
-              } else {
-                toast({ title: "Email reenviado!", description: "Verifique sua caixa de entrada" })
+              } catch (err: any) {
+                toast({ title: "Erro", description: "Não foi possível reenviar o email", variant: "destructive" })
               }
             }}
             className="w-full text-sm text-muted-foreground hover:text-primary"
