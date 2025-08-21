@@ -40,11 +40,11 @@ export const LoginForm = () => {
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <div className="flex flex-col items-center mb-6">
-          <img src={logo} alt="Androvox Logo" className="w-40 h-40 mb-3" />
+        <div className="flex flex-col items-center mb-4">
+          <img src={logo} alt="Androvox Logo" className="w-40 h-40 mb-2" />
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-foreground mb-1">ANDROVOX</h1>
-            <p className="text-lg text-muted-foreground font-medium">Fábrica de livros</p>
+            <h1 className="text-2xl font-bold text-foreground mb-0">ANDROVOX</h1>
+            <p className="text-xs text-muted-foreground font-medium">Fábrica de livros</p>
           </div>
         </div>
         <CardTitle>{isLogin ? "Entrar" : "Cadastrar"}</CardTitle>
