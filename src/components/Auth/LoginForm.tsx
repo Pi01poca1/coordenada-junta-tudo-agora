@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
-import logo from "../../assets/logo.png"
+import logo from "../../assets/logo-optimized.png"
 
 export const LoginForm = () => {
   const [name, setName] = useState("")
@@ -75,7 +75,7 @@ export const LoginForm = () => {
     <Card className="w-full max-w-md">
       <CardHeader>
         <div className="flex flex-col items-center mb-4">
-          <img src={logo} alt="Androvox Logo" className="w-40 h-40 mb-1" />
+          <img src={logo} alt="Androvox Logo" className="w-32 h-32 mb-1 object-contain" />
           <div className="text-center">
             <p className="text-sm text-muted-foreground font-semibold tracking-wide">Fábrica de livros</p>
           </div>
