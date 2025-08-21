@@ -98,27 +98,29 @@ export const LoginForm = () => {
             {isLogin ? "Entrar" : "Cadastrar"}
           </Button>
         </form>
-        <div className="mt-4 text-center text-sm text-gray-600">
+        <div className="mt-4 text-center text-sm">
           {isLogin ? (
-            <span>
-              Não tem uma conta?{" "}
-              <button
+            <div className="space-y-2">
+              <p className="text-muted-foreground">Não tem uma conta?</p>
+              <Button
+                variant="outline"
                 onClick={() => setIsLogin(false)}
-                className="text-blue-600 hover:underline"
+                className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground"
               >
-                Cadastre-se
-              </button>
-            </span>
+                Cadastre-se Agora
+              </Button>
+            </div>
           ) : (
-            <span>
-              Já tem uma conta?{" "}
-              <button
+            <div className="space-y-2">
+              <p className="text-muted-foreground">Já tem uma conta?</p>
+              <Button
+                variant="ghost"
                 onClick={() => setIsLogin(true)}
-                className="text-blue-600 hover:underline"
+                className="w-full text-primary hover:bg-primary/10"
               >
-                Entrar
-              </button>
-            </span>
+                Fazer Login
+              </Button>
+            </div>
           )}
         </div>
       </CardContent>
