@@ -12,15 +12,45 @@ export const LoginForm = () => {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [isLogin, setIsLogin] = useState(true)
   const [loading, setLoading] = useState(false)
+  const [isRecoverPassword, setIsRecoverPassword] = useState(false)
 
-  const { signIn, signUp } = useAuth()
+  const { signIn, signUp, resetPassword } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (isRecoverPassword) {
+      setLoading(true)
+      try {
+        await resetPassword(email)
+        toast({ 
+          title: "Email enviado!", 
+          description: "Verifique sua caixa de entrada para redefinir sua senha" 
+        })
+        setIsRecoverPassword(false)
+        setIsLogin(true)
+      } catch (err: any) {
+        toast({ title: "Erro", description: err.message, variant: "destructive" })
+      } finally {
+        setLoading(false)
+      }
+      return
+    }
+    
+    if (!isLogin && password !== confirmPassword) {
+      toast({ 
+        title: "Erro", 
+        description: "As senhas não coincidem", 
+        variant: "destructive" 
+      })
+      return
+    }
+    
     setLoading(true)
     try {
       if (isLogin) {
@@ -28,7 +58,10 @@ export const LoginForm = () => {
         navigate("/dashboard")
       } else {
         await signUp(email, password, name)
-        toast({ title: "Conta criada com sucesso!" })
+        toast({ 
+          title: "Conta criada com sucesso!", 
+          description: "Verifique seu email para confirmar a conta" 
+        })
       }
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" })
@@ -41,25 +74,29 @@ export const LoginForm = () => {
     <Card className="w-full max-w-md">
       <CardHeader>
         <div className="flex flex-col items-center mb-4">
-          <img src={logo} alt="Androvox Logo" className="w-40 h-40 mb-2" />
+          <img src={logo} alt="Androvox Logo" className="w-40 h-40 mb-1" />
           <div className="text-center">
             <h1 className="text-2xl font-bold text-foreground mb-0">ANDROVOX</h1>
-            <p className="text-xs text-muted-foreground font-medium">Fábrica de livros</p>
+            <p className="text-sm text-muted-foreground font-semibold tracking-wide">Fábrica de livros</p>
           </div>
         </div>
-        <CardTitle>{isLogin ? "Entrar" : "Cadastrar"}</CardTitle>
+        <CardTitle>
+          {isRecoverPassword ? "Recuperar Senha" : isLogin ? "Entrar" : "Cadastrar"}
+        </CardTitle>
         <CardDescription>
-          {isLogin 
-            ? "Digite suas credenciais para acessar seus livros" 
-            : "Crie sua conta para começar a escrever seus livros"
+          {isRecoverPassword
+            ? "Digite seu email para receber as instruções de recuperação"
+            : isLogin 
+              ? "Digite suas credenciais para acessar seus livros" 
+              : "Crie sua conta para começar a escrever seus livros"
           }
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {!isLogin && (
+          {!isLogin && !isRecoverPassword && (
             <div>
-              <Label htmlFor="name" className="text-sm font-medium">Como quer ser chamado?</Label>
+              <Label htmlFor="name" className="text-sm font-medium">Qual nome deseja ser chamado?</Label>
               <Input
                 id="name"
                 type="text"
@@ -83,23 +120,53 @@ export const LoginForm = () => {
               required
             />
           </div>
-          <div>
-            <Label htmlFor="password">Senha</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Digite sua senha"
-              required
-            />
-          </div>
+          {!isRecoverPassword && (
+            <>
+              <div>
+                <Label htmlFor="password">Senha</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Digite sua senha"
+                  required
+                />
+              </div>
+              {!isLogin && (
+                <div>
+                  <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirme sua senha"
+                    required
+                  />
+                </div>
+              )}
+            </>
+          )}
           <Button type="submit" className="w-full" disabled={loading}>
-            {isLogin ? "Entrar" : "Cadastrar"}
+            {isRecoverPassword ? "Enviar Email" : isLogin ? "Entrar" : "Cadastrar"}
           </Button>
         </form>
         <div className="mt-4 text-center text-sm">
-          {isLogin ? (
+          {isRecoverPassword ? (
+            <div className="space-y-2">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setIsRecoverPassword(false)
+                  setIsLogin(true)
+                }}
+                className="w-full text-primary hover:bg-primary/10"
+              >
+                Voltar ao Login
+              </Button>
+            </div>
+          ) : isLogin ? (
             <div className="space-y-2">
               <p className="text-muted-foreground">Não tem uma conta?</p>
               <Button
@@ -108,6 +175,13 @@ export const LoginForm = () => {
                 className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground"
               >
                 Cadastre-se Agora
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setIsRecoverPassword(true)}
+                className="w-full text-sm text-muted-foreground hover:text-primary"
+              >
+                Esqueci minha senha
               </Button>
             </div>
           ) : (
