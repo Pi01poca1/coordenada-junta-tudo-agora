@@ -116,13 +116,6 @@ export type Database = {
             referencedRelation: "images"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "book_covers_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "admin_users_view"
-            referencedColumns: ["id"]
-          },
         ]
       }
       book_elements: {
@@ -307,13 +300,6 @@ export type Database = {
             referencedRelation: "chapters"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "images_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "admin_users_view"
-            referencedColumns: ["id"]
-          },
         ]
       }
       profiles: {
@@ -350,15 +336,7 @@ export type Database = {
           role?: string | null
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "admin_users_view"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       table_of_contents: {
         Row: {
@@ -403,20 +381,7 @@ export type Database = {
       }
     }
     Views: {
-      admin_users_view: {
-        Row: {
-          bio: string | null
-          created_at: string | null
-          email: string | null
-          first_name: string | null
-          id: string | null
-          last_name: string | null
-          last_sign_in_at: string | null
-          name: string | null
-          role: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       citext: {
@@ -442,6 +407,20 @@ export type Database = {
       citextsend: {
         Args: { "": string }
         Returns: string
+      }
+      get_admin_users_data: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          bio: string
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          last_sign_in_at: string
+          name: string
+          role: string
+        }[]
       }
       is_admin: {
         Args: Record<PropertyKey, never>

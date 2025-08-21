@@ -144,7 +144,7 @@ const ChapterDetail = () => {
                     </div>
                   </div>
                   <Link to={`/books/${bookId}/chapters/${chapterId}/edit`}>
-                    <Button variant="outline">
+                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" variant="default">
                       <Edit className="mr-2 h-4 w-4" />
                       Editar Capítulo
                     </Button>

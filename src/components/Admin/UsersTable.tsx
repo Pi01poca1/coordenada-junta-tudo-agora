@@ -26,31 +26,19 @@ export default function UsersTable() {
   const load = async (currentPage: number) => {
     setLoading(true)
     try {
-      const from = currentPage * PAGE_SIZE
-      const to = from + PAGE_SIZE - 1
-
-      // Busca dados de usuários através da view admin_users_view
-      const { data: rows, error } = await supabase
-        .from("admin_users_view")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .range(from, to)
+      // Usar a função segura para buscar dados de usuários
+      const { data: rows, error } = await supabase.rpc('get_admin_users_data')
 
       if (error) throw error
 
-      // Verifica se há próxima página
-      const { data: nextRows, error: e2 } = await supabase
-        .from("admin_users_view")
-        .select("id", { count: "exact", head: false })
-        .range(to + 1, to + 1)
-
-      if (e2) {
-        setHasMore(false)
-      } else {
-        setHasMore(!!(nextRows && nextRows.length > 0))
-      }
-
-      setData(rows ?? [])
+      // Aplicar paginação no frontend para esta função
+      const startIndex = currentPage * PAGE_SIZE
+      const endIndex = startIndex + PAGE_SIZE
+      const paginatedData = rows?.slice(startIndex, endIndex) || []
+      
+      // Verificar se há mais dados
+      setHasMore(rows && rows.length > endIndex)
+      setData(paginatedData)
     } catch (err: any) {
       console.error("UsersTable error:", err?.message || err)
       toast({

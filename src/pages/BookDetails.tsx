@@ -165,7 +165,7 @@ const BookDetails = () => {
               </CardHeader>
               <CardContent className="space-y-3">
                 <Link to={`/books/${book.id}/edit`}>
-                  <Button className="w-full" variant="outline" size="sm">
+                  <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" variant="default" size="sm">
                     <Edit className="mr-2 h-4 w-4" />
                     Editar Livro
                   </Button>
