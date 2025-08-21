@@ -186,7 +186,10 @@ export const LoginForm = () => {
           <Button
             variant="ghost"
             onClick={async () => {
+              console.log("Botão reenviar clicado, email:", email)
+              
               if (!email.trim()) {
+                console.log("Email vazio, mostrando erro")
                 toast({ 
                   title: "Email necessário", 
                   description: "Digite seu email no campo acima antes de reenviar a confirmação", 
@@ -195,23 +198,50 @@ export const LoginForm = () => {
                 return
               }
               
+              console.log("Tentando reenviar confirmação para:", email.trim())
+              
               try {
+                setLoading(true)
+                toast({ 
+                  title: "Enviando...", 
+                  description: "Aguarde enquanto reenviamos o email de confirmação" 
+                })
+                
                 const { data, error } = await supabase.functions.invoke('resend-confirmation', {
                   body: { email: email.trim() }
                 })
                 
+                console.log("Resposta da função:", { data, error })
+                
                 if (error) {
-                  toast({ title: "Erro", description: error.message, variant: "destructive" })
+                  console.error("Erro na função:", error)
+                  toast({ 
+                    title: "Erro", 
+                    description: error.message || "Erro ao reenviar confirmação", 
+                    variant: "destructive" 
+                  })
                 } else {
-                  toast({ title: "Email reenviado!", description: "Verifique sua caixa de entrada" })
+                  console.log("Email reenviado com sucesso")
+                  toast({ 
+                    title: "✅ Email reenviado!", 
+                    description: "Verifique sua caixa de entrada e pasta de spam" 
+                  })
                 }
               } catch (err: any) {
-                toast({ title: "Erro", description: "Não foi possível reenviar o email", variant: "destructive" })
+                console.error("Erro na requisição:", err)
+                toast({ 
+                  title: "Erro", 
+                  description: "Não foi possível reenviar o email. Tente novamente.", 
+                  variant: "destructive" 
+                })
+              } finally {
+                setLoading(false)
               }
             }}
-            className="w-full text-sm text-muted-foreground hover:text-primary"
+            disabled={loading}
+            className="w-full text-sm text-muted-foreground hover:text-primary disabled:opacity-50"
           >
-            Reenviar email de confirmação
+            {loading ? "Enviando..." : "Reenviar email de confirmação"}
           </Button>
             </div>
           ) : (
