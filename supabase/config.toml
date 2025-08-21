@@ -29,3 +29,9 @@ verify_jwt = false
 
 [functions.export-book]
 verify_jwt = false
+
+[functions.resend-confirmation]
+verify_jwt = false
+
+[functions.reset-password]
+verify_jwt = false
