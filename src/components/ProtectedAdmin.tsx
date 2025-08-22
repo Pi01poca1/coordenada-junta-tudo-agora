@@ -1,13 +1,13 @@
-﻿import React from "react"
+import React from "react"
 import { Navigate } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { useIsAdmin } from "@/hooks/useIsAdmin"
 
 export function ProtectedAdmin({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
-  const isAdmin = useIsAdmin()
+  const { isAdmin, loading: adminLoading } = useIsAdmin()
 
-  if (loading) return null
+  if (loading || adminLoading) return null
   if (!user) return <Navigate to="/login" replace />
   if (!isAdmin) return <Navigate to="/dashboard" replace />
 

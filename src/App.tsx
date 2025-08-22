@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { useIsAdmin } from '@/hooks/useIsAdmin'
 
 // Imports estáticos (páginas leves)
 import Login from './pages/Login'
@@ -34,11 +35,9 @@ const LoadingSpinner = () => (
 
 const AppRoutes = () => {
   const { user, loading } = useAuth()
+  const { isAdmin, loading: adminLoading } = useIsAdmin()
 
-  // Simplified admin check
-  const isAdmin = false // Temporarily disable admin check to isolate the issue
-
-  if (loading) {
+  if (loading || adminLoading) {
     return <LoadingSpinner />
   }
 
