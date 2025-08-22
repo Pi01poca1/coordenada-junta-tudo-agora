@@ -35,10 +35,8 @@ const LoadingSpinner = () => (
 const AppRoutes = () => {
   const { user, loading } = useAuth()
 
-  // Lê a lista de admins do .env
-  const adminEmailsEnv = import.meta.env.VITE_ADMIN_EMAILS || ''
-  const adminEmails = adminEmailsEnv.split(',').map(e => e.trim()).filter(Boolean)
-  const isAdmin = !!(user?.email && adminEmails.includes(user.email))
+  // Simplified admin check
+  const isAdmin = false // Temporarily disable admin check to isolate the issue
 
   if (loading) {
     return <LoadingSpinner />
