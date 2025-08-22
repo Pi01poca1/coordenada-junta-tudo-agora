@@ -35,15 +35,24 @@ const LoadingSpinner = () => (
 const AppRoutes = () => {
   const { user, loading } = useAuth()
 
-  console.log('AppRoutes - user:', user?.email, 'loading:', loading)
+  console.log('AppRoutes iniciado - user:', user?.email, 'loading:', loading)
 
-  // Lê a lista de admins do .env (ex.: VITE_ADMIN_EMAILS=a@a.com,b@b.com)
-  const adminEmails =
-    (import.meta.env.VITE_ADMIN_EMAILS as string | undefined)?.split(',').map(e => e.trim()) ??
-    []
+  // Lê a lista de admins do .env de forma mais robusta
+  let adminEmails: string[] = []
+  try {
+    const adminEmailsEnv = import.meta.env.VITE_ADMIN_EMAILS
+    console.log('VITE_ADMIN_EMAILS bruto:', adminEmailsEnv)
+    
+    if (adminEmailsEnv && typeof adminEmailsEnv === 'string') {
+      adminEmails = adminEmailsEnv.split(',').map(e => e.trim()).filter(Boolean)
+    }
+  } catch (error) {
+    console.error('Erro ao ler VITE_ADMIN_EMAILS:', error)
+  }
+  
   const isAdmin = !!(user?.email && adminEmails.includes(user.email))
   
-  console.log('Admin emails:', adminEmails, 'isAdmin:', isAdmin)
+  console.log('Admin emails processados:', adminEmails, 'isAdmin:', isAdmin)
 
   if (loading) {
     console.log('Still loading...')
