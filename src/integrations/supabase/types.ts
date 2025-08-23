@@ -486,13 +486,40 @@ export type Database = {
           role: string
         }[]
       }
+      get_security_overview: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          description: string
+          metric: string
+          value: string
+        }[]
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      log_failed_login_attempt: {
+        Args: {
+          failure_reason?: string
+          user_agent_string?: string
+          user_email: string
+          user_ip?: string
+        }
+        Returns: undefined
+      }
       promote_user_to_admin: {
         Args: { target_user_id: string }
         Returns: boolean
+      }
+      run_security_audit: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          category: string
+          check_name: string
+          message: string
+          recommendation: string
+          status: string
+        }[]
       }
     }
     Enums: {
