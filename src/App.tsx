@@ -4,26 +4,8 @@ import { Toaster as Sonner } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider, useAuth } from '@/contexts/AuthContext'
-import { ProtectedRoute } from '@/components/ProtectedRoute'
 
-// Imports estáticos (páginas leves)
-import Login from './pages/Login'
-import Dashboard from './pages/Dashboard'
-import NotFound from './pages/NotFound'
-
-// Lazy imports (páginas pesadas)
-import { 
-  BookDetails, 
-  CreateBook, 
-  EditChapter, 
-  ChapterDetail, 
-  DocsOverview, 
-  Profile, 
-  Statistics, 
-  Admin 
-} from '@/components/LazyComponents'
-
+// Simplified imports to isolate the issue
 const queryClient = new QueryClient()
 
 const LoadingSpinner = () => (
@@ -32,138 +14,49 @@ const LoadingSpinner = () => (
   </div>
 )
 
-const AppRoutes = () => {
-  const { user, loading } = useAuth()
+// Simple test component to verify React is working
+const TestLogin = () => (
+  <div className="flex items-center justify-center min-h-screen bg-background">
+    <div className="bg-card p-8 rounded-lg shadow-lg border max-w-md w-full mx-4">
+      <h1 className="text-2xl font-bold text-center mb-4">Androvox</h1>
+      <p className="text-center text-muted-foreground mb-6">Fábrica de livros</p>
+      <div className="space-y-4">
+        <input 
+          type="email" 
+          placeholder="Email"
+          className="w-full p-3 border rounded-md"
+        />
+        <input 
+          type="password" 
+          placeholder="Senha"
+          className="w-full p-3 border rounded-md"
+        />
+        <button className="w-full bg-primary text-primary-foreground p-3 rounded-md hover:bg-primary/90">
+          Entrar
+        </button>
+      </div>
+      <p className="text-center text-sm text-muted-foreground mt-4">
+        Sistema funcionando! ✅
+      </p>
+    </div>
+  </div>
+)
 
-  // Simplified admin check
-  const isAdmin = false // Temporarily disable admin check to isolate the issue
+const AppRoutes = () => (
+  <Suspense fallback={<LoadingSpinner />}>
+    <Routes>
+      <Route path="/login" element={<TestLogin />} />
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<TestLogin />} />
+    </Routes>
+  </Suspense>
+)
 
-  if (loading) {
-    return <LoadingSpinner />
-  }
-
+const App = () => {
+  console.log('🚀 App iniciando...')
+  
   return (
-    <Suspense fallback={<LoadingSpinner />}>
-      <Routes>
-        {/* Login → envia para admin ou dashboard se já logado */}
-        <Route
-          path="/login"
-          element={user ? <Navigate to={isAdmin ? '/admin' : '/dashboard'} replace /> : <Login />}
-        />
-
-        {/* Raiz → envia para login se não logado, senão para admin ou dashboard */}
-        <Route path="/" element={user ? <Navigate to={isAdmin ? '/admin' : '/dashboard'} replace /> : <Navigate to="/login" replace />} />
-
-        {/* Admin (somente para emails da lista). Se não for admin, manda para dashboard */}
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute>
-              {isAdmin ? <Admin /> : <Navigate to="/dashboard" replace />}
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Rotas do usuário */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/books/new"
-          element={
-            <ProtectedRoute>
-              <CreateBook />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/books/:id"
-          element={
-            <ProtectedRoute>
-              <BookDetails />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/books/:id/edit"
-          element={
-            <ProtectedRoute>
-              <CreateBook />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/books/:bookId/chapters/new"
-          element={
-            <ProtectedRoute>
-              <EditChapter />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/books/:bookId/chapters/:chapterId/edit"
-          element={
-            <ProtectedRoute>
-              <EditChapter />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/books/:bookId/chapters/:chapterId"
-          element={
-            <ProtectedRoute>
-              <ChapterDetail />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/docs/overview"
-          element={
-            <ProtectedRoute>
-              <DocsOverview />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/statistics"
-          element={
-            <ProtectedRoute>
-              <Statistics />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Suspense>
-  )
-}
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
+    <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -171,8 +64,8 @@ const App = () => (
           <AppRoutes />
         </BrowserRouter>
       </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-)
+    </QueryClientProvider>
+  )
+}
 
 export default App
