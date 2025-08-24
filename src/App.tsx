@@ -1,124 +1,181 @@
-import React, { Suspense } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { Toaster } from '@/components/ui/toaster'
+import { Toaster as Sonner } from '@/components/ui/sonner'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { AuthProvider } from '@/contexts/AuthContext'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
-import { ProtectedAdmin } from '@/components/ProtectedAdmin'
-import { Toaster } from '@/components/ui/sonner'
+import { Suspense } from 'react'
 
-// Lazy loaded components
-import {
-  BookDetails,
-  ChapterDetail,
-  EditChapter,
-  CreateBook,
-  Admin,
-  Profile,
-  Statistics,
-  DocsOverview
+// Imports estáticos (páginas leves)
+import Login from './pages/Login'
+import Dashboard from './pages/Dashboard'
+import NotFound from './pages/NotFound'
+
+// Lazy imports (páginas pesadas)
+import { 
+  BookDetails, 
+  CreateBook, 
+  EditChapter, 
+  ChapterDetail, 
+  DocsOverview, 
+  Profile, 
+  Statistics, 
+  Admin 
 } from '@/components/LazyComponents'
-
-// Direct imports for critical pages
-import Index from '@/pages/Index'
-import Login from '@/pages/Login'
-import Dashboard from '@/pages/Dashboard'
-import NotFound from '@/pages/NotFound'
 
 const queryClient = new QueryClient()
 
-const App = () => {
+const LoadingSpinner = () => (
+  <div className="flex min-h-screen items-center justify-center bg-background">
+    <div className="text-muted-foreground">Loading...</div>
+  </div>
+)
+
+const AppRoutes = () => {
+  const { user, loading } = useAuth()
+
+  // Lê a lista de admins do .env (ex.: VITE_ADMIN_EMAILS=a@a.com,b@b.com)
+  const adminEmails =
+    (import.meta.env.VITE_ADMIN_EMAILS as string | undefined)?.split(',').map(e => e.trim()) ??
+    []
+  const isAdmin = !!(user?.email && adminEmails.includes(user.email))
+
+  if (loading) {
+    return <LoadingSpinner />
+  }
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <Router>
-        <AuthProvider>
-          <div className="min-h-screen bg-background">
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              
-              {/* Protected routes */}
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/create-book" element={
-                <ProtectedRoute>
-                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
-                    <CreateBook />
-                  </Suspense>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/books/:id" element={
-                <ProtectedRoute>
-                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
-                    <BookDetails />
-                  </Suspense>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/chapters/:id" element={
-                <ProtectedRoute>
-                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
-                    <ChapterDetail />
-                  </Suspense>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/chapters/:id/edit" element={
-                <ProtectedRoute>
-                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
-                    <EditChapter />
-                  </Suspense>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/profile" element={
-                <ProtectedRoute>
-                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
-                    <Profile />
-                  </Suspense>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/statistics" element={
-                <ProtectedRoute>
-                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
-                    <Statistics />
-                  </Suspense>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/docs" element={
-                <ProtectedRoute>
-                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
-                    <DocsOverview />
-                  </Suspense>
-                </ProtectedRoute>
-              } />
-              
-              {/* Admin routes */}
-              <Route path="/admin" element={
-                <ProtectedAdmin>
-                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
-                    <Admin />
-                  </Suspense>
-                </ProtectedAdmin>
-              } />
-              
-              {/* 404 route */}
-              <Route path="/404" element={<NotFound />} />
-              <Route path="*" element={<Navigate to="/404" replace />} />
-            </Routes>
-            <Toaster />
-          </div>
-        </AuthProvider>
-      </Router>
-    </QueryClientProvider>
+    <Suspense fallback={<LoadingSpinner />}>
+      <Routes>
+        {/* Login → envia para admin ou dashboard se já logado */}
+        <Route
+          path="/login"
+          element={user ? <Navigate to={isAdmin ? '/admin' : '/dashboard'} replace /> : <Login />}
+        />
+
+        {/* Raiz → envia para login se não logado, senão para admin ou dashboard */}
+        <Route path="/" element={user ? <Navigate to={isAdmin ? '/admin' : '/dashboard'} replace /> : <Navigate to="/login" replace />} />
+
+        {/* Admin (somente para emails da lista). Se não for admin, manda para dashboard */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              {isAdmin ? <Admin /> : <Navigate to="/dashboard" replace />}
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Rotas do usuário */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/books/new"
+          element={
+            <ProtectedRoute>
+              <CreateBook />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/books/:id"
+          element={
+            <ProtectedRoute>
+              <BookDetails />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/books/:id/edit"
+          element={
+            <ProtectedRoute>
+              <CreateBook />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/books/:bookId/chapters/new"
+          element={
+            <ProtectedRoute>
+              <EditChapter />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/books/:bookId/chapters/:chapterId/edit"
+          element={
+            <ProtectedRoute>
+              <EditChapter />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/books/:bookId/chapters/:chapterId"
+          element={
+            <ProtectedRoute>
+              <ChapterDetail />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/docs/overview"
+          element={
+            <ProtectedRoute>
+              <DocsOverview />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/statistics"
+          element={
+            <ProtectedRoute>
+              <Statistics />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   )
 }
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
+  </QueryClientProvider>
+)
 
 export default App
