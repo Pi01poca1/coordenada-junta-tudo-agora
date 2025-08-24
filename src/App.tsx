@@ -20,7 +20,6 @@ import {
 } from '@/components/LazyComponents'
 
 // Regular imports for essential components
-import Index from '@/pages/Index'
 import Login from '@/pages/Login'
 import Dashboard from '@/pages/Dashboard'
 import NotFound from '@/pages/NotFound'
@@ -48,8 +47,10 @@ const App = () => {
           <div className="min-h-screen bg-background">
             <Suspense fallback={<LoadingSpinner />}>
               <Routes>
+                {/* Redireciona raiz para login */}
+                <Route path="/" element={<Navigate to="/login" replace />} />
+
                 {/* Public routes */}
-                <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/docs" element={<DocsOverview />} />
                 
