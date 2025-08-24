@@ -1,81 +1,139 @@
-import React from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider, useAuth } from '@/contexts/AuthContext'
+import React, { Suspense } from 'react'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { AuthProvider } from '@/contexts/AuthContext'
+import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { ProtectedAdmin } from '@/components/ProtectedAdmin'
+import { Toaster } from '@/components/ui/toaster'
+import { Toaster as SonnerToaster } from '@/components/ui/sonner'
 
-// Import apenas do Login (que sabemos que funciona)
-import Login from './pages/Login'
+// Lazy loaded components
+import {
+  BookDetails,
+  ChapterDetail,
+  EditChapter,
+  CreateBook,
+  Admin,
+  Profile,
+  Statistics,
+  DocsOverview
+} from '@/components/LazyComponents'
 
-// Dashboard simples temporário
-const SimpleDashboard = () => (
-  <div style={{ padding: '20px', fontFamily: 'Arial', textAlign: 'center' }}>
-    <h1>🏠 Dashboard</h1>
-    <p>✅ <strong>SUCESSO! Vercel funcionando!</strong></p>
-    <p>🎉 Login, React Router, AuthProvider, Supabase - TUDO OK!</p>
-    <p>📋 Próximo passo: Investigar Dashboard.tsx original</p>
-    
-    <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#f0f8ff', border: '1px solid #0066cc' }}>
-      <h3>✅ Funcionalidades Confirmadas:</h3>
-      <ul style={{ textAlign: 'left', display: 'inline-block' }}>
-        <li>✅ Build de produção funciona</li>
-        <li>✅ Variáveis de ambiente funcionam</li>
-        <li>✅ Supabase conecta corretamente</li>
-        <li>✅ React Router funciona</li>
-        <li>✅ AuthProvider funciona</li>
-        <li>✅ Login.tsx funciona</li>
-      </ul>
-    </div>
-    
-    <div style={{ marginTop: '20px' }}>
-      <button onClick={() => window.location.href = '/login'}>
-        Voltar ao Login
-      </button>
-    </div>
+// Regular imports for essential components
+import Index from '@/pages/Index'
+import Login from '@/pages/Login'
+import Dashboard from '@/pages/Dashboard'
+import NotFound from '@/pages/NotFound'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
+    },
+  },
+})
+
+const LoadingSpinner = () => (
+  <div className="flex min-h-screen items-center justify-center bg-background">
+    <div className="text-muted-foreground">Carregando...</div>
   </div>
 )
 
-const Simple404 = () => (
-  <div style={{ padding: '20px', fontFamily: 'Arial', textAlign: 'center' }}>
-    <h1>❌ 404 - Página não encontrada</h1>
-    <a href="/login">Voltar ao Login</a>
-  </div>
-)
-
-const AppRoutes = () => {
-  const { user, loading } = useAuth()
-
-  if (loading) {
-    return (
-      <div style={{ padding: '20px', fontFamily: 'Arial', textAlign: 'center' }}>
-        <h2>🔄 Carregando...</h2>
-      </div>
-    )
-  }
-
+const App = () => {
   return (
-    <Routes>
-      <Route
-        path="/login"
-        element={user ? <Navigate to="/dashboard" replace /> : <Login />}
-      />
-      <Route 
-        path="/" 
-        element={user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} 
-      />
-      <Route
-        path="/dashboard"
-        element={user ? <SimpleDashboard /> : <Navigate to="/login" replace />}
-      />
-      <Route path="*" element={<Simple404 />} />
-    </Routes>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <Router>
+          <div className="min-h-screen bg-background">
+            <Suspense fallback={<LoadingSpinner />}>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<Index />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/docs" element={<DocsOverview />} />
+                
+                {/* Protected routes */}
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/create-book"
+                  element={
+                    <ProtectedRoute>
+                      <CreateBook />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/book/:id"
+                  element={
+                    <ProtectedRoute>
+                      <BookDetails />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/book/:bookId/chapter/:chapterId"
+                  element={
+                    <ProtectedRoute>
+                      <ChapterDetail />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/book/:bookId/chapter/:chapterId/edit"
+                  element={
+                    <ProtectedRoute>
+                      <EditChapter />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/statistics"
+                  element={
+                    <ProtectedRoute>
+                      <Statistics />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Admin routes */}
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedAdmin>
+                      <Admin />
+                    </ProtectedAdmin>
+                  }
+                />
+
+                {/* 404 and redirects */}
+                <Route path="/404" element={<NotFound />} />
+                <Route path="*" element={<Navigate to="/404" replace />} />
+              </Routes>
+            </Suspense>
+            
+            <Toaster />
+            <SonnerToaster />
+          </div>
+        </Router>
+      </AuthProvider>
+    </QueryClientProvider>
   )
 }
-
-const App = () => (
-  <AuthProvider>
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
-  </AuthProvider>
-)
 
 export default App
