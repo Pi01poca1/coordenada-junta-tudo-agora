@@ -170,22 +170,21 @@ export const DraggableChapterList = ({ bookId: propBookId, titleAlignment = 'lef
       // Atualizar estado local imediatamente para feedback visual
       setChapters(newChapters)
 
-      // Atualizar order_index no banco de dados
+      // Atualizar order_index no banco de dados de forma simples
       try {
-        // Atualizar cada capítulo individualmente com verificação de sucesso
-        for (let i = 0; i < newChapters.length; i++) {
-          const chapter = newChapters[i]
-          const { error } = await supabase
+        const updates = newChapters.map((chapter, index) => 
+          supabase
             .from('chapters')
-            .update({ 
-              order_index: i + 1,
-              updated_at: new Date().toISOString()
-            })
+            .update({ order_index: index + 1 })
             .eq('id', chapter.id)
-          
-          if (error) {
-            throw error
-          }
+        )
+        
+        const results = await Promise.all(updates)
+        
+        // Verificar se alguma atualização falhou
+        const errors = results.filter(result => result.error)
+        if (errors.length > 0) {
+          throw new Error(`Falha ao atualizar ${errors.length} capítulos`)
         }
 
         toast({
