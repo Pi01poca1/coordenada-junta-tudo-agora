@@ -1,178 +1,37 @@
-import React, { Suspense } from 'react'
-import { Toaster } from '@/components/ui/toaster'
-import { Toaster as Sonner } from '@/components/ui/sonner'
-import { TooltipProvider } from '@/components/ui/tooltip'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import React from 'react'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
-import { ProtectedRoute } from '@/components/ProtectedRoute'
 
-// Imports estáticos (páginas leves)
-import Login from './pages/Login'
-import Dashboard from './pages/Dashboard'
-import NotFound from './pages/NotFound'
-
-// Lazy imports (páginas pesadas)
-import { 
-  BookDetails, 
-  CreateBook, 
-  EditChapter, 
-  ChapterDetail, 
-  DocsOverview, 
-  Profile, 
-  Statistics, 
-  Admin 
-} from '@/components/LazyComponents'
-
-const queryClient = new QueryClient()
-
-const LoadingSpinner = () => (
-  <div className="flex min-h-screen items-center justify-center bg-background">
-    <div className="text-muted-foreground">Loading...</div>
-  </div>
-)
-
-const AppRoutes = () => {
+const AppContent = () => {
   const { user, loading } = useAuth()
 
-  // Simplified admin check
-  const isAdmin = false // Temporarily disable admin check to isolate the issue
-
   if (loading) {
-    return <LoadingSpinner />
+    return (
+      <div style={{ padding: '20px', fontFamily: 'Arial' }}>
+        <h2>🔄 Loading...</h2>
+      </div>
+    )
   }
 
   return (
-    <Suspense fallback={<LoadingSpinner />}>
-      <Routes>
-        {/* Login → envia para admin ou dashboard se já logado */}
-        <Route
-          path="/login"
-          element={user ? <Navigate to={isAdmin ? '/admin' : '/dashboard'} replace /> : <Login />}
-        />
-
-        {/* Raiz → envia para login se não logado, senão para admin ou dashboard */}
-        <Route path="/" element={user ? <Navigate to={isAdmin ? '/admin' : '/dashboard'} replace /> : <Navigate to="/login" replace />} />
-
-        {/* Admin (somente para emails da lista). Se não for admin, manda para dashboard */}
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute>
-              {isAdmin ? <Admin /> : <Navigate to="/dashboard" replace />}
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Rotas do usuário */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/books/new"
-          element={
-            <ProtectedRoute>
-              <CreateBook />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/books/:id"
-          element={
-            <ProtectedRoute>
-              <BookDetails />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/books/:id/edit"
-          element={
-            <ProtectedRoute>
-              <CreateBook />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/books/:bookId/chapters/new"
-          element={
-            <ProtectedRoute>
-              <EditChapter />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/books/:bookId/chapters/:chapterId/edit"
-          element={
-            <ProtectedRoute>
-              <EditChapter />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/books/:bookId/chapters/:chapterId"
-          element={
-            <ProtectedRoute>
-              <ChapterDetail />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/docs/overview"
-          element={
-            <ProtectedRoute>
-              <DocsOverview />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/statistics"
-          element={
-            <ProtectedRoute>
-              <Statistics />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Suspense>
+    <div style={{ padding: '20px', fontFamily: 'Arial' }}>
+      <h1>🎉 APP.TSX FUNCIONANDO!</h1>
+      <p><strong>Status:</strong> {user ? 'Logado' : 'Não logado'}</p>
+      <p><strong>User:</strong> {user ? user.email : 'Nenhum'}</p>
+      <p><strong>Loading:</strong> {loading ? 'Sim' : 'Não'}</p>
+      
+      <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#f0f8ff', border: '1px solid #0066cc' }}>
+        <h3>✅ SUCESSO!</h3>
+        <p>App.tsx carregou com AuthProvider funcionando!</p>
+        <p>Próximo passo: adicionar React Router...</p>
+      </div>
+    </div>
   )
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+  <AuthProvider>
+    <AppContent />
+  </AuthProvider>
 )
 
 export default App
