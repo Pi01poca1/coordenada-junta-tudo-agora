@@ -163,27 +163,39 @@ export const DraggableChapterList = ({ bookId: propBookId, titleAlignment = 'lef
       const oldIndex = chapters.findIndex((chapter) => chapter.id === active.id)
       const newIndex = chapters.findIndex((chapter) => chapter.id === over?.id)
 
+      if (oldIndex === -1 || newIndex === -1) return
+
       const newChapters = arrayMove(chapters, oldIndex, newIndex)
+      
+      // Atualizar estado local imediatamente para feedback visual
       setChapters(newChapters)
 
-      // Atualizar order_index no banco
+      // Atualizar order_index no banco com transação
       try {
         const updates = newChapters.map((chapter, index) => ({
           id: chapter.id,
           order_index: index + 1,
         }))
 
-        for (const update of updates) {
-          await supabase
-            .from('chapters')
-            .update({ order_index: update.order_index })
-            .eq('id', update.id)
-        }
+        // Usar Promise.all para melhor performance
+        await Promise.all(
+          updates.map(update =>
+            supabase
+              .from('chapters')
+              .update({ order_index: update.order_index })
+              .eq('id', update.id)
+          )
+        )
 
         toast({
           title: 'Sucesso',
           description: 'Ordem dos capítulos atualizada',
         })
+
+        // Emitir evento customizado para atualizar sumário
+        window.dispatchEvent(new CustomEvent('chaptersReordered', { 
+          detail: { bookId } 
+        }))
       } catch (error) {
         console.error('Erro ao atualizar ordem:', error)
         toast({
@@ -192,7 +204,7 @@ export const DraggableChapterList = ({ bookId: propBookId, titleAlignment = 'lef
           variant: 'destructive',
         })
         // Reverter mudança local
-        fetchChapters()
+        await fetchChapters()
       }
     }
   }

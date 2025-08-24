@@ -23,6 +23,7 @@ import Index from '@/pages/Index'
 import Login from '@/pages/Login'
 import Dashboard from '@/pages/Dashboard'
 import NotFound from '@/pages/NotFound'
+import CreateChapter from '@/pages/CreateChapter'
 
 const queryClient = new QueryClient()
 
@@ -45,6 +46,36 @@ const App = () => {
               } />
               
               <Route path="/create-book" element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
+                    <CreateBook />
+                  </Suspense>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/books/:id/chapters/new" element={
+                <ProtectedRoute>
+                  <CreateChapter />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/books/:id/chapters/:chapterId" element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
+                    <ChapterDetail />
+                  </Suspense>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/books/:id/chapters/:chapterId/edit" element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
+                    <EditChapter />
+                  </Suspense>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/books/:id/edit" element={
                 <ProtectedRoute>
                   <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
                     <CreateBook />
