@@ -36,22 +36,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const type = hashParams.get('type')
       
       if (accessToken && refreshToken && type === 'signup') {
-        console.log('Processing email confirmation from URL')
         try {
-          const { data, error } = await supabase.auth.setSession({
+          const { error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken
           })
           
-          if (error) {
-            console.error('Error setting session:', error)
-          } else {
-            console.log('Session set successfully:', data)
+          if (!error) {
             // Clear the hash from URL
             window.history.replaceState({}, document.title, window.location.pathname + window.location.search)
           }
         } catch (error) {
-          console.error('Error processing confirmation:', error)
+          // Silent error handling
         }
       }
     }
@@ -62,15 +58,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth event:', event, session?.user?.email)
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
-      
-      // Handle email confirmation
-      if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
-        console.log('Email confirmed successfully')
-      }
     })
 
     // Check for existing session
@@ -92,7 +82,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const signUp = async (email: string, password: string, name?: string) => {
-    const redirectUrl = "https://e50f4fda-55f8-4d52-aab2-82f9e3b02574.sandbox.lovable.dev/login"
+    const redirectUrl = `${window.location.origin}/login`
 
     const { error } = await supabase.auth.signUp({
       email,
@@ -123,29 +113,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resetPassword = async (email: string) => {
     // Primeiro tenta o método direto com URL correta
-    const redirectUrl = "https://e50f4fda-55f8-4d52-aab2-82f9e3b02574.sandbox.lovable.dev/login"
+    const redirectUrl = `${window.location.origin}/login`
     
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: redirectUrl
     })
     
     if (error) {
-      console.error('Erro no reset direto:', error)
       // Fallback para edge function
       try {
-        const { data, error: fnError } = await supabase.functions.invoke('reset-password', {
+        const { error: fnError } = await supabase.functions.invoke('reset-password', {
           body: { email }
         })
         
         if (fnError) {
-          console.error('Erro na função reset-password:', fnError)
           return { error: new Error('Erro ao enviar email de recuperação') }
         }
         
-        console.log('Reset enviado via edge function:', data)
         return { error: null }
       } catch (err: any) {
-        console.error('Erro ao chamar função:', err)
         return { error: err }
       }
     }
