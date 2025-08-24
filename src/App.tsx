@@ -28,6 +28,8 @@ import CreateChapter from '@/pages/CreateChapter'
 const queryClient = new QueryClient()
 
 const App = () => {
+  console.log('App component rendering...')
+  
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
