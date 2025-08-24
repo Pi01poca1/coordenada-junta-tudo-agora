@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string
+          details: string | null
+          id: string
+          ip_address: string | null
+          target_user_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          ip_address?: string | null
+          target_user_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          ip_address?: string | null
+          target_user_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       admin_emails: {
         Row: {
           email: string
@@ -225,6 +258,33 @@ export type Database = {
           },
         ]
       }
+      failed_login_attempts: {
+        Row: {
+          attempt_time: string
+          email: string
+          id: string
+          ip_address: string | null
+          reason: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          attempt_time?: string
+          email: string
+          id?: string
+          ip_address?: string | null
+          reason?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          attempt_time?: string
+          email?: string
+          id?: string
+          ip_address?: string | null
+          reason?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       images: {
         Row: {
           alt_text: string | null
@@ -384,6 +444,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_failed_login_attempts: {
+        Args: { threshold?: number; user_email: string }
+        Returns: boolean
+      }
       citext: {
         Args: { "": boolean } | { "": string } | { "": unknown }
         Returns: string
@@ -422,9 +486,44 @@ export type Database = {
           role: string
         }[]
       }
+      get_security_overview: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          description: string
+          metric: string
+          value: string
+        }[]
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      log_failed_login_attempt: {
+        Args: {
+          failure_reason?: string
+          user_agent_string?: string
+          user_email: string
+          user_ip?: string
+        }
+        Returns: undefined
+      }
+      promote_user_to_admin: {
+        Args: { target_user_id: string }
+        Returns: boolean
+      }
+      run_security_audit: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          category: string
+          check_name: string
+          message: string
+          recommendation: string
+          status: string
+        }[]
+      }
+      update_chapter_order: {
+        Args: { chapter_id: string; new_order: number }
+        Returns: undefined
       }
     }
     Enums: {
