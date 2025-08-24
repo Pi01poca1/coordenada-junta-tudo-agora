@@ -121,7 +121,11 @@ export const DraggableChapterList = ({ bookId: propBookId, titleAlignment = 'lef
   const bookId = propBookId || paramBookId
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
