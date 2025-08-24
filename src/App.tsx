@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { ProtectedAdmin } from '@/components/ProtectedAdmin'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { Toaster } from '@/components/ui/sonner'
 
 // Lazy loaded components
@@ -25,15 +26,23 @@ import Dashboard from '@/pages/Dashboard'
 import NotFound from '@/pages/NotFound'
 import CreateChapter from '@/pages/CreateChapter'
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+})
 
 const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <Router>
-        <AuthProvider>
-          <div className="min-h-screen">
-            <Routes>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <Router>
+          <AuthProvider>
+            <div className="min-h-screen">
+              <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
@@ -165,6 +174,7 @@ const App = () => {
         </AuthProvider>
       </Router>
     </QueryClientProvider>
+    </ErrorBoundary>
   )
 }
 
