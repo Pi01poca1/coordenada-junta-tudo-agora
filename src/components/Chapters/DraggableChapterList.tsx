@@ -174,20 +174,31 @@ export const DraggableChapterList = ({ bookId: propBookId, titleAlignment = 'lef
       // Atualizar estado local imediatamente para feedback visual
       setChapters(newChapters)
 
-      // Atualizar order_index no banco de dados usando RPC
+      // Atualizar order_index no banco de dados de forma simples e direta
       try {
+        // Use uma abordagem sequencial para evitar conflitos
         for (let i = 0; i < newChapters.length; i++) {
           const chapter = newChapters[i]
           const newIndex = i + 1
           
-          const { error } = await supabase.rpc('update_chapter_order', {
-            chapter_id: chapter.id,
-            new_order: newIndex
-          })
+          // UPDATE direto sem conflitos
+          const { error } = await supabase
+            .from('chapters')
+            .update({ 
+              order_index: newIndex,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', chapter.id)
+            .select()
           
           if (error) {
             console.error(`Erro ao atualizar capítulo ${chapter.id}:`, error)
             throw error
+          }
+          
+          // Pequena pausa para evitar conflitos de concorrência
+          if (i < newChapters.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 100))
           }
         }
 
