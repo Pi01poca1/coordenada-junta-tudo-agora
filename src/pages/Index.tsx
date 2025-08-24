@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 const Index = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-blue-50">
@@ -12,9 +14,12 @@ const Index = () => {
           <p className="text-sm text-purple-600">🎨 Interface restaurada</p>
         </div>
         <div className="mt-6">
-          <a href="/login" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          <Link 
+            to="/login" 
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 inline-block"
+          >
             Fazer Login
-          </a>
+          </Link>
         </div>
       </div>
     </div>
