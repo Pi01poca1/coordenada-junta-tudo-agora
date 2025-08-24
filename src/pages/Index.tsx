@@ -1,48 +1,22 @@
 import { Link } from 'react-router-dom'
 
 const Index = () => {
-  console.log('Index component rendering...')
-  
   return (
-    <div style={{ 
-      display: 'flex', 
-      minHeight: '100vh', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      backgroundColor: '#ffffff',
-      color: '#000000'
-    }}>
-      <div style={{ 
-        textAlign: 'center', 
-        padding: '32px', 
-        backgroundColor: '#f8f9fa', 
-        borderRadius: '8px', 
-        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-        border: '1px solid #e5e7eb'
-      }}>
-        <h1 style={{ marginBottom: '16px', fontSize: '36px', fontWeight: 'bold', color: '#000000' }}>
-          ✅ App Restaurado!
-        </h1>
-        <p style={{ fontSize: '20px', color: '#666666', marginBottom: '24px' }}>
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="text-center p-8 bg-card rounded-lg shadow-lg border border-border">
+        <h1 className="mb-4 text-4xl font-bold text-foreground">✅ App Restaurado!</h1>
+        <p className="text-xl text-muted-foreground mb-6">
           EscritorLivros está funcionando normalmente
         </p>
-        <div style={{ marginBottom: '24px' }}>
-          <p style={{ fontSize: '14px', color: '#3b82f6', marginBottom: '8px' }}>📚 Sistema de livros e capítulos</p>
-          <p style={{ fontSize: '14px', color: '#3b82f6', marginBottom: '8px' }}>🔐 Autenticação configurada</p>
-          <p style={{ fontSize: '14px', color: '#3b82f6', marginBottom: '8px' }}>🎨 Interface restaurada</p>
+        <div className="space-y-2">
+          <p className="text-sm text-primary">📚 Sistema de livros e capítulos</p>
+          <p className="text-sm text-primary">🔐 Autenticação configurada</p>
+          <p className="text-sm text-primary">🎨 Interface restaurada</p>
         </div>
-        <div style={{ marginTop: '24px' }}>
+        <div className="mt-6">
           <Link 
             to="/login" 
-            style={{ 
-              backgroundColor: '#3b82f6', 
-              color: 'white', 
-              padding: '8px 16px', 
-              borderRadius: '4px', 
-              textDecoration: 'none',
-              display: 'inline-block',
-              transition: 'background-color 0.2s'
-            }}
+            className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90 inline-block transition-colors"
           >
             Fazer Login
           </Link>

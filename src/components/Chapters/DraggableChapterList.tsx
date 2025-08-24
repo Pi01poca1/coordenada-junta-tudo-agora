@@ -176,17 +176,19 @@ export const DraggableChapterList = ({ bookId: propBookId, titleAlignment = 'lef
 
       // Atualizar order_index no banco de dados de forma simples
       try {
-        const updatePromises = newChapters.map(async (chapter, index) => {
+        for (const chapter of newChapters) {
+          const newIndex = newChapters.indexOf(chapter) + 1
+          
           const { error } = await supabase
             .from('chapters')
-            .update({ order_index: index + 1 })
+            .update({ order_index: newIndex })
             .eq('id', chapter.id)
           
-          if (error) throw error
-          return true
-        })
-        
-        await Promise.all(updatePromises)
+          if (error) {
+            console.error(`Erro ao atualizar capítulo ${chapter.id}:`, error)
+            throw error
+          }
+        }
 
         toast({
           title: 'Sucesso',
