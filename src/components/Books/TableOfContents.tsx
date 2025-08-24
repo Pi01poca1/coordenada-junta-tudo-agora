@@ -231,14 +231,20 @@ export const TableOfContents = forwardRef<TableOfContentsRef, TableOfContentsPro
       loadTOC()
 
       // Listener para atualização automática quando capítulos mudam
-      const handleChaptersReordered = (event: CustomEvent) => {
+      const handleChaptersReordered = async (event: CustomEvent) => {
         if (event.detail.bookId === bookId) {
-          generateTOC()
+          // Pequeno delay para garantir que as mudanças foram persistidas
+          setTimeout(() => {
+            generateTOC()
+          }, 500)
         }
       }
 
       const handleChapterUpdated = () => {
-        generateTOC()
+        // Pequeno delay para garantir consistência dos dados
+        setTimeout(() => {
+          generateTOC()
+        }, 300)
       }
 
       // Adicionar listeners para eventos customizados

@@ -136,7 +136,7 @@ export const DraggableChapterList = ({ bookId: propBookId, titleAlignment = 'lef
         .from('chapters')
         .select('*')
         .eq('book_id', bookId)
-        .order('order_index', { ascending: true })
+        .order('order_index', { ascending: true, nullsFirst: false })
 
       if (error) throw error
       setChapters(data || [])
@@ -170,29 +170,33 @@ export const DraggableChapterList = ({ bookId: propBookId, titleAlignment = 'lef
       // Atualizar estado local imediatamente para feedback visual
       setChapters(newChapters)
 
-      // Atualizar order_index no banco com transação
+      // Atualizar order_index no banco de dados
       try {
-        const updates = newChapters.map((chapter, index) => ({
-          id: chapter.id,
-          order_index: index + 1,
-        }))
-
-        // Usar Promise.all para melhor performance
-        await Promise.all(
-          updates.map(update =>
-            supabase
-              .from('chapters')
-              .update({ order_index: update.order_index })
-              .eq('id', update.id)
-          )
-        )
+        // Atualizar cada capítulo individualmente com verificação de sucesso
+        for (let i = 0; i < newChapters.length; i++) {
+          const chapter = newChapters[i]
+          const { error } = await supabase
+            .from('chapters')
+            .update({ 
+              order_index: i + 1,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', chapter.id)
+          
+          if (error) {
+            throw error
+          }
+        }
 
         toast({
           title: 'Sucesso',
           description: 'Ordem dos capítulos atualizada',
         })
 
-        // Emitir evento customizado para atualizar sumário
+        // Recarregar capítulos para confirmar mudanças
+        await fetchChapters()
+
+        // Emitir evento customizado para atualizar sumário APENAS após sucesso completo
         window.dispatchEvent(new CustomEvent('chaptersReordered', { 
           detail: { bookId } 
         }))
