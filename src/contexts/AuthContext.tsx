@@ -58,6 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔐 Auth state change:', event, session?.user?.email || 'nao logado')
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
@@ -74,10 +75,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [])
 
   const signIn = async (email: string, password: string) => {
+    console.log('🔐 AuthContext: Iniciando login para', email)
+    
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
+    
+    console.log('🔐 AuthContext: Resultado do login:', error ? 'ERRO' : 'SUCESSO')
+    if (error) {
+      console.error('🔐 AuthContext: Erro detalhado:', error)
+    }
+    
     return { error }
   }
 

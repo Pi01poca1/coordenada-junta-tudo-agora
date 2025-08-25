@@ -55,17 +55,52 @@ export const LoginForm = () => {
     setLoading(true)
     try {
       if (isLogin) {
-        await signIn(email, password)
+        console.log('🔑 Tentando fazer login com:', email)
+        const { error } = await signIn(email, password)
+        
+        if (error) {
+          console.error('❌ Erro de login:', error)
+          toast({ 
+            title: "Erro de Login", 
+            description: error.message || "Credenciais inválidas", 
+            variant: "destructive" 
+          })
+          return
+        }
+        
+        console.log('✅ Login realizado com sucesso')
+        toast({ 
+          title: "Login realizado!", 
+          description: "Redirecionando para o dashboard..." 
+        })
         navigate("/dashboard")
       } else {
-        await signUp(email, password, name)
+        console.log('📝 Tentando criar conta para:', email)
+        const { error } = await signUp(email, password, name)
+        
+        if (error) {
+          console.error('❌ Erro de cadastro:', error)
+          toast({ 
+            title: "Erro de Cadastro", 
+            description: error.message || "Erro ao criar conta", 
+            variant: "destructive" 
+          })
+          return
+        }
+        
+        console.log('✅ Conta criada com sucesso')
         toast({ 
           title: "Conta criada com sucesso!", 
           description: "Verifique seu email para confirmar a conta" 
         })
       }
     } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" })
+      console.error('💥 Erro inesperado:', err)
+      toast({ 
+        title: "Erro", 
+        description: err.message || "Erro inesperado", 
+        variant: "destructive" 
+      })
     } finally {
       setLoading(false)
     }
