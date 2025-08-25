@@ -743,209 +743,147 @@ async function blobToBase64Safe(blob: Blob): Promise<string> {
 }
 
 async function generateDOCX(book: any, chapters: any[], coverImage: any, bookImages: any[], options: any): Promise<{fileBuffer: Uint8Array, mimeType: string, filename: string}> {
-  console.log('📘 Generating professional DOCX...');
+  console.log('📘 Generating simple DOCX...');
   
   try {
-    const children = [];
-
-    // CAPA - Título principal
-    children.push(
-      new Paragraph({
+    // Criar documento com estrutura mínima
+    const doc = new Document({
+      sections: [{
         children: [
-          new TextRun({
-            text: book.title.toUpperCase(),
-            bold: true,
-            size: 48, // 24pt em half-points
-          }),
-        ],
-        alignment: "center",
-        spacing: { 
-          after: 800 // 20pt * 20 = 400 twips
-        }
-      })
-    );
-
-    // Descrição (se houver)
-    if (book.description) {
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: book.description,
-              size: 24, // 12pt
-              italics: true,
-            }),
-          ],
-          alignment: "center",
-          spacing: { after: 600 }
-        })
-      );
-    }
-
-    // Data de geração
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: `Gerado em ${new Date().getFullYear()}`,
-            size: 20, // 10pt
-          }),
-        ],
-        alignment: "center",
-        spacing: { after: 800 }
-      })
-    );
-
-    // QUEBRA DE PÁGINA e SUMÁRIO
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: "SUMÁRIO",
-            bold: true,
-            size: 32, // 16pt
-          }),
-        ],
-        alignment: "center",
-        spacing: { 
-          before: 400,
-          after: 600 
-        },
-        pageBreakBefore: true
-      })
-    );
-
-    // Entradas do sumário
-    chapters.forEach((chapter, index) => {
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: `${chapter.order_index || (index + 1)}. ${chapter.title}`,
-              size: 22, // 11pt
-            }),
-          ],
-          spacing: { after: 200 }
-        })
-      );
-    });
-
-    // CAPÍTULOS
-    chapters.forEach((chapter, index) => {
-      // Quebra de página para cada capítulo
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: `CAPÍTULO ${chapter.order_index || (index + 1)}`,
-              bold: true,
-              size: 28, // 14pt
-              allCaps: true,
-            }),
-          ],
-          heading: HeadingLevel.HEADING_1,
-          alignment: "center",
-          spacing: { 
-            before: 400,
-            after: 400 
-          },
-          pageBreakBefore: true
-        })
-      );
-
-      // Título do capítulo
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: chapter.title,
-              bold: true,
-              size: 24, // 12pt
-            }),
-          ],
-          alignment: "center", 
-          spacing: { after: 600 }
-        })
-      );
-
-      // Conteúdo do capítulo
-      if (chapter.content && chapter.content.trim()) {
-        const paragraphs = chapter.content
-          .split('\n')
-          .filter((p: string) => p.trim().length > 0);
-        
-        paragraphs.forEach((para: string) => {
-          children.push(
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: para.trim(),
-                  size: 22, // 11pt
-                }),
-              ],
-              alignment: "justify",
-              spacing: { after: 200 },
-              indent: { 
-                firstLine: 360 // 0.25 inch = 360 twips
-              }
-            })
-          );
-        });
-      } else {
-        // Parágrafo vazio caso não haja conteúdo
-        children.push(
+          // Título do livro
           new Paragraph({
             children: [
               new TextRun({
-                text: "[Conteúdo do capítulo a ser desenvolvido]",
-                size: 22,
-                italics: true,
+                text: book.title,
+                bold: true,
+                size: 28,
               }),
             ],
             alignment: "center",
             spacing: { after: 400 }
-          })
-        );
-      }
+          }),
+          
+          // Descrição se houver
+          ...(book.description ? [
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: book.description,
+                  size: 22,
+                }),
+              ],
+              alignment: "center",
+              spacing: { after: 600 }
+            })
+          ] : []),
+          
+          // Quebra de página
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: "SUMÁRIO",
+                bold: true,
+                size: 24,
+              }),
+            ],
+            alignment: "center",
+            spacing: { before: 400, after: 400 },
+            pageBreakBefore: true
+          }),
+          
+          // Sumário
+          ...chapters.map((chapter: any, index: number) => 
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `${index + 1}. ${chapter.title}`,
+                  size: 20,
+                }),
+              ],
+              spacing: { after: 200 }
+            })
+          ),
+          
+          // Capítulos
+          ...chapters.flatMap((chapter: any, index: number) => [
+            // Quebra de página para cada capítulo
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `Capítulo ${index + 1}`,
+                  bold: true,
+                  size: 24,
+                }),
+              ],
+              alignment: "center",
+              spacing: { before: 400, after: 300 },
+              pageBreakBefore: true
+            }),
+            
+            // Título do capítulo  
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: chapter.title,
+                  bold: true,
+                  size: 22,
+                }),
+              ],
+              alignment: "center",
+              spacing: { after: 400 }
+            }),
+            
+            // Conteúdo do capítulo
+            ...(chapter.content && chapter.content.trim() ? 
+              chapter.content.split('\n')
+                .filter((p: string) => p.trim())
+                .map((para: string) => 
+                  new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: para.trim(),
+                        size: 20,
+                      }),
+                    ],
+                    spacing: { after: 200 },
+                    indent: { firstLine: 360 }
+                  })
+                ) : [
+                  new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: "[Conteúdo do capítulo]",
+                        size: 20,
+                        italics: true,
+                      }),
+                    ],
+                    alignment: "center",
+                    spacing: { after: 400 }
+                  })
+                ]
+            )
+          ])
+        ]
+      }]
     });
 
-    // Criar documento com estrutura básica
-    const doc = new Document({
-      sections: [
-        {
-          properties: {
-            page: {
-              margin: {
-                top: 1440,    // 1 inch = 1440 twips
-                right: 1440,
-                bottom: 1440,
-                left: 1440,
-              },
-            },
-          },
-          children: children,
-        },
-      ],
-    });
-
-    console.log('📦 Convertendo documento para buffer...');
+    console.log('📦 Convertendo para buffer...');
     const buffer = await Packer.toBuffer(doc);
     
-    console.log('✅ DOCX gerado com sucesso:', {
-      bufferSize: buffer.byteLength,
-      title: book.title,
+    console.log('✅ DOCX gerado:', {
+      size: buffer.byteLength,
       chapters: chapters.length
     });
 
     return {
       fileBuffer: new Uint8Array(buffer),
       mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      filename: `${book.title.replace(/[^a-zA-Z0-9\s]/g, '_').replace(/\s+/g, '_')}.docx`
+      filename: `${book.title.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_')}.docx`
     };
 
   } catch (error) {
-    console.error('❌ Erro ao gerar DOCX:', error);
-    throw new Error(`Falha na geração do DOCX: ${error.message}`);
+    console.error('❌ Erro DOCX:', error);
+    throw new Error(`Falha na geração DOCX: ${error.message}`);
   }
 }
 
