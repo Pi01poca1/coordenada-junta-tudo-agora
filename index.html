@@ -7,27 +7,39 @@
     <meta name="description" content="Sistema de criação de livros" />
   </head>
 
-  <body>
+  <body style="margin: 0; padding: 0; font-family: Arial;">
     <div id="root">
-      <!-- Fallback se JavaScript falhar -->
-      <div style="padding: 20px; font-family: Arial; background: #f0f0f0; min-height: 100vh;">
-        <h1 style="color: red;">⚠️ ANDROVOX - HTML Puro</h1>
-        <p>Se você vê isso, o HTML carregou mas JavaScript pode estar falhando.</p>
-        <div style="background: white; padding: 10px; border-radius: 5px; margin-top: 10px;">
-          <strong>Status:</strong> HTML funcionando, aguardando JavaScript...
+      <!-- HTML Puro - Teste Final -->
+      <div style="padding: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; color: white; text-align: center;">
+        <h1 style="font-size: 3rem; margin-bottom: 20px;">🔧 ANDROVOX - HTML PURO</h1>
+        <p style="font-size: 1.5rem; margin-bottom: 30px;">Se você vê isso, o deploy básico funciona!</p>
+        
+        <div style="background: rgba(255,255,255,0.1); padding: 30px; border-radius: 10px; backdrop-filter: blur(10px);">
+          <h2>🚨 DIAGNÓSTICO</h2>
+          <p><strong>Status:</strong> HTML carregando ✅</p>
+          <p><strong>Deploy:</strong> Funcionando ✅</p>
+          <p><strong>Problema:</strong> React/Vite build ❌</p>
+          <p style="margin-top: 20px; font-size: 0.9rem;">
+            <strong>Solução:</strong> Reconstruir projeto do zero<br>
+            ou usar HTML/JS puro por enquanto
+          </p>
+        </div>
+
+        <div style="margin-top: 30px; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+          <p><strong>Hora do teste:</strong> <span id="time"></span></p>
         </div>
       </div>
     </div>
-    <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Não carregar React por enquanto - só teste HTML -->
     <script>
-      console.log('🔧 Script inline executando...')
+      console.log('🔧 HTML puro carregando...')
+      document.getElementById('time').textContent = new Date().toLocaleString()
+      console.log('✅ HTML funcionando perfeitamente!')
+      
       setTimeout(() => {
-        const root = document.getElementById('root')
-        if (root && root.innerHTML.includes('HTML Puro')) {
-          console.error('❌ React não carregou após 3 segundos')
-          root.innerHTML = '<div style="padding:20px;color:red;font-family:Arial;"><h1>❌ Erro: React não carregou</h1><p>Problema no build de produção.</p></div>'
-        }
-      }, 3000)
+        console.log('⏰ 5 segundos depois - HTML ainda funcionando')
+      }, 5000)
     </script>
   </body>
 </html>
