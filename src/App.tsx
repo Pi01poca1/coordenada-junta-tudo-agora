@@ -30,7 +30,8 @@ const queryClient = new QueryClient()
 const App = () => {
   console.log('🚀 App component iniciando...')
   
-  return (
+  try {
+    return (
     <QueryClientProvider client={queryClient}>
       <Router>
         <AuthProvider>
@@ -129,7 +130,11 @@ const App = () => {
         </AuthProvider>
       </Router>
     </QueryClientProvider>
-  )
+    )
+  } catch (error) {
+    console.error('❌ Erro no App component:', error)
+    return <div style={{padding: '20px', color: 'red'}}>Erro: {error.message}</div>
+  }
 }
 
 export default App
