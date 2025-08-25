@@ -60,7 +60,15 @@ const App = () => {
                 </ProtectedRoute>
               } />
               
-              <Route path="/chapters/:id" element={
+              <Route path="/books/:bookId/chapters/new" element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
+                    <EditChapter />
+                  </Suspense>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/books/:bookId/chapters/:chapterId" element={
                 <ProtectedRoute>
                   <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
                     <ChapterDetail />
@@ -68,7 +76,7 @@ const App = () => {
                 </ProtectedRoute>
               } />
               
-              <Route path="/chapters/:id/edit" element={
+              <Route path="/books/:bookId/chapters/:chapterId/edit" element={
                 <ProtectedRoute>
                   <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
                     <EditChapter />
