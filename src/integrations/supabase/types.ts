@@ -48,15 +48,9 @@ export type Database = {
         Relationships: []
       }
       admin_emails: {
-        Row: {
-          email: string
-        }
-        Insert: {
-          email: string
-        }
-        Update: {
-          email?: string
-        }
+        Row: {}
+        Insert: {}
+        Update: {}
         Relationships: []
       }
       admin_users: {
@@ -447,30 +441,6 @@ export type Database = {
       check_failed_login_attempts: {
         Args: { threshold?: number; user_email: string }
         Returns: boolean
-      }
-      citext: {
-        Args: { "": boolean } | { "": string } | { "": unknown }
-        Returns: string
-      }
-      citext_hash: {
-        Args: { "": string }
-        Returns: number
-      }
-      citextin: {
-        Args: { "": unknown }
-        Returns: string
-      }
-      citextout: {
-        Args: { "": string }
-        Returns: unknown
-      }
-      citextrecv: {
-        Args: { "": unknown }
-        Returns: string
-      }
-      citextsend: {
-        Args: { "": string }
-        Returns: string
       }
       get_admin_users_data: {
         Args: Record<PropertyKey, never>
