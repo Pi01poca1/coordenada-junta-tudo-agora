@@ -231,20 +231,28 @@ export const TableOfContents = forwardRef<TableOfContentsRef, TableOfContentsPro
   }, [bookId])
 
   const generateTOC = async () => {
+    console.log('📋 Gerando sumário para bookId:', bookId)
     setLoading(true)
     try {
       // Fetch chapters
+      console.log('📖 Buscando capítulos...')
       const { data: chapters, error: chaptersError } = await supabase
         .from('chapters')
         .select('id, title, order_index, content')
         .eq('book_id', bookId)
         .order('order_index')
 
-      if (chaptersError) throw chaptersError
+      if (chaptersError) {
+        console.error('❌ Erro ao buscar capítulos:', chaptersError)
+        throw chaptersError
+      }
+      
+      console.log('✅ Capítulos encontrados:', chapters?.length || 0)
 
       // Fetch book elements - handle case where table doesn't exist yet
       let elements: BookElement[] = []
       try {
+        console.log('🎨 Buscando elementos do livro...')
         const { data: elementsData, error: elementsError } = await supabase
           .from('book_elements')
           .select('id, type, title, order_index, enabled')
@@ -255,17 +263,21 @@ export const TableOfContents = forwardRef<TableOfContentsRef, TableOfContentsPro
           throw elementsError
         }
         elements = elementsData || []
+        console.log('✅ Elementos encontrados:', elements.length)
       } catch (error) {
         // Table might not exist yet, that's ok
-        console.log('Book elements table not available yet')
+        console.log('⚠️ Tabela book_elements não disponível ainda')
       }
 
       // Generate table of contents with page calculations
+      console.log('📄 Calculando páginas para sumário...')
       const items: TOCItem[] = []
       let currentPage = 1
 
       // Add enabled elements first (they come before chapters)
       const enabledElements = elements.filter(el => el.enabled)
+      console.log('🎨 Elementos habilitados:', enabledElements.length)
+      
       for (const element of enabledElements) {
         items.push({
           id: element.id,
@@ -280,6 +292,7 @@ export const TableOfContents = forwardRef<TableOfContentsRef, TableOfContentsPro
       }
 
       // Add chapters
+      console.log('📖 Processando capítulos para sumário...')
       if (chapters) {
         for (let i = 0; i < chapters.length; i++) {
           const chapter = chapters[i]
@@ -298,6 +311,7 @@ export const TableOfContents = forwardRef<TableOfContentsRef, TableOfContentsPro
         }
       }
 
+      console.log('✅ Sumário gerado com', items.length, 'itens')
       setTocItems(items)
     } catch (error) {
       console.error('Error generating TOC:', error)
@@ -312,13 +326,20 @@ export const TableOfContents = forwardRef<TableOfContentsRef, TableOfContentsPro
   }
 
   const refreshTOC = async () => {
+    console.log('🔄 Iniciando atualização do sumário...')
     setUpdating(true)
-    await generateTOC()
-    setUpdating(false)
-    toast({
-      title: 'Sumário Atualizado',
-      description: 'O sumário foi regenerado com as últimas alterações',
-    })
+    try {
+      await generateTOC()
+      console.log('✅ Sumário regenerado com sucesso')
+      toast({
+        title: 'Sumário Atualizado',
+        description: 'O sumário foi regenerado com as últimas alterações',
+      })
+    } catch (error) {
+      console.error('❌ Erro ao regenerar sumário:', error)
+    } finally {
+      setUpdating(false)
+    }
   }
 
   useImperativeHandle(ref, () => ({
