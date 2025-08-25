@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { ProtectedAdmin } from '@/components/ProtectedAdmin'
-import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { Toaster } from '@/components/ui/sonner'
 
 // Lazy loaded components
@@ -26,23 +25,15 @@ import Dashboard from '@/pages/Dashboard'
 import NotFound from '@/pages/NotFound'
 import CreateChapter from '@/pages/CreateChapter'
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-})
+const queryClient = new QueryClient()
 
 const App = () => {
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
         <Router>
-          <AuthProvider>
-            <div className="min-h-screen">
-              <Routes>
+          <div className="min-h-screen">
+            <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
@@ -84,22 +75,6 @@ const App = () => {
                 </ProtectedRoute>
               } />
               
-              <Route path="/books/:id/edit" element={
-                <ProtectedRoute>
-                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
-                    <CreateBook />
-                  </Suspense>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/books/new" element={
-                <ProtectedRoute>
-                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
-                    <CreateBook />
-                  </Suspense>
-                </ProtectedRoute>
-              } />
-              
               <Route path="/books/:id" element={
                 <ProtectedRoute>
                   <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
@@ -108,50 +83,10 @@ const App = () => {
                 </ProtectedRoute>
               } />
               
-              <Route path="/chapters/:id" element={
-                <ProtectedRoute>
-                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
-                    <ChapterDetail />
-                  </Suspense>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/chapters/:id/edit" element={
-                <ProtectedRoute>
-                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
-                    <EditChapter />
-                  </Suspense>
-                </ProtectedRoute>
-              } />
-              
               <Route path="/profile" element={
                 <ProtectedRoute>
                   <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
                     <Profile />
-                  </Suspense>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/statistics" element={
-                <ProtectedRoute>
-                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
-                    <Statistics />
-                  </Suspense>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/docs" element={
-                <ProtectedRoute>
-                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
-                    <DocsOverview />
-                  </Suspense>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/docs/overview" element={
-                <ProtectedRoute>
-                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
-                    <DocsOverview />
                   </Suspense>
                 </ProtectedRoute>
               } />
@@ -171,10 +106,9 @@ const App = () => {
             </Routes>
             <Toaster />
           </div>
-        </AuthProvider>
-      </Router>
+        </Router>
+      </AuthProvider>
     </QueryClientProvider>
-    </ErrorBoundary>
   )
 }
 
