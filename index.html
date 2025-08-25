@@ -8,7 +8,26 @@
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Fallback se JavaScript falhar -->
+      <div style="padding: 20px; font-family: Arial; background: #f0f0f0; min-height: 100vh;">
+        <h1 style="color: red;">⚠️ ANDROVOX - HTML Puro</h1>
+        <p>Se você vê isso, o HTML carregou mas JavaScript pode estar falhando.</p>
+        <div style="background: white; padding: 10px; border-radius: 5px; margin-top: 10px;">
+          <strong>Status:</strong> HTML funcionando, aguardando JavaScript...
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      console.log('🔧 Script inline executando...')
+      setTimeout(() => {
+        const root = document.getElementById('root')
+        if (root && root.innerHTML.includes('HTML Puro')) {
+          console.error('❌ React não carregou após 3 segundos')
+          root.innerHTML = '<div style="padding:20px;color:red;font-family:Arial;"><h1>❌ Erro: React não carregou</h1><p>Problema no build de produção.</p></div>'
+        }
+      }, 3000)
+    </script>
   </body>
 </html>
