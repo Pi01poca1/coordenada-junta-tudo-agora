@@ -161,30 +161,55 @@ export const DraggableChapterList = ({ bookId: propBookId, titleAlignment = 'lef
     const { active, over } = event
 
     if (active.id !== over?.id) {
-      console.log('🔄 Drag and drop iniciado:', { active: active.id, over: over?.id })
+      console.log('🔄 Drag and drop iniciado:', { 
+        active: active.id, 
+        over: over?.id,
+        activeType: typeof active.id,
+        overType: typeof over?.id 
+      })
       
       const oldIndex = chapters.findIndex((chapter) => chapter.id === active.id)
       const newIndex = chapters.findIndex((chapter) => chapter.id === over?.id)
+      
+      console.log('📊 Índices encontrados:', { oldIndex, newIndex })
+      console.log('📋 Capítulos antes da reordenação:', chapters.map(c => ({ id: c.id, title: c.title, order: c.order_index })))
 
       const newChapters = arrayMove(chapters, oldIndex, newIndex)
+      console.log('📋 Capítulos após reordenação local:', newChapters.map(c => ({ id: c.id, title: c.title, order: c.order_index })))
+      
       setChapters(newChapters)
 
       // Atualizar order_index no banco
       try {
+        console.log('💾 Salvando nova ordem dos capítulos...')
         const updates = newChapters.map((chapter, index) => ({
           id: chapter.id,
           order_index: index + 1,
         }))
 
+        console.log('📝 Updates a serem aplicados:', updates)
+
         for (const update of updates) {
-          await supabase
+          console.log(`🔄 Atualizando capítulo ${update.id} para order_index ${update.order_index}`)
+          
+          const { error: updateError } = await supabase
             .from('chapters')
             .update({ order_index: update.order_index })
             .eq('id', update.id)
+            
+          if (updateError) {
+            console.error(`❌ Erro ao atualizar capítulo ${update.id}:`, updateError)
+            throw updateError
+          }
+          
+          console.log(`✅ Capítulo ${update.id} atualizado com sucesso`)
         }
+
+        console.log('✅ Todas as atualizações concluídas')
 
         // Notificar que a ordem foi alterada ANTES do toast
         if (onChaptersReordered) {
+          console.log('📢 Chamando callback de reordenação...')
           onChaptersReordered()
         }
 
@@ -193,13 +218,26 @@ export const DraggableChapterList = ({ bookId: propBookId, titleAlignment = 'lef
           description: 'Ordem dos capítulos atualizada e sumário atualizado',
         })
       } catch (error) {
-        console.error('Erro ao atualizar ordem:', error)
+        console.error('💥 Erro ao atualizar ordem dos capítulos:', error)
+        
+        // Log detalhado do erro
+        if (error.message) {
+          console.error('📋 Mensagem do erro:', error.message)
+        }
+        if (error.details) {
+          console.error('📋 Detalhes do erro:', error.details)
+        }
+        if (error.hint) {
+          console.error('📋 Dica do erro:', error.hint)
+        }
+        
         toast({
           title: 'Erro',
-          description: 'Falha ao salvar nova ordem',
+          description: `Falha ao salvar nova ordem: ${error.message || 'Erro desconhecido'}`,
           variant: 'destructive',
         })
         // Reverter mudança local
+        console.log('🔄 Revertendo mudanças locais...')
         fetchChapters()
       }
     }

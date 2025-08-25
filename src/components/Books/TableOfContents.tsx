@@ -234,20 +234,24 @@ export const TableOfContents = forwardRef<TableOfContentsRef, TableOfContentsPro
     console.log('📋 Gerando sumário para bookId:', bookId)
     setLoading(true)
     try {
-      // Fetch chapters
-      console.log('📖 Buscando capítulos...')
+      // Fetch chapters com order_index mais atual
+      console.log('📖 Buscando capítulos ordenados...')
       const { data: chapters, error: chaptersError } = await supabase
         .from('chapters')
         .select('id, title, order_index, content')
         .eq('book_id', bookId)
-        .order('order_index')
+        .order('order_index', { ascending: true })
 
       if (chaptersError) {
         console.error('❌ Erro ao buscar capítulos:', chaptersError)
         throw chaptersError
       }
       
-      console.log('✅ Capítulos encontrados:', chapters?.length || 0)
+      console.log('✅ Capítulos encontrados para sumário:', chapters?.map(c => ({ 
+        id: c.id.substring(0, 8), 
+        title: c.title, 
+        order: c.order_index 
+      })) || [])
 
       // Fetch book elements - handle case where table doesn't exist yet
       let elements: BookElement[] = []

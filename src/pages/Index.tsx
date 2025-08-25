@@ -25,8 +25,8 @@ const Index = () => {
               color: 'white',
               textDecoration: 'none'
             }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#1d4ed8'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = '#2563eb'}
+            onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#1d4ed8'}
+            onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = '#2563eb'}
           >
             Fazer Login
           </Link>
