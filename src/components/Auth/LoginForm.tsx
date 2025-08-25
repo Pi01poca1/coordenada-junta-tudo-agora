@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react"
+import * as React from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,13 +10,13 @@ import { supabase } from "@/integrations/supabase/client"
 import logo from "/lovable-uploads/31e2a8d7-b979-4013-8ea3-90c8ccc92055.png"
 
 export const LoginForm = () => {
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [isLogin, setIsLogin] = useState(true)
-  const [loading, setLoading] = useState(false)
-  const [isRecoverPassword, setIsRecoverPassword] = useState(false)
+  const [name, setName] = React.useState("")
+  const [email, setEmail] = React.useState("")
+  const [password, setPassword] = React.useState("")
+  const [confirmPassword, setConfirmPassword] = React.useState("")
+  const [isLogin, setIsLogin] = React.useState(true)
+  const [loading, setLoading] = React.useState(false)
+  const [isRecoverPassword, setIsRecoverPassword] = React.useState(false)
 
   const { signIn, signUp, resetPassword } = useAuth()
   const navigate = useNavigate()
