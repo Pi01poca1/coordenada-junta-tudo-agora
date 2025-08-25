@@ -4,8 +4,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Navigation } from '@/components/Layout/Navigation'
-import { ImageUpload } from '@/components/Images/ImageUpload'
-import { ImageGallery } from '@/components/Images/ImageGallery'
 import { ImageRenderer } from '@/components/Images/ImageRenderer'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
@@ -168,18 +166,6 @@ const ChapterDetail = () => {
               )}
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Imagens</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <ImageUpload
-                  chapterId={chapterId}
-                  onImageUploaded={() => window.location.reload()}
-                />
-                <ImageGallery chapterId={chapterId} />
-              </CardContent>
-            </Card>
           </div>
 
           <div className="lg:col-span-1">
