@@ -224,7 +224,7 @@ export type Database = {
           content: string | null
           created_at: string | null
           id: string
-          order_index: number | null
+          order_index: number
           title: string
           updated_at: string | null
         }
@@ -234,7 +234,7 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           id?: string
-          order_index?: number | null
+          order_index: number
           title: string
           updated_at?: string | null
         }
@@ -244,7 +244,7 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           id?: string
-          order_index?: number | null
+          order_index?: number
           title?: string
           updated_at?: string | null
         }
@@ -433,7 +433,7 @@ export type Database = {
           {
             foreignKeyName: "table_of_contents_chapter_id_fkey"
             columns: ["chapter_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "chapters"
             referencedColumns: ["id"]
           },

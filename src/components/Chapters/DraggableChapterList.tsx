@@ -31,7 +31,7 @@ interface Chapter {
   id: string
   title: string
   content: string | null
-  order_index: number | null
+  order_index: number
   created_at: string
   updated_at: string
   book_id: string
@@ -78,7 +78,7 @@ const SortableChapter = ({ chapter, index, bookId, titleAlignment = 'left' }: So
           </CardDescription>
         </div>
         <Badge variant="outline" className="ml-2">
-          #{chapter.order_index || 0}
+          #{chapter.order_index}
         </Badge>
       </CardHeader>
       <CardContent>
@@ -167,23 +167,32 @@ export const DraggableChapterList = ({ bookId: propBookId, titleAlignment = 'lef
       const newChapters = arrayMove(chapters, oldIndex, newIndex)
       setChapters(newChapters)
 
-      // Atualizar order_index no banco - método mais simples
       try {
-        // Atualizar cada capítulo individualmente sem ON CONFLICT
-        const updatePromises = newChapters.map((chapter, index) => 
-          supabase
-            .from('chapters')
-            .update({ order_index: index + 1 })
-            .eq('id', chapter.id)
-            .select()
-        )
+        // Usar método sequencial para evitar conflitos de constraint única
+        // Primeiro, atualizar temporariamente todos para números negativos
+        const tempUpdates = newChapters.map((chapter, index) => ({
+          id: chapter.id,
+          tempOrder: -(index + 1)
+        }))
 
-        const results = await Promise.all(updatePromises)
-        
-        // Verificar se houve erros
-        const errors = results.filter(result => result.error)
-        if (errors.length > 0) {
-          throw new Error(`Erro ao atualizar ${errors.length} capítulos`)
+        // Aplicar atualizações temporárias
+        for (const update of tempUpdates) {
+          const { error } = await supabase
+            .from('chapters')
+            .update({ order_index: update.tempOrder })
+            .eq('id', update.id)
+          
+          if (error) throw error
+        }
+
+        // Agora atualizar para os valores finais positivos
+        for (let i = 0; i < newChapters.length; i++) {
+          const { error } = await supabase
+            .from('chapters')
+            .update({ order_index: i + 1 })
+            .eq('id', newChapters[i].id)
+          
+          if (error) throw error
         }
 
         // Notificar que a ordem foi alterada
