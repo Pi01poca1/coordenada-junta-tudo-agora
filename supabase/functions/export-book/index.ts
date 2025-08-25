@@ -753,28 +753,27 @@ async function generateDOCX(book: any, chapters: any[], coverImage: any, bookIma
     new Paragraph({
       children: [
         new TextRun({
-          text: isABNT ? 'UNIVERSIDADE FEDERAL DO BRASIL' : '',
+          text: book.title.toUpperCase(),
           bold: true,
-          size: 24,
+          size: 32,
         }),
       ],
       alignment: 'center',
-      spacing: { after: 200 }
+      spacing: { after: 400 }
     })
   );
 
-  if (isABNT) {
+  if (book.description) {
     children.push(
       new Paragraph({
         children: [
           new TextRun({
-            text: 'CURSO DE LETRAS',
-            bold: true,
-            size: 20,
+            text: book.description,
+            size: 24,
           }),
         ],
         alignment: 'center',
-        spacing: { after: 800 }
+        spacing: { after: 600 }
       })
     );
   }
@@ -783,21 +782,7 @@ async function generateDOCX(book: any, chapters: any[], coverImage: any, bookIma
     new Paragraph({
       children: [
         new TextRun({
-          text: book.title.toUpperCase(),
-          bold: true,
-          size: isABNT ? 28 : 36,
-        }),
-      ],
-      alignment: 'center',
-      spacing: { after: 800 }
-    })
-  );
-
-  children.push(
-    new Paragraph({
-      children: [
-        new TextRun({
-          text: 'Autor: [Nome do Autor]',
+          text: `Gerado em ${new Date().getFullYear()}`,
           size: 20,
         }),
       ],
@@ -806,78 +791,19 @@ async function generateDOCX(book: any, chapters: any[], coverImage: any, bookIma
     })
   );
 
+  // NOVA PÁGINA - SUMÁRIO
   children.push(
     new Paragraph({
       children: [
         new TextRun({
-          text: `Cidade\n${new Date().getFullYear()}`,
-          size: 18,
+          text: 'SUMÁRIO',
+          bold: true,
+          size: 28,
         }),
       ],
       alignment: 'center',
-      pageBreakBefore: false
-    })
-  );
-
-  // QUEBRA DE PÁGINA
-  children.push(
-    new Paragraph({
-      children: [new TextRun({ text: "", break: 1 })],
+      spacing: { after: 400 },
       pageBreakBefore: true
-    })
-  );
-
-  // PREFÁCIO
-  children.push(
-    new Paragraph({
-      children: [
-        new TextRun({
-          text: isABNT ? 'PREFÁCIO' : 'Prefácio',
-          bold: true,
-          size: isABNT ? 24 : 28,
-        }),
-      ],
-      alignment: isABNT ? 'center' : 'left',
-      spacing: { after: 400 }
-    })
-  );
-
-  const prefaceText = book.description || 
-    `Esta obra representa um trabalho dedicado ao tema proposto, desenvolvido com rigor acadêmico e compromisso com a qualidade do conteúdo apresentado.\n\nO livro "${book.title}" foi estruturado de forma a proporcionar uma leitura fluida e compreensiva, abordando os principais aspectos do assunto de maneira clara e objetiva.\n\nEsperamos que este material possa contribuir significativamente para o conhecimento e desenvolvimento dos leitores.`;
-
-  children.push(
-    new Paragraph({
-      children: [
-        new TextRun({
-          text: prefaceText,
-          size: 20,
-        }),
-      ],
-      alignment: 'justify',
-      spacing: { after: 400 }
-    })
-  );
-
-  // QUEBRA DE PÁGINA PARA SUMÁRIO
-  children.push(
-    new Paragraph({
-      children: [new TextRun({ text: "", break: 1 })],
-      pageBreakBefore: true
-    })
-  );
-
-  // SUMÁRIO
-  children.push(
-    new Paragraph({
-      children: [
-        new TextRun({
-          text: isABNT ? 'SUMÁRIO' : 'Sumário',
-          bold: true,
-          size: isABNT ? 24 : 28,
-        }),
-      ],
-      alignment: isABNT ? 'center' : 'left',
-      spacing: { after: 400 }
     })
   );
 
@@ -889,24 +815,33 @@ async function generateDOCX(book: any, chapters: any[], coverImage: any, bookIma
         children: [
           new TextRun({
             text: `${chapter.order_index || (i + 1)}. ${chapter.title}`,
-            size: 20,
+            size: 22,
           }),
           new TextRun({
-            text: `.............................. ${i + 4}`, // Página estimada
-            size: 20,
+            text: '\t' + `${i + 3}`, // Página estimada com tab
+            size: 22,
           }),
         ],
-        spacing: { after: 100 }
+        spacing: { after: 200 }
       })
     );
   }
 
   // CAPÍTULOS
   for (const chapter of chapters) {
-    // Quebra de página antes de cada capítulo
+    // Nova página para cada capítulo
     children.push(
       new Paragraph({
-        children: [new TextRun({ text: "", break: 1 })],
+        children: [
+          new TextRun({
+            text: `CAPÍTULO ${chapter.order_index || 'S/N'}`,
+            bold: true,
+            size: 26,
+          }),
+        ],
+        heading: HeadingLevel.HEADING_1,
+        alignment: 'center',
+        spacing: { after: 300 },
         pageBreakBefore: true
       })
     );
@@ -916,13 +851,12 @@ async function generateDOCX(book: any, chapters: any[], coverImage: any, bookIma
       new Paragraph({
         children: [
           new TextRun({
-            text: `${chapter.order_index || 'S/N'}. ${chapter.title.toUpperCase()}`,
+            text: chapter.title,
             bold: true,
-            size: isABNT ? 24 : 28,
+            size: 24,
           }),
         ],
-        heading: HeadingLevel.HEADING_1,
-        alignment: isABNT ? 'left' : 'left',
+        alignment: 'center',
         spacing: { after: 400 }
       })
     );
@@ -936,28 +870,42 @@ async function generateDOCX(book: any, chapters: any[], coverImage: any, bookIma
             children: [
               new TextRun({
                 text: para,
-                size: 20,
+                size: 22,
               }),
             ],
             alignment: 'justify',
-            spacing: { after: 200 },
-            indent: isABNT ? { firstLine: 720 } : undefined // Recuo ABNT
+            spacing: { after: 240 },
+            indent: { firstLine: 720 } // Recuo da primeira linha
           })
         );
       }
     }
+
+    // Espaço após cada capítulo
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: '',
+            size: 22,
+          }),
+        ],
+        spacing: { after: 400 }
+      })
+    );
   }
 
+  // Criar o documento
   const doc = new Document({
     sections: [
       {
         properties: {
           page: {
             margin: {
-              top: isABNT ? 1134 : 1440, // 2cm ou 2.5cm
-              right: isABNT ? 567 : 1440, // 1cm ou 2.5cm  
-              bottom: isABNT ? 567 : 1440, // 1cm ou 2.5cm
-              left: isABNT ? 1134 : 1440, // 2cm ou 2.5cm
+              top: 1440,    // 2.5cm
+              right: 1440,  // 2.5cm
+              bottom: 1440, // 2.5cm
+              left: 1440,   // 2.5cm
             },
           },
         },
@@ -970,7 +918,7 @@ async function generateDOCX(book: any, chapters: any[], coverImage: any, bookIma
   return {
     fileBuffer: new Uint8Array(buffer),
     mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    filename: `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}_${isABNT ? 'ABNT' : 'profissional'}.docx`
+    filename: `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}.docx`
   };
 }
 
