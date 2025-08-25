@@ -26,27 +26,101 @@ export const LoginForm = () => {
     e.preventDefault()
     
     if (isRecoverPassword) {
+      if (!email.trim()) {
+        toast({ 
+          title: "Email necessário", 
+          description: "Digite seu email para recuperar a senha", 
+          variant: "destructive" 
+        })
+        return
+      }
+      
       setLoading(true)
       try {
-        await resetPassword(email)
+        console.log('🔑 Tentando recuperar senha para:', email)
+        const { error } = await resetPassword(email)
+        
+        if (error) {
+          console.error('❌ Erro de recuperação:', error)
+          
+          // Tratamento específico para rate limiting
+          if (error.message?.includes('429') || error.message?.includes('rate limit') || error.message?.includes('too many')) {
+            toast({ 
+              title: "Muitas tentativas", 
+              description: "Aguarde alguns minutos antes de tentar novamente", 
+              variant: "destructive" 
+            })
+          } else {
+            toast({ 
+              title: "Erro ao recuperar senha", 
+              description: error.message || "Não foi possível enviar o email de recuperação", 
+              variant: "destructive" 
+            })
+          }
+          return
+        }
+        
+        console.log('✅ Email de recuperação enviado')
         toast({ 
-          title: "Email enviado!", 
-          description: "Verifique sua caixa de entrada para redefinir sua senha" 
+          title: "✅ Email enviado!", 
+          description: "Verifique sua caixa de entrada e pasta de spam para redefinir sua senha" 
         })
         setIsRecoverPassword(false)
         setIsLogin(true)
       } catch (err: any) {
-        toast({ title: "Erro", description: err.message, variant: "destructive" })
+        console.error('💥 Erro inesperado na recuperação:', err)
+        toast({ 
+          title: "Erro", 
+          description: "Erro inesperado. Tente novamente em alguns minutos.", 
+          variant: "destructive" 
+        })
       } finally {
         setLoading(false)
       }
       return
     }
     
+    // Validações básicas
+    if (!email.trim()) {
+      toast({ 
+        title: "Email necessário", 
+        description: "Digite um email válido", 
+        variant: "destructive" 
+      })
+      return
+    }
+    
+    if (!isLogin && !name.trim()) {
+      toast({ 
+        title: "Nome necessário", 
+        description: "Digite seu nome de autor", 
+        variant: "destructive" 
+      })
+      return
+    }
+    
+    if (!password.trim()) {
+      toast({ 
+        title: "Senha necessária", 
+        description: "Digite uma senha", 
+        variant: "destructive" 
+      })
+      return
+    }
+    
     if (!isLogin && password !== confirmPassword) {
       toast({ 
-        title: "Erro", 
-        description: "As senhas não coincidem", 
+        title: "Senhas não coincidem", 
+        description: "As senhas digitadas são diferentes", 
+        variant: "destructive" 
+      })
+      return
+    }
+    
+    if (!isLogin && password.length < 6) {
+      toast({ 
+        title: "Senha muito curta", 
+        description: "A senha deve ter pelo menos 6 caracteres", 
         variant: "destructive" 
       })
       return
@@ -56,49 +130,114 @@ export const LoginForm = () => {
     try {
       if (isLogin) {
         console.log('🔑 Tentando fazer login com:', email)
+        toast({ 
+          title: "Fazendo login...", 
+          description: "Verificando suas credenciais" 
+        })
+        
         const { error } = await signIn(email, password)
         
         if (error) {
           console.error('❌ Erro de login:', error)
-          toast({ 
-            title: "Erro de Login", 
-            description: error.message || "Credenciais inválidas", 
-            variant: "destructive" 
-          })
+          
+          // Tratamento específico de erros de login
+          if (error.message?.includes('Invalid login credentials')) {
+            toast({ 
+              title: "Credenciais inválidas", 
+              description: "Email ou senha incorretos", 
+              variant: "destructive" 
+            })
+          } else if (error.message?.includes('Email not confirmed')) {
+            toast({ 
+              title: "Email não confirmado", 
+              description: "Verifique seu email e clique no link de confirmação, ou use 'Reenviar email de confirmação'", 
+              variant: "destructive" 
+            })
+          } else if (error.message?.includes('429') || error.message?.includes('rate limit')) {
+            toast({ 
+              title: "Muitas tentativas", 
+              description: "Aguarde alguns minutos antes de tentar novamente", 
+              variant: "destructive" 
+            })
+          } else {
+            toast({ 
+              title: "Erro de Login", 
+              description: error.message || "Não foi possível fazer login", 
+              variant: "destructive" 
+            })
+          }
           return
         }
         
         console.log('✅ Login realizado com sucesso')
         toast({ 
-          title: "Login realizado!", 
-          description: "Redirecionando para o dashboard..." 
+          title: "✅ Login realizado!", 
+          description: "Bem-vindo de volta!" 
         })
         navigate("/dashboard")
       } else {
-        console.log('📝 Tentando criar conta para:', email)
+        console.log('📝 Tentando criar conta para:', email, 'com nome:', name)
+        toast({ 
+          title: "Criando conta...", 
+          description: "Configurando sua nova conta" 
+        })
+        
         const { error } = await signUp(email, password, name)
         
         if (error) {
           console.error('❌ Erro de cadastro:', error)
-          toast({ 
-            title: "Erro de Cadastro", 
-            description: error.message || "Erro ao criar conta", 
-            variant: "destructive" 
-          })
+          
+          // Tratamento específico de erros de cadastro
+          if (error.message?.includes('User already registered')) {
+            toast({ 
+              title: "Conta já existe", 
+              description: "Este email já está cadastrado. Tente fazer login ou recuperar a senha.", 
+              variant: "destructive" 
+            })
+          } else if (error.message?.includes('429') || error.message?.includes('rate limit') || error.message?.includes('too many')) {
+            toast({ 
+              title: "Muitas tentativas", 
+              description: "Aguarde alguns minutos antes de tentar criar uma conta novamente", 
+              variant: "destructive" 
+            })
+          } else if (error.message?.includes('Password')) {
+            toast({ 
+              title: "Senha inválida", 
+              description: "A senha deve ter pelo menos 6 caracteres", 
+              variant: "destructive" 
+            })
+          } else if (error.message?.includes('Email')) {
+            toast({ 
+              title: "Email inválido", 
+              description: "Digite um email válido", 
+              variant: "destructive" 
+            })
+          } else {
+            toast({ 
+              title: "Erro de Cadastro", 
+              description: error.message || "Não foi possível criar a conta", 
+              variant: "destructive" 
+            })
+          }
           return
         }
         
         console.log('✅ Conta criada com sucesso')
         toast({ 
-          title: "Conta criada com sucesso!", 
-          description: "Verifique seu email para confirmar a conta" 
+          title: "✅ Conta criada com sucesso!", 
+          description: "Verifique seu email para confirmar sua conta e começar a usar o sistema" 
         })
+        
+        // Mudar para o modo login após cadastro bem-sucedido
+        setIsLogin(true)
+        setPassword("")
+        setConfirmPassword("")
       }
     } catch (err: any) {
       console.error('💥 Erro inesperado:', err)
       toast({ 
-        title: "Erro", 
-        description: err.message || "Erro inesperado", 
+        title: "Erro inesperado", 
+        description: "Ocorreu um erro. Tente novamente em alguns minutos.", 
         variant: "destructive" 
       })
     } finally {
@@ -221,10 +360,10 @@ export const LoginForm = () => {
           <Button
             variant="ghost"
             onClick={async () => {
-              console.log("Botão reenviar clicado, email:", email)
+              console.log("🔄 Botão reenviar clicado, email:", email)
               
               if (!email.trim()) {
-                console.log("Email vazio, mostrando erro")
+                console.log("❌ Email vazio, mostrando erro")
                 toast({ 
                   title: "Email necessário", 
                   description: "Digite seu email no campo acima antes de reenviar a confirmação", 
@@ -233,40 +372,56 @@ export const LoginForm = () => {
                 return
               }
               
-              console.log("Tentando reenviar confirmação para:", email.trim())
+              console.log("📧 Tentando reenviar confirmação para:", email.trim())
               
               try {
                 setLoading(true)
                 toast({ 
-                  title: "Enviando...", 
-                  description: "Aguarde enquanto reenviamos o email de confirmação" 
+                  title: "📧 Enviando email...", 
+                  description: "Reenviando confirmação, aguarde..." 
                 })
                 
                 const { data, error } = await supabase.functions.invoke('resend-confirmation', {
                   body: { email: email.trim() }
                 })
                 
-                console.log("Resposta da função:", { data, error })
+                console.log("📥 Resposta da função:", { data, error })
                 
                 if (error) {
-                  console.error("Erro na função:", error)
-                  toast({ 
-                    title: "Erro", 
-                    description: error.message || "Erro ao reenviar confirmação", 
-                    variant: "destructive" 
-                  })
+                  console.error("❌ Erro na função:", error)
+                  
+                  // Tratamento específico para rate limiting
+                  if (error.message?.includes('429') || error.message?.includes('rate limit') || error.message?.includes('too many')) {
+                    toast({ 
+                      title: "Muitas tentativas", 
+                      description: "Aguarde alguns minutos antes de reenviar novamente", 
+                      variant: "destructive" 
+                    })
+                  } else if (error.message?.includes('User not found') || error.message?.includes('not found')) {
+                    toast({ 
+                      title: "Email não encontrado", 
+                      description: "Este email não está cadastrado no sistema", 
+                      variant: "destructive" 
+                    })
+                  } else {
+                    toast({ 
+                      title: "Erro no reenvio", 
+                      description: error.message || "Não foi possível reenviar o email", 
+                      variant: "destructive" 
+                    })
+                  }
                 } else {
-                  console.log("Email reenviado com sucesso")
+                  console.log("✅ Email reenviado com sucesso")
                   toast({ 
                     title: "✅ Email reenviado!", 
-                    description: "Verifique sua caixa de entrada e pasta de spam" 
+                    description: "Verifique sua caixa de entrada e pasta de spam. O link é válido por 24 horas." 
                   })
                 }
               } catch (err: any) {
-                console.error("Erro na requisição:", err)
+                console.error("💥 Erro na requisição:", err)
                 toast({ 
-                  title: "Erro", 
-                  description: "Não foi possível reenviar o email. Tente novamente.", 
+                  title: "Erro de conexão", 
+                  description: "Verifique sua conexão e tente novamente em alguns minutos.", 
                   variant: "destructive" 
                 })
               } finally {
@@ -276,7 +431,7 @@ export const LoginForm = () => {
             disabled={loading}
             className="w-full text-sm text-muted-foreground hover:text-primary disabled:opacity-50"
           >
-            {loading ? "Enviando..." : "Reenviar email de confirmação"}
+            {loading ? "📧 Enviando..." : "🔄 Reenviar email de confirmação"}
           </Button>
             </div>
           ) : (
