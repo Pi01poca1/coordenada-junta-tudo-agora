@@ -37,8 +37,7 @@ const App = () => {
           <div className="min-h-screen bg-background">
             <Routes>
               {/* Public routes */}
-              <Route path="/" element={<TestPage />} />
-              <Route path="/index" element={<Index />} />
+              <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               
               {/* Protected routes */}
