@@ -167,22 +167,23 @@ export const DraggableChapterList = ({ bookId: propBookId, titleAlignment = 'lef
       const newChapters = arrayMove(chapters, oldIndex, newIndex)
       setChapters(newChapters)
 
-      // Atualizar order_index no banco
+      // Atualizar order_index no banco - método mais simples
       try {
-        const updates = newChapters.map((chapter, index) => ({
-          id: chapter.id,
-          order_index: index + 1,
-        }))
-
-        for (const update of updates) {
-          const { error: updateError } = await supabase
+        // Atualizar cada capítulo individualmente sem ON CONFLICT
+        const updatePromises = newChapters.map((chapter, index) => 
+          supabase
             .from('chapters')
-            .update({ order_index: update.order_index })
-            .eq('id', update.id)
-            
-          if (updateError) {
-            throw updateError
-          }
+            .update({ order_index: index + 1 })
+            .eq('id', chapter.id)
+            .select()
+        )
+
+        const results = await Promise.all(updatePromises)
+        
+        // Verificar se houve erros
+        const errors = results.filter(result => result.error)
+        if (errors.length > 0) {
+          throw new Error(`Erro ao atualizar ${errors.length} capítulos`)
         }
 
         // Notificar que a ordem foi alterada
