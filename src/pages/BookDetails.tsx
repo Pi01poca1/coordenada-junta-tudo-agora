@@ -88,6 +88,12 @@ const BookDetails = () => {
     }
   }
 
+  const handleChaptersReordered = async () => {
+    if (tocRef.current) {
+      await tocRef.current.refreshTOC()
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -280,7 +286,11 @@ const BookDetails = () => {
                 <CollapsibleContent>
                   <CardContent>
                     <div className="max-h-[600px] overflow-y-auto rounded-md border bg-muted/20 p-4">
-                      <DraggableChapterList bookId={book.id} titleAlignment={chaptersAlignment} />
+                      <DraggableChapterList 
+                        bookId={book.id} 
+                        titleAlignment={chaptersAlignment} 
+                        onChaptersReordered={handleChaptersReordered}
+                      />
                     </div>
                   </CardContent>
                 </CollapsibleContent>

@@ -109,9 +109,10 @@ const SortableChapter = ({ chapter, index, bookId, titleAlignment = 'left' }: So
 interface DraggableChapterListProps {
   bookId?: string
   titleAlignment?: TextAlignment
+  onChaptersReordered?: () => void
 }
 
-export const DraggableChapterList = ({ bookId: propBookId, titleAlignment = 'left' }: DraggableChapterListProps) => {
+export const DraggableChapterList = ({ bookId: propBookId, titleAlignment = 'left', onChaptersReordered }: DraggableChapterListProps) => {
   const [chapters, setChapters] = useState<Chapter[]>([])
   const [loading, setLoading] = useState(true)
   const { bookId: paramBookId } = useParams()
@@ -184,6 +185,11 @@ export const DraggableChapterList = ({ bookId: propBookId, titleAlignment = 'lef
           title: 'Sucesso',
           description: 'Ordem dos capítulos atualizada',
         })
+
+        // Notificar que a ordem foi alterada
+        if (onChaptersReordered) {
+          onChaptersReordered()
+        }
       } catch (error) {
         console.error('Erro ao atualizar ordem:', error)
         toast({
