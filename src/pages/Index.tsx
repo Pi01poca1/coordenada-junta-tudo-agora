@@ -2,8 +2,6 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 
 const Index = () => {
-  console.log('🏠 Index component carregando...')
-  
   return (
     <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#dbeafe' }}>
       <div className="text-center p-8 rounded-lg shadow-lg" style={{ backgroundColor: 'white' }}>
@@ -25,8 +23,6 @@ const Index = () => {
               color: 'white',
               textDecoration: 'none'
             }}
-            onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#1d4ed8'}
-            onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = '#2563eb'}
           >
             Fazer Login
           </Link>
