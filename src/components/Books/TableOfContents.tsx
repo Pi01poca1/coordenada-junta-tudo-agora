@@ -213,7 +213,11 @@ export const TableOfContents = forwardRef<TableOfContentsRef, TableOfContentsPro
   const navigate = useNavigate()
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -230,10 +234,17 @@ export const TableOfContents = forwardRef<TableOfContentsRef, TableOfContentsPro
       }
       loadTOC()
 
-      // Listener para atualização automática quando capítulos mudam
+      // Listener para atualização automática quando capítulos ou elementos mudam
       const handleChaptersReordered = async (event: CustomEvent) => {
         if (event.detail.bookId === bookId) {
-          // Pequeno delay para garantir que as mudanças foram persistidas
+          setTimeout(() => {
+            generateTOC()
+          }, 500)
+        }
+      }
+
+      const handleElementsUpdated = async (event: CustomEvent) => {
+        if (event.detail.bookId === bookId) {
           setTimeout(() => {
             generateTOC()
           }, 500)
@@ -241,7 +252,6 @@ export const TableOfContents = forwardRef<TableOfContentsRef, TableOfContentsPro
       }
 
       const handleChapterUpdated = () => {
-        // Pequeno delay para garantir consistência dos dados
         setTimeout(() => {
           generateTOC()
         }, 300)
@@ -249,12 +259,14 @@ export const TableOfContents = forwardRef<TableOfContentsRef, TableOfContentsPro
 
       // Adicionar listeners para eventos customizados
       window.addEventListener('chaptersReordered', handleChaptersReordered as EventListener)
+      window.addEventListener('elementsUpdated', handleElementsUpdated as EventListener)
       window.addEventListener('chapterUpdated', handleChapterUpdated)
       window.addEventListener('chapterCreated', handleChapterUpdated)
       window.addEventListener('chapterDeleted', handleChapterUpdated)
 
       return () => {
         window.removeEventListener('chaptersReordered', handleChaptersReordered as EventListener)
+        window.removeEventListener('elementsUpdated', handleElementsUpdated as EventListener)
         window.removeEventListener('chapterUpdated', handleChapterUpdated)
         window.removeEventListener('chapterCreated', handleChapterUpdated)
         window.removeEventListener('chapterDeleted', handleChapterUpdated)

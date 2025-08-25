@@ -158,6 +158,27 @@ export const DraggableChapterList = ({ bookId: propBookId, titleAlignment = 'lef
 
   useEffect(() => {
     fetchChapters()
+
+    // Escutar eventos de outros componentes
+    const handleTOCUpdated = () => {
+      setTimeout(() => {
+        fetchChapters()
+      }, 300)
+    }
+
+    const handleElementsUpdated = () => {
+      setTimeout(() => {
+        fetchChapters()
+      }, 300)
+    }
+
+    window.addEventListener('tocUpdated', handleTOCUpdated)
+    window.addEventListener('elementsUpdated', handleElementsUpdated)
+
+    return () => {
+      window.removeEventListener('tocUpdated', handleTOCUpdated)
+      window.removeEventListener('elementsUpdated', handleElementsUpdated)
+    }
   }, [bookId, user])
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -194,7 +215,6 @@ export const DraggableChapterList = ({ bookId: propBookId, titleAlignment = 'lef
               updated_at: timestamp
             })
             .eq('id', chapter.id)
-            .single()
           
           if (error) {
             console.error(`Erro ao atualizar capítulo ${chapter.id}:`, error)
@@ -210,7 +230,7 @@ export const DraggableChapterList = ({ bookId: propBookId, titleAlignment = 'lef
         description: 'Ordem dos capítulos atualizada',
       })
 
-      // Emitir evento para atualizar sumário
+      // Emitir evento para atualizar outros componentes
       window.dispatchEvent(new CustomEvent('chaptersReordered', { 
         detail: { bookId } 
       }))
