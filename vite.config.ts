@@ -31,7 +31,7 @@ export default defineConfig(({ mode }) => ({
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: true,
+        drop_console: false, // Manter console.log para debug
         drop_debugger: true,
       },
     },
@@ -101,6 +101,6 @@ export default defineConfig(({ mode }) => ({
     chunkSizeWarningLimit: 500, // Reduzido para 500KB
   },
   esbuild: {
-    drop: mode === 'production' ? ['console', 'debugger'] : [],
+    drop: mode === 'production' ? ['debugger'] : [], // Manter console.log para debug
   },
 }));

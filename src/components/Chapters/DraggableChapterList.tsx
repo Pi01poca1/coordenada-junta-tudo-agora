@@ -161,6 +161,8 @@ export const DraggableChapterList = ({ bookId: propBookId, titleAlignment = 'lef
     const { active, over } = event
 
     if (active.id !== over?.id) {
+      console.log('🔄 Drag and drop iniciado:', { active: active.id, over: over?.id })
+      
       const oldIndex = chapters.findIndex((chapter) => chapter.id === active.id)
       const newIndex = chapters.findIndex((chapter) => chapter.id === over?.id)
 
@@ -181,15 +183,15 @@ export const DraggableChapterList = ({ bookId: propBookId, titleAlignment = 'lef
             .eq('id', update.id)
         }
 
-        toast({
-          title: 'Sucesso',
-          description: 'Ordem dos capítulos atualizada',
-        })
-
-        // Notificar que a ordem foi alterada
+        // Notificar que a ordem foi alterada ANTES do toast
         if (onChaptersReordered) {
           onChaptersReordered()
         }
+
+        toast({
+          title: 'Sucesso',
+          description: 'Ordem dos capítulos atualizada e sumário atualizado',
+        })
       } catch (error) {
         console.error('Erro ao atualizar ordem:', error)
         toast({

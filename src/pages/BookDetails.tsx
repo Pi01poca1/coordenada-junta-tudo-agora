@@ -89,8 +89,12 @@ const BookDetails = () => {
   }
 
   const handleChaptersReordered = async () => {
+    console.log('📋 Atualizando sumário após reordenação de capítulos...')
     if (tocRef.current) {
       await tocRef.current.refreshTOC()
+      console.log('✅ Sumário atualizado com sucesso!')
+    } else {
+      console.log('❌ Referência do sumário não encontrada')
     }
   }
 
