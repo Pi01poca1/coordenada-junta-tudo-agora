@@ -975,7 +975,7 @@ async function generateDOCX(book: any, chapters: any[], coverImage: any, bookIma
 }
 
 async function generateEPUB(book: any, chapters: any[]): Promise<{fileBuffer: Uint8Array, mimeType: string, filename: string}> {
-  console.log('📚 Generating EPUB...');
+  console.log('📚 Generating EPUB (as HTML)...');
   
   const content = `
     <!DOCTYPE html>
@@ -984,19 +984,53 @@ async function generateEPUB(book: any, chapters: any[]): Promise<{fileBuffer: Ui
         <title>${book.title}</title>
         <meta charset="utf-8">
         <style>
-          body { font-family: serif; line-height: 1.6; margin: 40px; }
-          h1 { text-align: center; margin-bottom: 40px; }
-          h2 { margin-top: 40px; page-break-before: always; }
-          p { text-indent: 1.5em; margin-bottom: 1em; }
+          body { 
+            font-family: Georgia, serif; 
+            line-height: 1.6; 
+            margin: 40px auto; 
+            max-width: 800px;
+            padding: 20px; 
+          }
+          h1 { 
+            text-align: center; 
+            margin-bottom: 40px; 
+            color: #2c3e50; 
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+          }
+          h2 { 
+            margin-top: 40px; 
+            page-break-before: always; 
+            color: #34495e;
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+          }
+          p { 
+            text-indent: 1.5em; 
+            margin-bottom: 1em; 
+            text-align: justify;
+          }
+          .description {
+            font-style: italic;
+            background: #ecf0f1;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+          }
+          .chapter {
+            margin-bottom: 30px;
+          }
         </style>
     </head>
     <body>
         <h1>${book.title}</h1>
-        ${book.description ? `<p><em>${book.description}</em></p>` : ''}
+        ${book.description ? `<div class="description">${book.description}</div>` : ''}
         
         ${chapters.map(chapter => `
-            <h2>Capítulo ${chapter.order_index || 'S/N'}: ${chapter.title}</h2>
-            <div>${chapter.content ? chapter.content.split('\n').map(p => `<p>${p}</p>`).join('') : '<p>Sem conteúdo</p>'}</div>
+            <div class="chapter">
+                <h2>Capítulo ${chapter.order_index || 'S/N'}: ${chapter.title}</h2>
+                <div>${chapter.content ? chapter.content.split('\n').filter(p => p.trim()).map(p => `<p>${p}</p>`).join('') : '<p>Sem conteúdo</p>'}</div>
+            </div>
         `).join('')}
     </body>
     </html>
@@ -1007,8 +1041,8 @@ async function generateEPUB(book: any, chapters: any[]): Promise<{fileBuffer: Ui
   
   return {
     fileBuffer: buffer,
-    mimeType: 'application/epub+zip',
-    filename: `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}.epub`
+    mimeType: 'text/html',
+    filename: `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}.html`
   }
 }
 
