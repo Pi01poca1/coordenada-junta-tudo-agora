@@ -1,6 +1,5 @@
 // Lazy loading components for better code splitting
-import * as React from 'react'
-const { lazy } = React
+import { lazy } from 'react';
 
 // Pages - todas exportam como default
 export const BookDetails = lazy(() => import('@/pages/BookDetails'));

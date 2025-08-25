@@ -1,5 +1,4 @@
-import * as React from 'react'
-const { Suspense } = React
+import React, { Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from '@/contexts/AuthContext'
@@ -24,6 +23,7 @@ import Index from '@/pages/Index'
 import Login from '@/pages/Login'
 import Dashboard from '@/pages/Dashboard'
 import NotFound from '@/pages/NotFound'
+import TestPage from '@/pages/TestPage'
 
 const queryClient = new QueryClient()
 
@@ -37,7 +37,8 @@ const App = () => {
           <div className="min-h-screen bg-background">
             <Routes>
               {/* Public routes */}
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<TestPage />} />
+              <Route path="/index" element={<Index />} />
               <Route path="/login" element={<Login />} />
               
               {/* Protected routes */}

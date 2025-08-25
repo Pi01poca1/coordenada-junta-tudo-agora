@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -20,7 +20,7 @@ interface DashboardStats {
 }
 
 const Dashboard = () => {
-  const [stats, setStats] = React.useState<DashboardStats>({
+  const [stats, setStats] = useState<DashboardStats>({
     totalBooks: 0,
     totalChapters: 0,
     totalWords: 0,
@@ -28,11 +28,11 @@ const Dashboard = () => {
     booksThisMonth: 0,
     chaptersThisMonth: 0,
   })
-  const [loading, setLoading] = React.useState(true)
+  const [loading, setLoading] = useState(true)
   const { user } = useAuth()
   const { toast } = useToast()
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (user) {
       fetchStats()
     }

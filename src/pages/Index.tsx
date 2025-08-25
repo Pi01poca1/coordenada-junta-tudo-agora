@@ -1,11 +1,11 @@
-import * as React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '@/integrations/supabase/client'
 
 const Index = () => {
-  const [connectionStatus, setConnectionStatus] = React.useState('testando')
+  const [connectionStatus, setConnectionStatus] = useState('testando')
   
-  React.useEffect(() => {
+  useEffect(() => {
     console.log('📍 Index page carregada')
     
     const testSupabase = async () => {
