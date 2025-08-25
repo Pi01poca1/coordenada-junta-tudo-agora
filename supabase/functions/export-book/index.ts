@@ -745,181 +745,208 @@ async function blobToBase64Safe(blob: Blob): Promise<string> {
 async function generateDOCX(book: any, chapters: any[], coverImage: any, bookImages: any[], options: any): Promise<{fileBuffer: Uint8Array, mimeType: string, filename: string}> {
   console.log('📘 Generating professional DOCX...');
   
-  const isABNT = options?.template === 'abnt';
-  const children = [];
+  try {
+    const children = [];
 
-  // CAPA
-  children.push(
-    new Paragraph({
-      children: [
-        new TextRun({
-          text: book.title.toUpperCase(),
-          bold: true,
-          size: 32,
-        }),
-      ],
-      alignment: 'center',
-      spacing: { after: 400 }
-    })
-  );
-
-  if (book.description) {
+    // CAPA - Título principal
     children.push(
       new Paragraph({
         children: [
           new TextRun({
-            text: book.description,
-            size: 24,
-          }),
-        ],
-        alignment: 'center',
-        spacing: { after: 600 }
-      })
-    );
-  }
-
-  children.push(
-    new Paragraph({
-      children: [
-        new TextRun({
-          text: `Gerado em ${new Date().getFullYear()}`,
-          size: 20,
-        }),
-      ],
-      alignment: 'center',
-      spacing: { after: 400 }
-    })
-  );
-
-  // NOVA PÁGINA - SUMÁRIO
-  children.push(
-    new Paragraph({
-      children: [
-        new TextRun({
-          text: 'SUMÁRIO',
-          bold: true,
-          size: 28,
-        }),
-      ],
-      alignment: 'center',
-      spacing: { after: 400 },
-      pageBreakBefore: true
-    })
-  );
-
-  // Entradas do sumário
-  for (let i = 0; i < chapters.length; i++) {
-    const chapter = chapters[i];
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: `${chapter.order_index || (i + 1)}. ${chapter.title}`,
-            size: 22,
-          }),
-          new TextRun({
-            text: '\t' + `${i + 3}`, // Página estimada com tab
-            size: 22,
-          }),
-        ],
-        spacing: { after: 200 }
-      })
-    );
-  }
-
-  // CAPÍTULOS
-  for (const chapter of chapters) {
-    // Nova página para cada capítulo
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: `CAPÍTULO ${chapter.order_index || 'S/N'}`,
+            text: book.title.toUpperCase(),
             bold: true,
-            size: 26,
+            size: 48, // 24pt em half-points
           }),
         ],
-        heading: HeadingLevel.HEADING_1,
-        alignment: 'center',
-        spacing: { after: 300 },
+        alignment: "center",
+        spacing: { 
+          after: 800 // 20pt * 20 = 400 twips
+        }
+      })
+    );
+
+    // Descrição (se houver)
+    if (book.description) {
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: book.description,
+              size: 24, // 12pt
+              italics: true,
+            }),
+          ],
+          alignment: "center",
+          spacing: { after: 600 }
+        })
+      );
+    }
+
+    // Data de geração
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: `Gerado em ${new Date().getFullYear()}`,
+            size: 20, // 10pt
+          }),
+        ],
+        alignment: "center",
+        spacing: { after: 800 }
+      })
+    );
+
+    // QUEBRA DE PÁGINA e SUMÁRIO
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "SUMÁRIO",
+            bold: true,
+            size: 32, // 16pt
+          }),
+        ],
+        alignment: "center",
+        spacing: { 
+          before: 400,
+          after: 600 
+        },
         pageBreakBefore: true
       })
     );
 
-    // Título do capítulo
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: chapter.title,
-            bold: true,
-            size: 24,
-          }),
-        ],
-        alignment: 'center',
-        spacing: { after: 400 }
-      })
-    );
+    // Entradas do sumário
+    chapters.forEach((chapter, index) => {
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: `${chapter.order_index || (index + 1)}. ${chapter.title}`,
+              size: 22, // 11pt
+            }),
+          ],
+          spacing: { after: 200 }
+        })
+      );
+    });
 
-    // Conteúdo do capítulo
-    if (chapter.content) {
-      const paragraphs = chapter.content.split('\n').filter((p: string) => p.trim());
-      for (const para of paragraphs) {
+    // CAPÍTULOS
+    chapters.forEach((chapter, index) => {
+      // Quebra de página para cada capítulo
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: `CAPÍTULO ${chapter.order_index || (index + 1)}`,
+              bold: true,
+              size: 28, // 14pt
+              allCaps: true,
+            }),
+          ],
+          heading: HeadingLevel.HEADING_1,
+          alignment: "center",
+          spacing: { 
+            before: 400,
+            after: 400 
+          },
+          pageBreakBefore: true
+        })
+      );
+
+      // Título do capítulo
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: chapter.title,
+              bold: true,
+              size: 24, // 12pt
+            }),
+          ],
+          alignment: "center", 
+          spacing: { after: 600 }
+        })
+      );
+
+      // Conteúdo do capítulo
+      if (chapter.content && chapter.content.trim()) {
+        const paragraphs = chapter.content
+          .split('\n')
+          .filter((p: string) => p.trim().length > 0);
+        
+        paragraphs.forEach((para: string) => {
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: para.trim(),
+                  size: 22, // 11pt
+                }),
+              ],
+              alignment: "justify",
+              spacing: { after: 200 },
+              indent: { 
+                firstLine: 360 // 0.25 inch = 360 twips
+              }
+            })
+          );
+        });
+      } else {
+        // Parágrafo vazio caso não haja conteúdo
         children.push(
           new Paragraph({
             children: [
               new TextRun({
-                text: para,
+                text: "[Conteúdo do capítulo a ser desenvolvido]",
                 size: 22,
+                italics: true,
               }),
             ],
-            alignment: 'justify',
-            spacing: { after: 240 },
-            indent: { firstLine: 720 } // Recuo da primeira linha
+            alignment: "center",
+            spacing: { after: 400 }
           })
         );
       }
-    }
+    });
 
-    // Espaço após cada capítulo
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: '',
-            size: 22,
-          }),
-        ],
-        spacing: { after: 400 }
-      })
-    );
-  }
-
-  // Criar o documento
-  const doc = new Document({
-    sections: [
-      {
-        properties: {
-          page: {
-            margin: {
-              top: 1440,    // 2.5cm
-              right: 1440,  // 2.5cm
-              bottom: 1440, // 2.5cm
-              left: 1440,   // 2.5cm
+    // Criar documento com estrutura básica
+    const doc = new Document({
+      sections: [
+        {
+          properties: {
+            page: {
+              margin: {
+                top: 1440,    // 1 inch = 1440 twips
+                right: 1440,
+                bottom: 1440,
+                left: 1440,
+              },
             },
           },
+          children: children,
         },
-        children: children,
-      },
-    ],
-  });
+      ],
+    });
 
-  const buffer = await Packer.toBuffer(doc);
-  return {
-    fileBuffer: new Uint8Array(buffer),
-    mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    filename: `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}.docx`
-  };
+    console.log('📦 Convertendo documento para buffer...');
+    const buffer = await Packer.toBuffer(doc);
+    
+    console.log('✅ DOCX gerado com sucesso:', {
+      bufferSize: buffer.byteLength,
+      title: book.title,
+      chapters: chapters.length
+    });
+
+    return {
+      fileBuffer: new Uint8Array(buffer),
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      filename: `${book.title.replace(/[^a-zA-Z0-9\s]/g, '_').replace(/\s+/g, '_')}.docx`
+    };
+
+  } catch (error) {
+    console.error('❌ Erro ao gerar DOCX:', error);
+    throw new Error(`Falha na geração do DOCX: ${error.message}`);
+  }
 }
 
 async function generateEPUB(book: any, chapters: any[]): Promise<{fileBuffer: Uint8Array, mimeType: string, filename: string}> {
