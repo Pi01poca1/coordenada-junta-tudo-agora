@@ -163,67 +163,68 @@ export const DraggableChapterList = ({ bookId: propBookId, titleAlignment = 'lef
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
 
-    if (active.id !== over?.id) {
-      const oldIndex = chapters.findIndex((chapter) => chapter.id === active.id)
-      const newIndex = chapters.findIndex((chapter) => chapter.id === over?.id)
+    if (!active || !over || active.id === over.id) return
 
-      if (oldIndex === -1 || newIndex === -1) return
+    const oldIndex = chapters.findIndex((chapter) => chapter.id === active.id)
+    const newIndex = chapters.findIndex((chapter) => chapter.id === over.id)
 
-      const newChapters = arrayMove(chapters, oldIndex, newIndex)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    // Criar nova ordem dos capítulos
+    const reorderedChapters = arrayMove(chapters, oldIndex, newIndex)
+    
+    // Atualizar estado local imediatamente para feedback visual
+    setChapters(reorderedChapters)
+
+    // Atualizar no banco de dados
+    try {
+      // Criar um timestamp único para evitar conflitos
+      const timestamp = new Date().toISOString()
       
-      // Atualizar estado local imediatamente para feedback visual
-      setChapters(newChapters)
-
-      // Atualizar order_index no banco de dados de forma simples e direta
-      try {
-        // Use uma abordagem sequencial para evitar conflitos
-        for (let i = 0; i < newChapters.length; i++) {
-          const chapter = newChapters[i]
-          const newIndex = i + 1
-          
-          // UPDATE direto sem conflitos
+      // Atualizar apenas os capítulos que mudaram de posição
+      const promises = reorderedChapters.map(async (chapter, index) => {
+        const newOrderIndex = index + 1
+        
+        // Só atualiza se a ordem mudou
+        if (chapter.order_index !== newOrderIndex) {
           const { error } = await supabase
             .from('chapters')
             .update({ 
-              order_index: newIndex,
-              updated_at: new Date().toISOString()
+              order_index: newOrderIndex,
+              updated_at: timestamp
             })
             .eq('id', chapter.id)
-            .select()
+            .single()
           
           if (error) {
             console.error(`Erro ao atualizar capítulo ${chapter.id}:`, error)
             throw error
           }
-          
-          // Pequena pausa para evitar conflitos de concorrência
-          if (i < newChapters.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 100))
-          }
         }
+      })
 
-        toast({
-          title: 'Sucesso',
-          description: 'Ordem dos capítulos atualizada',
-        })
+      await Promise.all(promises)
 
-        // Recarregar capítulos para confirmar mudanças
-        await fetchChapters()
+      toast({
+        title: 'Sucesso',
+        description: 'Ordem dos capítulos atualizada',
+      })
 
-        // Emitir evento customizado para atualizar sumário APENAS após sucesso completo
-        window.dispatchEvent(new CustomEvent('chaptersReordered', { 
-          detail: { bookId } 
-        }))
-      } catch (error) {
-        console.error('Erro ao atualizar ordem:', error)
-        toast({
-          title: 'Erro',
-          description: 'Falha ao salvar nova ordem',
-          variant: 'destructive',
-        })
-        // Reverter mudança local
-        await fetchChapters()
-      }
+      // Emitir evento para atualizar sumário
+      window.dispatchEvent(new CustomEvent('chaptersReordered', { 
+        detail: { bookId } 
+      }))
+      
+    } catch (error) {
+      console.error('Erro ao atualizar ordem:', error)
+      toast({
+        title: 'Erro',
+        description: 'Falha ao salvar nova ordem',
+        variant: 'destructive',
+      })
+      
+      // Reverter mudança local em caso de erro
+      setChapters(chapters)
     }
   }
 

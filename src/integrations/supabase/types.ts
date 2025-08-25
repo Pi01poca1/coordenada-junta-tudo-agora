@@ -521,10 +521,6 @@ export type Database = {
           status: string
         }[]
       }
-      update_chapter_order: {
-        Args: { chapter_id: string; new_order: number }
-        Returns: undefined
-      }
     }
     Enums: {
       [_ in never]: never
