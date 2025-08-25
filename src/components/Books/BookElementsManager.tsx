@@ -124,11 +124,7 @@ export const BookElementsManager = ({ bookId, onElementUpdate, titleAlignment = 
   const { toast } = useToast()
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
+    useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -137,27 +133,6 @@ export const BookElementsManager = ({ bookId, onElementUpdate, titleAlignment = 
   useEffect(() => {
     if (bookId) {
       fetchElements()
-    }
-
-    // Escutar eventos de outros componentes para sincronização
-    const handleChaptersReordered = () => {
-      setTimeout(() => {
-        fetchElements()
-      }, 300)
-    }
-
-    const handleTOCUpdated = () => {
-      setTimeout(() => {
-        fetchElements()
-      }, 300)
-    }
-
-    window.addEventListener('chaptersReordered', handleChaptersReordered)
-    window.addEventListener('tocUpdated', handleTOCUpdated)
-
-    return () => {
-      window.removeEventListener('chaptersReordered', handleChaptersReordered)
-      window.removeEventListener('tocUpdated', handleTOCUpdated)
     }
   }, [bookId])
 
@@ -281,16 +256,6 @@ export const BookElementsManager = ({ bookId, onElementUpdate, titleAlignment = 
           title: 'Ordem atualizada',
           description: 'A ordem dos elementos foi alterada com sucesso',
         })
-
-        // Notify parent component to refresh table of contents
-        if (onElementUpdate) {
-          onElementUpdate()
-        }
-
-        // Emitir evento para sincronizar com outros componentes
-        window.dispatchEvent(new CustomEvent('elementsUpdated', { 
-          detail: { bookId } 
-        }))
       } catch (error) {
         console.error('Error updating order:', error)
         toast({

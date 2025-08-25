@@ -121,11 +121,7 @@ export const DraggableChapterList = ({ bookId: propBookId, titleAlignment = 'lef
   const bookId = propBookId || paramBookId
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
+    useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -140,7 +136,7 @@ export const DraggableChapterList = ({ bookId: propBookId, titleAlignment = 'lef
         .from('chapters')
         .select('*')
         .eq('book_id', bookId)
-        .order('order_index', { ascending: true, nullsFirst: false })
+        .order('order_index', { ascending: true })
 
       if (error) throw error
       setChapters(data || [])
@@ -158,93 +154,46 @@ export const DraggableChapterList = ({ bookId: propBookId, titleAlignment = 'lef
 
   useEffect(() => {
     fetchChapters()
-
-    // Escutar eventos de outros componentes
-    const handleTOCUpdated = () => {
-      setTimeout(() => {
-        fetchChapters()
-      }, 300)
-    }
-
-    const handleElementsUpdated = () => {
-      setTimeout(() => {
-        fetchChapters()
-      }, 300)
-    }
-
-    window.addEventListener('tocUpdated', handleTOCUpdated)
-    window.addEventListener('elementsUpdated', handleElementsUpdated)
-
-    return () => {
-      window.removeEventListener('tocUpdated', handleTOCUpdated)
-      window.removeEventListener('elementsUpdated', handleElementsUpdated)
-    }
   }, [bookId, user])
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
 
-    if (!active || !over || active.id === over.id) return
+    if (active.id !== over?.id) {
+      const oldIndex = chapters.findIndex((chapter) => chapter.id === active.id)
+      const newIndex = chapters.findIndex((chapter) => chapter.id === over?.id)
 
-    const oldIndex = chapters.findIndex((chapter) => chapter.id === active.id)
-    const newIndex = chapters.findIndex((chapter) => chapter.id === over.id)
+      const newChapters = arrayMove(chapters, oldIndex, newIndex)
+      setChapters(newChapters)
 
-    if (oldIndex === -1 || newIndex === -1) return
+      // Atualizar order_index no banco
+      try {
+        const updates = newChapters.map((chapter, index) => ({
+          id: chapter.id,
+          order_index: index + 1,
+        }))
 
-    // Criar nova ordem dos capítulos
-    const reorderedChapters = arrayMove(chapters, oldIndex, newIndex)
-    
-    // Atualizar estado local imediatamente para feedback visual
-    setChapters(reorderedChapters)
-
-    // Atualizar no banco de dados
-    try {
-      // Criar um timestamp único para evitar conflitos
-      const timestamp = new Date().toISOString()
-      
-      // Atualizar apenas os capítulos que mudaram de posição
-      const promises = reorderedChapters.map(async (chapter, index) => {
-        const newOrderIndex = index + 1
-        
-        // Só atualiza se a ordem mudou
-        if (chapter.order_index !== newOrderIndex) {
-          const { error } = await supabase
+        for (const update of updates) {
+          await supabase
             .from('chapters')
-            .update({ 
-              order_index: newOrderIndex,
-              updated_at: timestamp
-            })
-            .eq('id', chapter.id)
-          
-          if (error) {
-            console.error(`Erro ao atualizar capítulo ${chapter.id}:`, error)
-            throw error
-          }
+            .update({ order_index: update.order_index })
+            .eq('id', update.id)
         }
-      })
 
-      await Promise.all(promises)
-
-      toast({
-        title: 'Sucesso',
-        description: 'Ordem dos capítulos atualizada',
-      })
-
-      // Emitir evento para atualizar outros componentes
-      window.dispatchEvent(new CustomEvent('chaptersReordered', { 
-        detail: { bookId } 
-      }))
-      
-    } catch (error) {
-      console.error('Erro ao atualizar ordem:', error)
-      toast({
-        title: 'Erro',
-        description: 'Falha ao salvar nova ordem',
-        variant: 'destructive',
-      })
-      
-      // Reverter mudança local em caso de erro
-      setChapters(chapters)
+        toast({
+          title: 'Sucesso',
+          description: 'Ordem dos capítulos atualizada',
+        })
+      } catch (error) {
+        console.error('Erro ao atualizar ordem:', error)
+        toast({
+          title: 'Erro',
+          description: 'Falha ao salvar nova ordem',
+          variant: 'destructive',
+        })
+        // Reverter mudança local
+        fetchChapters()
+      }
     }
   }
 

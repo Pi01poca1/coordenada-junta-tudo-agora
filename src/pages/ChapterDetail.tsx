@@ -32,7 +32,7 @@ const ChapterDetail = () => {
   const [chapter, setChapter] = useState<Chapter | null>(null)
   const [book, setBook] = useState<Book | null>(null)
   const [loading, setLoading] = useState(true)
-  const { bookId, chapterId } = useParams<{ bookId: string; chapterId: string }>()
+  const { bookId, chapterId } = useParams()
   const { user } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()

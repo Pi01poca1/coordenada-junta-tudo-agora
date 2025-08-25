@@ -18,21 +18,20 @@ import {
   DocsOverview
 } from '@/components/LazyComponents'
 
-// Direct imports 
+// Direct imports for critical pages
 import Index from '@/pages/Index'
 import Login from '@/pages/Login'
 import Dashboard from '@/pages/Dashboard'
 import NotFound from '@/pages/NotFound'
-import CreateChapter from '@/pages/CreateChapter'
 
 const queryClient = new QueryClient()
 
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router>
-          <div className="min-h-screen">
+      <Router>
+        <AuthProvider>
+          <div className="min-h-screen bg-background">
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />
@@ -53,13 +52,15 @@ const App = () => {
                 </ProtectedRoute>
               } />
               
-              <Route path="/books/:bookId/chapters/new" element={
+              <Route path="/books/:id" element={
                 <ProtectedRoute>
-                  <CreateChapter />
+                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
+                    <BookDetails />
+                  </Suspense>
                 </ProtectedRoute>
               } />
               
-              <Route path="/books/:bookId/chapters/:chapterId" element={
+              <Route path="/chapters/:id" element={
                 <ProtectedRoute>
                   <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
                     <ChapterDetail />
@@ -67,18 +68,10 @@ const App = () => {
                 </ProtectedRoute>
               } />
               
-              <Route path="/books/:bookId/chapters/:chapterId/edit" element={
+              <Route path="/chapters/:id/edit" element={
                 <ProtectedRoute>
                   <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
                     <EditChapter />
-                  </Suspense>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/books/:bookId" element={
-                <ProtectedRoute>
-                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
-                    <BookDetails />
                   </Suspense>
                 </ProtectedRoute>
               } />
@@ -87,6 +80,22 @@ const App = () => {
                 <ProtectedRoute>
                   <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
                     <Profile />
+                  </Suspense>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/statistics" element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
+                    <Statistics />
+                  </Suspense>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/docs" element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
+                    <DocsOverview />
                   </Suspense>
                 </ProtectedRoute>
               } />
@@ -106,8 +115,8 @@ const App = () => {
             </Routes>
             <Toaster />
           </div>
-        </Router>
-      </AuthProvider>
+        </AuthProvider>
+      </Router>
     </QueryClientProvider>
   )
 }

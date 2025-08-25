@@ -143,17 +143,6 @@ export const ChapterForm = () => {
         description: `Capítulo ${isEdit ? 'atualizado' : 'criado'} com sucesso`,
       })
 
-      // Emitir eventos customizados para atualizar sumário
-      if (isEdit) {
-        window.dispatchEvent(new CustomEvent('chapterUpdated', { 
-          detail: { bookId, chapterId } 
-        }))
-      } else {
-        window.dispatchEvent(new CustomEvent('chapterCreated', { 
-          detail: { bookId } 
-        }))
-      }
-
       navigate(`/books/${bookId}`)
     } catch (error) {
       console.error('Error saving chapter:', error)

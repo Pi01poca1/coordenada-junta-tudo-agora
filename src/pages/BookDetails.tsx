@@ -44,26 +44,6 @@ const BookDetails = () => {
     if (id) {
       fetchBook(id)
     }
-
-    // Listener para atualizações do sumário
-    const handleTOCUpdate = () => {
-      if (tocRef.current) {
-        tocRef.current.refreshTOC()
-      }
-    }
-
-    // Adicionar listeners para eventos de capítulos
-    window.addEventListener('chapterCreated', handleTOCUpdate)
-    window.addEventListener('chapterUpdated', handleTOCUpdate)
-    window.addEventListener('chapterDeleted', handleTOCUpdate)
-    window.addEventListener('chaptersReordered', handleTOCUpdate)
-
-    return () => {
-      window.removeEventListener('chapterCreated', handleTOCUpdate)
-      window.removeEventListener('chapterUpdated', handleTOCUpdate)
-      window.removeEventListener('chapterDeleted', handleTOCUpdate)
-      window.removeEventListener('chaptersReordered', handleTOCUpdate)
-    }
   }, [id, user])
 
   const fetchBook = async (bookId: string) => {

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -210,14 +209,9 @@ export const TableOfContents = forwardRef<TableOfContentsRef, TableOfContentsPro
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
   const { toast } = useToast()
-  const navigate = useNavigate()
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
+    useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -233,44 +227,6 @@ export const TableOfContents = forwardRef<TableOfContentsRef, TableOfContentsPro
         }
       }
       loadTOC()
-
-      // Listener para atualização automática quando capítulos ou elementos mudam
-      const handleChaptersReordered = async (event: CustomEvent) => {
-        if (event.detail.bookId === bookId) {
-          setTimeout(() => {
-            generateTOC()
-          }, 500)
-        }
-      }
-
-      const handleElementsUpdated = async (event: CustomEvent) => {
-        if (event.detail.bookId === bookId) {
-          setTimeout(() => {
-            generateTOC()
-          }, 500)
-        }
-      }
-
-      const handleChapterUpdated = () => {
-        setTimeout(() => {
-          generateTOC()
-        }, 300)
-      }
-
-      // Adicionar listeners para eventos customizados
-      window.addEventListener('chaptersReordered', handleChaptersReordered as EventListener)
-      window.addEventListener('elementsUpdated', handleElementsUpdated as EventListener)
-      window.addEventListener('chapterUpdated', handleChapterUpdated)
-      window.addEventListener('chapterCreated', handleChapterUpdated)
-      window.addEventListener('chapterDeleted', handleChapterUpdated)
-
-      return () => {
-        window.removeEventListener('chaptersReordered', handleChaptersReordered as EventListener)
-        window.removeEventListener('elementsUpdated', handleElementsUpdated as EventListener)
-        window.removeEventListener('chapterUpdated', handleChapterUpdated)
-        window.removeEventListener('chapterCreated', handleChapterUpdated)
-        window.removeEventListener('chapterDeleted', handleChapterUpdated)
-      }
     }
   }, [bookId])
 
@@ -413,11 +369,6 @@ export const TableOfContents = forwardRef<TableOfContentsRef, TableOfContentsPro
 
           // Refresh TOC to recalculate page numbers
           await generateTOC()
-          
-          // Emitir evento para outras partes da aplicação
-          window.dispatchEvent(new CustomEvent('tocUpdated', { 
-            detail: { bookId } 
-          }))
         } catch (error) {
           console.error('Error updating order:', error)
           toast({
@@ -432,8 +383,8 @@ export const TableOfContents = forwardRef<TableOfContentsRef, TableOfContentsPro
 
   const handleEditItem = (item: TOCItem) => {
     if (item.type === 'chapter') {
-      // Navigate to chapter edit page using React Router
-      navigate(`/books/${bookId}/chapters/${item.id}/edit`)
+      // Navigate to chapter edit page
+      window.location.href = `/books/${bookId}/chapters/${item.id}/edit`
     } else {
       // For elements, we'll emit an event that the parent can listen to
       toast({
