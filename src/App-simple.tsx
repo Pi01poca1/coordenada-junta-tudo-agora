@@ -1,31 +1,37 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { AuthProvider } from '@/contexts/AuthContext'
 import { Toaster } from '@/components/ui/sonner'
 
-// Teste sem AuthProvider primeiro
+// Teste com AuthProvider
 import Index from '@/pages/Index'
+import Login from '@/pages/Login'
 
 const queryClient = new QueryClient()
 
 const AppSimple = () => {
-  console.log('🚀 App Simple carregando...')
+  console.log('🚀 Testando AuthProvider...')
   
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial' }}>
-      <h1 style={{ color: 'green' }}>✅ ANDROVOX - App Simple Funcionando!</h1>
-      <p>Se você vê isso, o problema foi identificado.</p>
-      <p>Hora: {new Date().toLocaleString()}</p>
-      
-      <div style={{ marginTop: '20px' }}>
-        <h3>Próximos passos:</h3>
-        <ul>
-          <li>Testar AuthProvider</li>
-          <li>Testar Router</li>
-          <li>Testar componentes lazy</li>
-        </ul>
-      </div>
-    </div>
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <AuthProvider>
+          <div style={{ padding: '20px', fontFamily: 'Arial' }}>
+            <h1 style={{ color: 'blue' }}>🔄 TESTE: AuthProvider + Router</h1>
+            <p>Se você vê isso, AuthProvider está OK!</p>
+            <p>Hora: {new Date().toLocaleString()}</p>
+            
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </div>
+          <Toaster />
+        </AuthProvider>
+      </Router>
+    </QueryClientProvider>
   )
 }
 
