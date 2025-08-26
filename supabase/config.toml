@@ -12,7 +12,7 @@ enabled = true
 port = 54324
 site_url = "https://e50f4fda-55f8-4d52-aab2-82f9e3b02574.sandbox.lovable.dev"
 additional_redirect_urls = ["https://e50f4fda-55f8-4d52-aab2-82f9e3b02574.sandbox.lovable.dev/login", "https://e50f4fda-55f8-4d52-aab2-82f9e3b02574.sandbox.lovable.dev/dashboard", "https://e50f4fda-55f8-4d52-aab2-82f9e3b02574.sandbox.lovable.dev"]
-jwt_expiry = 1800
+jwt_expiry = 3600
 enable_signup = true
 email_double_confirm_changes = true
 
