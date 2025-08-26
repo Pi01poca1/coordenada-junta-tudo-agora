@@ -22,31 +22,57 @@ export const useAuth = () => {
   return context
 }
 
+let authInitialized = false
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    console.log('🚀 AuthProvider iniciado')
+    // Prevenir múltiplas inicializações
+    if (authInitialized) {
+      console.log('⚠️ AuthProvider já inicializado, pulando...')
+      return
+    }
     
-    // Listener de mudanças de auth - EXATAMENTE como no teste que funciona
+    authInitialized = true
+    console.log('🚀 AuthProvider inicializado ÚNICA VEZ')
+    
+    let mounted = true
+    
+    // Listener de mudanças de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return
+      
       console.log('🔄 Auth evento:', event, session?.user?.email || 'sem user')
+      
+      // Evitar logout desnecessário durante INITIAL_SESSION
+      if (event === 'INITIAL_SESSION' && !session) {
+        setLoading(false)
+        return
+      }
+      
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
     })
 
-    // Verificar sessão atual - EXATAMENTE como no teste que funciona
+    // Verificar sessão atual
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return
+      
       console.log('🔍 Sessão inicial:', session?.user?.email || 'sem user')
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+      authInitialized = false // Reset para permitir nova inicialização se necessário
+    }
   }, [])
 
   const signIn = async (email: string, password: string) => {
@@ -69,6 +95,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   const signOut = async () => {
+    console.log('🚪 Fazendo logout...')
     await supabase.auth.signOut()
   }
 
