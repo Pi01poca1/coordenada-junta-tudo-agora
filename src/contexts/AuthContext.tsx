@@ -28,55 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    console.log('🔄 AuthContext: Inicializando...')
-    
-    // Handle auth tokens from URL first (email confirmation, password reset)
-    const handleAuthFromUrl = async () => {
-      const hashParams = new URLSearchParams(window.location.hash.substring(1))
-      const accessToken = hashParams.get('access_token')
-      const refreshToken = hashParams.get('refresh_token')
-      const type = hashParams.get('type')
-      const error = hashParams.get('error')
-      
-      console.log('🔍 Verificando tokens na URL:', { accessToken: !!accessToken, refreshToken: !!refreshToken, type, error })
-      
-      // Se há erro na URL, limpar e parar processamento
-      if (error) {
-        console.log('❌ Erro encontrado na URL:', error)
-        window.history.replaceState({}, document.title, window.location.pathname + window.location.search)
-        return
-      }
-      
-      // Processar apenas se temos ambos os tokens e é um tipo válido
-      if (accessToken && refreshToken && (type === 'signup' || type === 'recovery')) {
-        console.log('🔑 Processando tokens da URL, tipo:', type)
-        try {
-          const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
-          })
-          
-          if (error) {
-            console.error('❌ Erro ao definir sessão:', error)
-          } else {
-            console.log('✅ Sessão definida com sucesso')
-          }
-          
-          // Sempre limpar a hash da URL após processar
-          window.history.replaceState({}, document.title, window.location.pathname + window.location.search)
-        } catch (error) {
-          console.error('❌ Erro inesperado ao processar tokens:', error)
-          // Limpar a hash mesmo em caso de erro
-          window.history.replaceState({}, document.title, window.location.pathname + window.location.search)
-        }
-      } else if (window.location.hash.length > 1) {
-        // Se há hash mas não são tokens válidos, limpar
-        console.log('🧹 Limpando hash inválida da URL')
-        window.history.replaceState({}, document.title, window.location.pathname + window.location.search)
-      }
-    }
-    
-    handleAuthFromUrl()
+    console.log('🔄 AuthContext: Inicializando (versão simplificada)...')
 
     // Set up auth state listener
     const {
