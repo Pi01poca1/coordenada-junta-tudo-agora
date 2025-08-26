@@ -57,6 +57,9 @@ export function Navigation() {
         <Link to="/docs/overview" className="text-gray-700 hover:underline">
           Documentação
         </Link>
+        <Link to="/manual" className="text-gray-700 hover:underline">
+          Manual
+        </Link>
         <Link to="/profile" className="text-gray-700 hover:underline">
           Perfil
         </Link>

@@ -15,7 +15,8 @@ import {
   Admin,
   Profile,
   Statistics,
-  DocsOverview
+  DocsOverview,
+  Manual
 } from '@/components/LazyComponents'
 
 // Direct imports for critical pages
@@ -115,6 +116,14 @@ const App = () => {
                 <ProtectedRoute>
                   <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
                     <DocsOverview />
+                  </Suspense>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/manual" element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
+                    <Manual />
                   </Suspense>
                 </ProtectedRoute>
               } />

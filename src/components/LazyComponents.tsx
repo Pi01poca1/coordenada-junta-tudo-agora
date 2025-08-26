@@ -10,6 +10,7 @@ export const Admin = lazy(() => import('@/pages/Admin'));
 export const Profile = lazy(() => import('@/pages/Profile'));
 export const Statistics = lazy(() => import('@/pages/Statistics'));
 export const DocsOverview = lazy(() => import('@/pages/DocsOverview'));
+export const Manual = lazy(() => import('@/pages/Manual'));
 
 // Heavy components - já exportam como default
 export const AdminStats = lazy(() => import('@/components/Admin/AdminStats'));
