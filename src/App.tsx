@@ -56,6 +56,22 @@ const App = () => {
                 </ProtectedRoute>
               } />
               
+              <Route path="/books/new" element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
+                    <CreateBook />
+                  </Suspense>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/books/:id/edit" element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
+                    <CreateBook />
+                  </Suspense>
+                </ProtectedRoute>
+              } />
+              
               <Route path="/books/:id" element={
                 <ProtectedRoute>
                   <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
