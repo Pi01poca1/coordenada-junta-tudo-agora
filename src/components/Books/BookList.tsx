@@ -105,7 +105,7 @@ export const BookList = () => {
               Estatísticas
             </Button>
           </Link>
-          <Link to="/books/new">
+          <Link to="/create-book">
             <Button>
               <Plus className="mr-2 h-4 w-4" />
               Novo Livro
@@ -121,7 +121,7 @@ export const BookList = () => {
           <p className="mb-4 text-muted-foreground">
             Comece sua jornada de escrita criando seu primeiro livro
           </p>
-          <Link to="/books/new">
+          <Link to="/create-book">
             <Button>
               <Plus className="mr-2 h-4 w-4" />
               Criar Seu Primeiro Livro
