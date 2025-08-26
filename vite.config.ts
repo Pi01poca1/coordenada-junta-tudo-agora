@@ -22,12 +22,18 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       external: [],
       output: {
-        manualChunks: undefined, // Simplificar chunks
+        manualChunks: {
+          // Force React to be in a single chunk
+          'react-vendor': ['react', 'react-dom'],
+          // Keep other libraries separate
+          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select'],
+          'router': ['react-router-dom'],
+          'supabase': ['@supabase/supabase-js'],
+        },
       },
     },
     sourcemap: false,
-    minify: 'esbuild',
-    chunkSizeWarningLimit: 1000,
+    minify: 'esbuild', // Usar esbuild ao invés de terser
   },
   esbuild: {
     drop: mode === 'production' ? ['debugger'] : [],
