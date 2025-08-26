@@ -174,7 +174,7 @@ export const LoginForm = () => {
           title: "✅ Login realizado!", 
           description: "Bem-vindo de volta!" 
         })
-        navigate("/dashboard")
+        navigate("/")
       } else {
         console.log('📝 Tentando criar conta para:', email, 'com nome:', name)
         toast({ 
