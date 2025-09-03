@@ -25,6 +25,8 @@ import Login from '@/pages/Login'
 import Dashboard from '@/pages/Dashboard'
 import NotFound from '@/pages/NotFound'
 import TestPage from '@/pages/TestPage'
+import SimplifiedPanel from '@/pages/SimplifiedPanel'
+import SimplifiedChapterView from '@/pages/SimplifiedChapterView'
 
 const queryClient = new QueryClient()
 
@@ -40,6 +42,19 @@ const App = () => {
               {/* Public routes */}
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
+              
+              {/* Simplified Panel Routes */}
+              <Route path="/simplified" element={
+                <ProtectedRoute>
+                  <SimplifiedPanel />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/simplified/books/:bookId/chapters" element={
+                <ProtectedRoute>
+                  <SimplifiedChapterView />
+                </ProtectedRoute>
+              } />
               
               {/* Protected routes */}
               <Route path="/dashboard" element={

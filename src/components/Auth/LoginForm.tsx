@@ -172,9 +172,16 @@ export const LoginForm = () => {
         console.log('✅ Login realizado com sucesso')
         toast({ 
           title: "✅ Login realizado!", 
-          description: "Bem-vindo de volta!" 
+          description: "Escolha como continuar" 
         })
-        navigate("/dashboard")
+        
+        // Show choice between dashboard and simplified panel
+        const choice = window.confirm("Deseja ir para:\n\nOK = Painel Simplificado (recomendado)\nCancelar = Dashboard Completo")
+        if (choice) {
+          navigate("/simplified")
+        } else {
+          navigate("/dashboard")
+        }
       } else {
         console.log('📝 Tentando criar conta para:', email, 'com nome:', name)
         toast({ 

@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
 import { ArrowLeft, Save } from 'lucide-react'
+import { BackToSimplified } from '@/components/ui/back-to-simplified'
 
 
 export const ChapterForm = () => {
@@ -159,6 +160,7 @@ export const ChapterForm = () => {
 
   return (
     <div className="mx-auto max-w-4xl">
+      <BackToSimplified />
       <div className="mb-6">
         <Button variant="ghost" onClick={() => navigate(`/books/${bookId}`)} className="mb-4">
           <ArrowLeft className="mr-2 h-4 w-4" />

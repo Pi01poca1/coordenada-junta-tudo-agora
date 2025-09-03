@@ -125,6 +125,13 @@ const Dashboard = () => {
               Gerencie seus livros e acompanhe seu progresso de escrita
             </p>
           </div>
+          <div className="flex space-x-3">
+            <Link to="/simplified">
+              <Button variant="outline">
+                Painel Simplificado
+              </Button>
+            </Link>
+          </div>
         </div>
 
 

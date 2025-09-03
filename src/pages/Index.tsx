@@ -40,7 +40,7 @@ const Index = () => {
         <div className="space-y-2">
           <p className="text-sm" style={{ color: '#2563eb' }}>📚 Sistema de livros e capítulos</p>
           <p className="text-sm" style={{ color: '#16a34a' }}>🔐 Autenticação configurada</p>
-          <p className="text-sm" style={{ color: '#9333ea' }}>🎨 Interface restaurada</p>
+          <p className="text-sm" style={{ color: '#9333ea' }}>🎨 Interface simplificada disponível</p>
           <p className="text-sm" style={{ color: '#f59e0b' }}>🔌 Supabase: {connectionStatus}</p>
         </div>
         <div className="mt-6">

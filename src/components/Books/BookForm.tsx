@@ -16,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
 import { ArrowLeft } from 'lucide-react'
+import { BackToSimplified } from '@/components/ui/back-to-simplified'
 
 export const BookForm = () => {
   const [title, setTitle] = useState('')
@@ -114,6 +115,7 @@ export const BookForm = () => {
 
   return (
     <div className="mx-auto max-w-2xl">
+      <BackToSimplified />
       <div className="mb-6">
         <Button variant="ghost" onClick={() => navigate('/dashboard')} className="mb-4">
           <ArrowLeft className="mr-2 h-4 w-4" />
