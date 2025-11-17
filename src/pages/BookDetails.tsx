@@ -170,10 +170,16 @@ const BookDetails = () => {
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Link to={`/books/${book.id}/edit`}>
-                  <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" variant="default" size="sm">
+                <Link to={`/book-editor-setup/${book.id}`}>
+                  <Button className="w-full" variant="default" size="sm">
                     <Edit className="mr-2 h-4 w-4" />
-                    Editar Livro
+                    Abrir Editor de Livro
+                  </Button>
+                </Link>
+                <Link to={`/books/${book.id}/edit`}>
+                  <Button className="w-full" variant="outline" size="sm">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Configurações
                   </Button>
                 </Link>
               </CardContent>

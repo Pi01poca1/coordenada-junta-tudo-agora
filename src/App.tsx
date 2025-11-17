@@ -27,6 +27,8 @@ import NotFound from '@/pages/NotFound'
 import TestPage from '@/pages/TestPage'
 import SimplifiedPanel from '@/pages/SimplifiedPanel'
 import SimplifiedChapterView from '@/pages/SimplifiedChapterView'
+import BookEditor from '@/pages/BookEditor'
+import BookEditorSetup from '@/pages/BookEditorSetup'
 
 const queryClient = new QueryClient()
 
@@ -108,6 +110,19 @@ const App = () => {
                   <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
                     <EditChapter />
                   </Suspense>
+                </ProtectedRoute>
+              } />
+              
+              {/* New Book Editor Routes */}
+              <Route path="/book-editor-setup/:bookId" element={
+                <ProtectedRoute>
+                  <BookEditorSetup />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/book-editor/:bookId" element={
+                <ProtectedRoute>
+                  <BookEditor />
                 </ProtectedRoute>
               } />
               
