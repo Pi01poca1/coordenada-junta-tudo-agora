@@ -1,6 +1,7 @@
 import React from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
+import { useIsAdmin } from "@/hooks/useIsAdmin"
 import { supabase } from "@/integrations/supabase/client"
 import logo from "/lovable-uploads/31e2a8d7-b979-4013-8ea3-90c8ccc92055.png"
 
@@ -34,10 +35,7 @@ export function Navigation() {
     }
   }, [user])
 
-  // Lista de admins (separados por vírgula) vinda do .env.local
-  const adminEmails =
-    (import.meta.env.VITE_ADMIN_EMAILS as string | undefined)?.split(",").map(e => e.trim()) ?? []
-  const isAdmin = !!(user?.email && adminEmails.includes(user.email))
+  const { isAdmin } = useIsAdmin()
 
   return (
     <nav className="flex items-center justify-between px-6 py-4 border-b bg-white">

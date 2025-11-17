@@ -112,54 +112,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const signUp = async (email: string, password: string, name?: string) => {
-    console.log('📝 AuthContext: Iniciando cadastro para:', email, 'com nome:', name)
+    const redirectUrl = `${window.location.origin}/`
     
-    const redirectUrl = `${window.location.origin}/login`
-    console.log('🔄 Redirect URL configurada:', redirectUrl)
-
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: name ? { name: name.trim() } : {}
-        },
-      })
-      
-      console.log('📥 Resposta do signUp:', { data, error })
-      
-      if (error) {
-        console.error('❌ Erro no signUp:', error)
-        return { error }
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: name ? { name } : undefined
       }
-      
-      // Se o cadastro foi bem-sucedido e temos um nome, tentar salvar no perfil
-      if (data.user && name?.trim()) {
-        console.log('👤 Tentando salvar perfil para o usuário:', data.user.id)
-        try {
-          const { error: profileError } = await supabase.from('profiles').upsert({
-            id: data.user.id,
-            name: name.trim()
+    })
+
+    if (error) {
+      console.error('Error during signup:', error)
+      return { error }
+    }
+
+    // If name is provided, update the profile
+    if (name) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: user.id,
+            name: name,
+            updated_at: new Date().toISOString(),
           })
-          
-          if (profileError) {
-            console.warn('⚠️ Erro ao salvar perfil (não crítico):', profileError)
-          } else {
-            console.log('✅ Perfil salvo com sucesso')
-          }
-        } catch (profileErr) {
-          console.warn('⚠️ Erro inesperado ao salvar perfil:', profileErr)
+
+        if (profileError) {
+          console.error('Error updating profile:', profileError)
         }
       }
-      
-      console.log('✅ Cadastro realizado com sucesso')
-      return { error: null }
-      
-    } catch (err: any) {
-      console.error('💥 Erro inesperado no signUp:', err)
-      return { error: err }
     }
+
+    return { error: null }
   }
 
   const signOut = async () => {

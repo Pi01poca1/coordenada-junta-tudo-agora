@@ -22,13 +22,13 @@ double_confirm_changes = true
 enable_confirmations = true
 
 [functions.ai-enrich]
-verify_jwt = false
+verify_jwt = true
 
 [functions.ai-prompt]
-verify_jwt = false
+verify_jwt = true
 
 [functions.export-book]
-verify_jwt = false
+verify_jwt = true
 
 [functions.resend-confirmation]
 verify_jwt = false
