@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SimplifiedBookList } from '@/components/Books/SimplifiedBookList'
-import { Plus, Settings, BookOpen } from 'lucide-react'
+import { Plus, Settings } from 'lucide-react'
+import logo from '/lovable-uploads/31e2a8d7-b979-4013-8ea3-90c8ccc92055.png'
 
 const SimplifiedPanel = () => {
   return (
@@ -11,11 +12,11 @@ const SimplifiedPanel = () => {
       <div className="mx-auto max-w-4xl space-y-6">
         {/* Logo and Header */}
         <div className="text-center">
-          <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-            <BookOpen className="h-8 w-8 text-primary" />
+          <div className="mx-auto mb-4 flex items-center justify-center">
+            <img src={logo} alt="Androvox Logo" className="h-32 w-auto object-contain" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground">Painel de Escrita</h1>
-          <p className="text-muted-foreground mt-2">Acesso rápido às suas criações</p>
+          <h1 className="text-3xl font-bold text-foreground">Fábrica de Livros</h1>
+          <p className="text-muted-foreground mt-2">Escreva, organize e publique seus livros</p>
         </div>
 
         {/* Quick Actions */}
