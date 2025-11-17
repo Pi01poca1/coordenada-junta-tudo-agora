@@ -11,15 +11,11 @@ const SimplifiedPanel = () => {
       <div className="mx-auto max-w-4xl space-y-6">
         {/* Logo and Header */}
         <div className="text-center">
-          <div className="mx-auto mb-4 h-24 w-24 flex items-center justify-center">
-            <img 
-              src="/lovable-uploads/9cfd105b-fbaa-448d-9d30-e3d2b5c2d993.png" 
-              alt="AndroVox Logo" 
-              className="h-20 w-20 object-contain"
-            />
+          <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+            <BookOpen className="h-8 w-8 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground">ANDROVOX</h1>
-          <p className="text-muted-foreground mt-2">Painel de Escrita - Acesso rápido às suas criações</p>
+          <h1 className="text-3xl font-bold text-foreground">Painel de Escrita</h1>
+          <p className="text-muted-foreground mt-2">Acesso rápido às suas criações</p>
         </div>
 
         {/* Quick Actions */}
