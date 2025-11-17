@@ -48,15 +48,9 @@ export type Database = {
         Relationships: []
       }
       admin_emails: {
-        Row: {
-          email: string
-        }
-        Insert: {
-          email: string
-        }
-        Update: {
-          email?: string
-        }
+        Row: {}
+        Insert: {}
+        Update: {}
         Relationships: []
       }
       admin_users: {
@@ -448,32 +442,8 @@ export type Database = {
         Args: { threshold?: number; user_email: string }
         Returns: boolean
       }
-      citext: {
-        Args: { "": boolean } | { "": string } | { "": unknown }
-        Returns: string
-      }
-      citext_hash: {
-        Args: { "": string }
-        Returns: number
-      }
-      citextin: {
-        Args: { "": unknown }
-        Returns: string
-      }
-      citextout: {
-        Args: { "": string }
-        Returns: unknown
-      }
-      citextrecv: {
-        Args: { "": unknown }
-        Returns: string
-      }
-      citextsend: {
-        Args: { "": string }
-        Returns: string
-      }
       get_admin_users_data: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           bio: string
           created_at: string
@@ -487,17 +457,14 @@ export type Database = {
         }[]
       }
       get_security_overview: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           description: string
           metric: string
           value: string
         }[]
       }
-      is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      is_admin: { Args: never; Returns: boolean }
       log_failed_login_attempt: {
         Args: {
           failure_reason?: string
@@ -512,7 +479,7 @@ export type Database = {
         Returns: boolean
       }
       run_security_audit: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           category: string
           check_name: string
