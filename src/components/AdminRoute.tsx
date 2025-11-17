@@ -1,34 +1,31 @@
 import React from "react"
 import { Navigate, useLocation } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
-
-function isAdminEmail(email?: string | null): boolean {
-  if (!email) return false
-  const list = (import.meta.env.VITE_ADMIN_EMAILS || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean)
-  return list.includes(email.toLowerCase())
-}
+import { useIsAdmin } from "@/hooks/useIsAdmin"
 
 export const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, loading } = useAuth()
+  const { user, loading: authLoading } = useAuth()
+  const { isAdmin, loading: adminLoading } = useIsAdmin()
   const location = useLocation()
 
-  if (loading) {
+  if (authLoading || adminLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="text-muted-foreground">Carregando…</div>
+        <div className="text-muted-foreground">Carregando...</div>
       </div>
     )
   }
 
-  // Não logado ? manda para /login e depois retorna ao /admin
+  // Not logged in? Send to /login and then return to /admin
   if (!user) {
-    return <Navigate to="/login" replace state={{ from: location }} />
+    return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  // Logado mas não é admin ? manda para dashboard
-  if (!isAdminEmail(user.email)) {
+  // Logged in but not admin? Go to dashboard
+  if (!isAdmin) {
     return <Navigate to="/dashboard" replace />
   }
 
+  // Is admin, render children
   return <>{children}</>
 }

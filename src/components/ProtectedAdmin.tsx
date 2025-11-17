@@ -4,10 +4,10 @@ import { useAuth } from "@/contexts/AuthContext"
 import { useIsAdmin } from "@/hooks/useIsAdmin"
 
 export function ProtectedAdmin({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth()
-  const isAdmin = useIsAdmin()
+  const { user, loading: authLoading } = useAuth()
+  const { isAdmin, loading: adminLoading } = useIsAdmin()
 
-  if (loading) return null
+  if (authLoading || adminLoading) return null
   if (!user) return <Navigate to="/login" replace />
   if (!isAdmin) return <Navigate to="/dashboard" replace />
 
