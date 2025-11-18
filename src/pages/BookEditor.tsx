@@ -6,6 +6,7 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/componen
 import { BookEditorToolbar } from '@/components/BookEditor/BookEditorToolbar'
 import { BookEditorStructure } from '@/components/BookEditor/BookEditorStructure'
 import { BookPageRenderer } from '@/components/BookEditor/BookPageRenderer'
+import { BookPageEffect } from '@/components/BookEditor/BookPageEffect'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
@@ -283,18 +284,22 @@ const BookEditor = () => {
 
         {/* Center Panel - Book */}
         <ResizablePanel defaultSize={leftPanelCollapsed && rightPanelCollapsed ? 100 : 80}>
-          <div className="h-full flex flex-col bg-muted/30">
-            {/* Book Content */}
+          <div className="h-full flex flex-col bg-gradient-to-br from-muted/20 via-muted/10 to-background">
+            {/* Book Content with Page Effect */}
             <div className="flex-1 overflow-auto p-8">
-              <BookPageRenderer
-                item={currentItem}
-                fontFamily={fontFamily}
-                fontSize={fontSize}
-                lineHeight={lineHeight}
-                useABNT={useABNT}
-                onContentChange={handleUpdateContent}
-                onTitleChange={handleUpdateTitle}
-              />
+              <BookPageEffect className="h-full">
+                <div className="p-12">
+                  <BookPageRenderer
+                    item={currentItem}
+                    fontFamily={fontFamily}
+                    fontSize={fontSize}
+                    lineHeight={lineHeight}
+                    useABNT={useABNT}
+                    onContentChange={handleUpdateContent}
+                    onTitleChange={handleUpdateTitle}
+                  />
+                </div>
+              </BookPageEffect>
             </div>
 
             {/* Navigation Footer */}
